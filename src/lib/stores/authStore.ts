@@ -10,6 +10,7 @@ export interface UserData {
     badges: string[];
     points: number;
     role: string;
+    achievementsVisible: boolean;
 }
 
 interface AuthStore {
@@ -22,6 +23,8 @@ interface AuthStore {
     setUser: (user: UserData | null) => void;
     setTokens: (accessToken: string, refreshToken: string) => void;
     clearAuth: () => void;
+    updateUserField: <K extends keyof UserData>(field: K, value: UserData[K]) => void;
+
 }
 
 type AuthPersist = (
@@ -30,22 +33,25 @@ type AuthPersist = (
 ) => StateCreator<AuthStore>;
 
 export const useAuthStore = create((persist as AuthPersist)((set) => ({
-    isAuthenticated: false,
-    user: null,
-    refreshToken: null,
-    accessToken: null,
-
-    setAuthenticated: (isAuthenticated ) => set({ isAuthenticated }),
-    setUser: (user) => set({ user }),
-    setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
-    clearAuth: () => set({
         isAuthenticated: false,
         user: null,
         refreshToken: null,
-        accessToken: null
+        accessToken: null,
+
+        setAuthenticated: (isAuthenticated) => set({isAuthenticated}),
+        setUser: (user) => set({user}),
+        setTokens: (accessToken, refreshToken) => set({accessToken, refreshToken}),
+        clearAuth: () => set({
+            isAuthenticated: false,
+            user: null,
+            refreshToken: null,
+            accessToken: null
+        }),
+        updateUserField: (field, value) => set((state) => ({
+            user: state.user ? {...state.user, [field]: value} : null
+        })),
     }),
-}),
     {
-    name: 'game-storage',
-    storage: createJSONStorage(() => localStorage),
-}))
+        name: 'game-storage',
+        storage: createJSONStorage(() => localStorage),
+    }))
