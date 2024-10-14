@@ -7,6 +7,7 @@ export interface UserData {
     picture: string;
     description: string;
     badges: string[];
+    achievementsVisible: boolean;
 }
 
 interface AuthStore {
@@ -19,19 +20,13 @@ interface AuthStore {
     setUser: (user: UserData | null) => void;
     setTokens: (accessToken: string, refreshToken: string) => void;
     clearAuth: () => void;
+    updateUserField: <K extends keyof UserData>(field: K, value: UserData[K]) => void;
+
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
     isAuthenticated: false,
     user: null,
-    // isAuthenticated: true,
-    // user: {
-    //     id: 1,
-    //     fullName: "Jan Kowalski",
-    //     email: "jan.kowalski@example.com",
-    //     picture: "https://i.pravatar.cc/150?u=jan.kowalski@example.com",
-    //     description: "Entuzjasta nowych technologii i miłośnik górskich wycieczek."
-    // },
     refreshToken: null,
     accessToken: null,
 
@@ -44,4 +39,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         refreshToken: null,
         accessToken: null
     }),
+    updateUserField: (field, value) => set((state) => ({
+        user: state.user ? { ...state.user, [field]: value } : null
+    })),
 }))
