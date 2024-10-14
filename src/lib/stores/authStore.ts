@@ -1,4 +1,5 @@
-import { create } from 'zustand'
+import {create, StateCreator} from 'zustand'
+import {persist, createJSONStorage, PersistOptions} from "zustand/middleware";
 
 export interface UserData {
     id: number;
@@ -7,6 +8,8 @@ export interface UserData {
     picture: string;
     description: string;
     badges: string[];
+    points: number;
+    role: string;
 }
 
 interface AuthStore {
@@ -21,21 +24,18 @@ interface AuthStore {
     clearAuth: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+type AuthPersist = (
+    config: StateCreator<AuthStore>,
+    options: PersistOptions<AuthStore>
+) => StateCreator<AuthStore>;
+
+export const useAuthStore = create((persist as AuthPersist)((set) => ({
     isAuthenticated: false,
     user: null,
-    // isAuthenticated: true,
-    // user: {
-    //     id: 1,
-    //     fullName: "Jan Kowalski",
-    //     email: "jan.kowalski@example.com",
-    //     picture: "https://i.pravatar.cc/150?u=jan.kowalski@example.com",
-    //     description: "Entuzjasta nowych technologii i miłośnik górskich wycieczek."
-    // },
     refreshToken: null,
     accessToken: null,
 
-    setAuthenticated: (status) => set({ isAuthenticated: status }),
+    setAuthenticated: (isAuthenticated ) => set({ isAuthenticated }),
     setUser: (user) => set({ user }),
     setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
     clearAuth: () => set({
@@ -44,4 +44,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
         refreshToken: null,
         accessToken: null
     }),
+}),
+    {
+    name: 'game-storage',
+    storage: createJSONStorage(() => localStorage),
 }))

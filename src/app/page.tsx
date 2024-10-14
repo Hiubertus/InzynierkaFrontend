@@ -18,7 +18,9 @@ export default function Home() {
                 "Stowrzenie 5 kursów",
                 "Sprzedaż kursu 100 osobom",
                 "Nauczyciel"
-            ]
+            ],
+            points: 0,
+            role: 'user'
         });
         setAuthenticated(true)
     }

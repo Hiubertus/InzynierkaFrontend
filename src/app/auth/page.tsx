@@ -30,17 +30,17 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/lib/stores/authStore";
 
 const loginSchema = z.object({
-    email: z.string().min(1, { message: "Email jest wymagany" }).email({ message: "Nieprawidłowy adres email" }),
-    password: z.string().min(1, { message: "Hasło jest wymagane" }).min(8, { message: "Hasło musi mieć co najmniej 8 znaków" }),
+    email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email address" }),
+    password: z.string().min(1, { message: "Password is required" }).min(8, { message: "Password must be at least 8 characters long" }),
 })
 
 const registerSchema = z.object({
-    fullName: z.string().min(1, { message: "Pole wymagane" }),
-    email: z.string().min(1, { message: "Pole wymagane" }).email({ message: "Nieprawidłowy adres email" }),
-    password: z.string().min(1, { message: "Pole wymagane" }).min(8, { message: "Hasło musi mieć co najmniej 8 znaków" }),
-    confirmPassword: z.string().min(1, { message: "Pole wymagane" }),
+    fullName: z.string().min(1, { message: "Full name is required" }),
+    email: z.string().min(1, { message: "Email is required" }).email({ message: "Invalid email address" }),
+    password: z.string().min(1, { message: "Password is required" }).min(8, { message: "Password must be at least 8 characters long" }),
+    confirmPassword: z.string().min(1, { message: "Confirm password is required" }),
 }).refine((data) => data.password === data.confirmPassword, {
-    message: "Hasła nie są identyczne",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
 })
 
@@ -53,6 +53,7 @@ interface FormFieldProps<T extends FieldValues> {
     label: string;
     type?: string;
     placeholder?: string;
+    disabled?: boolean;
 }
 
 const FormFieldInput = <T extends FieldValues>({
@@ -60,7 +61,8 @@ const FormFieldInput = <T extends FieldValues>({
                                                    name,
                                                    label,
                                                    type = "text",
-                                                   placeholder = ""
+                                                   placeholder = "",
+                                                   disabled = false
                                                }: FormFieldProps<T>) => {
     const [isActive, setIsActive] = useState(false);
 
@@ -82,6 +84,7 @@ const FormFieldInput = <T extends FieldValues>({
                             )}
                             onFocus={() => setIsActive(true)}
                             onBlur={() => setIsActive(false)}
+                            disabled={disabled}
                         />
                     </FormControl>
                     {fieldState.error && isActive && (
@@ -119,6 +122,7 @@ AuthCard.displayName = "AuthCard"
 
 const LoginForm: React.FC = memo(() => {
     const { setAuthenticated, setUser, setTokens } = useAuthStore();
+    const [backendError, setBackendError] = useState<string | null>(null);
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -140,14 +144,26 @@ const LoginForm: React.FC = memo(() => {
             if (response.ok) {
                 const data = await response.json();
                 setAuthenticated(true);
-                setUser(data.user);
-                setTokens(data.accessToken, data.refreshToken);
+                setUser({
+                    id: data.data.user.id,
+                    fullName: data.data.user.fullName,
+                    email:  data.data.user.email,
+                    picture: data.data.user.picture,
+                    points: data.data.user.points,
+                    role: data.data.user.role,
+                    badges: data.data.user.badges,
+                    description: data.data.user.description
+                });
+                setTokens(data.data.user.accessToken, data.data.user.refreshToken);
                 console.log('Login successful');
+                setBackendError(null);
             } else {
-                console.error('Login failed');
+                const errorData = await response.json();
+                setBackendError(errorData.message || 'Login failed');
             }
         } catch (error) {
             console.error('Error during login:', error);
+            setBackendError('An unexpected error occurred');
         }
     }
 
@@ -155,7 +171,7 @@ const LoginForm: React.FC = memo(() => {
         <AuthCard
             footerContent={
                 <Button type="submit" className="w-[200px] text-sm md:text-base lg:text-lg py-2 md:py-3 mt-3 mx-auto" onClick={form.handleSubmit(onSubmit)}>
-                    Zaloguj się
+                    Log In
                 </Button>
             }
         >
@@ -163,8 +179,13 @@ const LoginForm: React.FC = memo(() => {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6 mt-4">
                     <div className="grid grid-cols-2 gap-8">
                         <FormFieldInput<LoginFormValues> control={form.control} name="email" label="Email" type="email" />
-                        <FormFieldInput<LoginFormValues> control={form.control} name="password" label="Hasło" type="password" />
+                        <FormFieldInput<LoginFormValues> control={form.control} name="password" label="Password" type="password" />
                     </div>
+                    {backendError && (
+                        <div className="text-red-500 text-sm mt-2">
+                            {backendError}
+                        </div>
+                    )}
                 </form>
             </Form>
         </AuthCard>
@@ -174,6 +195,8 @@ LoginForm.displayName = "LoginForm";
 
 const RegisterForm: React.FC = memo(() => {
     const { setAuthenticated, setUser, setTokens } = useAuthStore();
+    const [backendError, setBackendError] = useState<string | null>(null);
+    const [isSuccess, setIsSuccess] = useState(false);
     const form = useForm<RegisterFormValues>({
         resolver: zodResolver(registerSchema),
         defaultValues: {
@@ -200,30 +223,45 @@ const RegisterForm: React.FC = memo(() => {
                 setUser(data.user);
                 setTokens(data.accessToken, data.refreshToken);
                 console.log('Registration successful');
+                setBackendError(null);
+                setIsSuccess(true);
+                form.reset();
             } else {
-                console.error('Registration failed');
+                const errorData = await response.json();
+                setBackendError(errorData.message || 'Registration failed');
             }
         } catch (error) {
             console.error('Error during registration:', error);
+            setBackendError('An unexpected error occurred');
         }
     }
 
     return (
         <AuthCard
             footerContent={
-                <Button type="submit" className="w-[200px] text-sm md:text-base lg:text-lg py-2 md:py-3 mt-3 mx-auto" onClick={form.handleSubmit(onSubmit)}>
-                    Zarejestruj się
+                <Button type="submit" className="w-[200px] text-sm md:text-base lg:text-lg py-2 md:py-3 mt-3 mx-auto" onClick={form.handleSubmit(onSubmit)} disabled={isSuccess}>
+                    Register
                 </Button>
             }
         >
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 md:space-y-6 mt-4">
                     <div className="grid grid-cols-2 gap-8">
-                        <FormFieldInput<RegisterFormValues> control={form.control} name="fullName" label="Imię i Nazwisko" placeholder="Jan Kowalski" />
-                        <FormFieldInput<RegisterFormValues> control={form.control} name="email" label="Email" type="email" placeholder="jan.kowalski@gmail.com" />
-                        <FormFieldInput<RegisterFormValues> control={form.control} name="password" label="Hasło" type="password" />
-                        <FormFieldInput<RegisterFormValues> control={form.control} name="confirmPassword" label="Powtórz hasło" type="password" />
+                        <FormFieldInput<RegisterFormValues> control={form.control} name="fullName" label="Full Name" placeholder="John Doe" disabled={isSuccess} />
+                        <FormFieldInput<RegisterFormValues> control={form.control} name="email" label="Email" type="email" placeholder="john.doe@example.com" disabled={isSuccess} />
+                        <FormFieldInput<RegisterFormValues> control={form.control} name="password" label="Password" type="password" disabled={isSuccess} />
+                        <FormFieldInput<RegisterFormValues> control={form.control} name="confirmPassword" label="Confirm Password" type="password" disabled={isSuccess} />
                     </div>
+                    {backendError && (
+                        <div className="text-red-500 text-sm mt-2">
+                            {backendError}
+                        </div>
+                    )}
+                    {isSuccess && (
+                        <div className="text-green-500 text-sm mt-2">
+                            Registration successful!
+                        </div>
+                    )}
                 </form>
             </Form>
         </AuthCard>
@@ -238,8 +276,8 @@ export default function Page() {
                 defaultValue="login"
                 className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto px-5">
                 <TabsList className="grid grid-cols-2 py-2 mb-2 md:mb-4 h-[42px] md:h-[46px] lg:h-[50px]">
-                    <TabsTrigger value="login" className="text-sm md:text-base lg:text-lg">Logowanie</TabsTrigger>
-                    <TabsTrigger value="register" className="text-sm md:text-base lg:text-lg">Rejestracja</TabsTrigger>
+                    <TabsTrigger value="login" className="text-sm md:text-base lg:text-lg">Login</TabsTrigger>
+                    <TabsTrigger value="register" className="text-sm md:text-base lg:text-lg">Register</TabsTrigger>
                 </TabsList>
                 <TabsContent value="login">
                     <LoginForm />
