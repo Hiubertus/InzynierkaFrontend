@@ -13,45 +13,69 @@ export interface UserData {
     achievementsVisible: boolean;
 }
 
-interface AuthStore {
-    isAuthenticated: boolean;
+interface PersistedAuthStore {
     user: UserData | null;
     refreshToken: string | null;
-    accessToken: string | null;
-
-    setAuthenticated: (status: boolean) => void;
+    loading: boolean;
     setUser: (user: UserData | null) => void;
-    setTokens: (accessToken: string, refreshToken: string) => void;
-    clearAuth: () => void;
+    setRefreshToken: (refreshToken: string | null) => void;
     updateUserField: <K extends keyof UserData>(field: K, value: UserData[K]) => void;
-
+    clearPersistedAuth: () => void;
+    setLoading: (loading: boolean) => void;
 }
 
-type AuthPersist = (
-    config: StateCreator<AuthStore>,
-    options: PersistOptions<AuthStore>
-) => StateCreator<AuthStore>;
+type PersistedAuthPersist = (
+    config: StateCreator<PersistedAuthStore>,
+    options: PersistOptions<PersistedAuthStore>
+) => StateCreator<PersistedAuthStore>;
 
-export const useAuthStore = create((persist as AuthPersist)((set) => ({
-        isAuthenticated: false,
-        user: null,
-        refreshToken: null,
-        accessToken: null,
-
-        setAuthenticated: (isAuthenticated) => set({isAuthenticated}),
-        setUser: (user) => set({user}),
-        setTokens: (accessToken, refreshToken) => set({accessToken, refreshToken}),
-        clearAuth: () => set({
-            isAuthenticated: false,
+export const usePersistedAuthStore = create(
+    (persist as PersistedAuthPersist)(
+        (set) => ({
             user: null,
             refreshToken: null,
-            accessToken: null
+            loading: true, // Initially set to true
+            setUser: (user) => set({ user }),
+            setRefreshToken: (refreshToken) => set({ refreshToken }),
+            updateUserField: (field, value) => set((state) => ({
+                user: state.user ? { ...state.user, [field]: value } : null
+            })),
+            clearPersistedAuth: () => set({ user: null, refreshToken: null }),
+            setLoading: (loading) => set({ loading }),
         }),
-        updateUserField: (field, value) => set((state) => ({
-            user: state.user ? {...state.user, [field]: value} : null
-        })),
-    }),
-    {
-        name: 'game-storage',
-        storage: createJSONStorage(() => localStorage),
-    }))
+        {
+            name: 'persisted-auth-storage',
+            storage: createJSONStorage(() => localStorage),
+            onRehydrateStorage: () => (state) => {
+                state?.setLoading(false);
+            },
+        }
+    )
+)
+
+interface AccessTokenStore {
+    accessToken: string | null;
+    setAccessToken: (accessToken: string | null) => void;
+    clearAccessToken: () => void;
+}
+
+export const useAccessTokenStore = create<AccessTokenStore>((set) => ({
+    accessToken: null,
+    setAccessToken: (accessToken) => set({ accessToken }),
+    clearAccessToken: () => set({ accessToken: null }),
+}))
+
+// Combined hook for easier access to both stores
+export const useAuthStore = () => {
+    const persistedAuth = usePersistedAuthStore()
+    const accessToken = useAccessTokenStore()
+
+    return {
+        ...persistedAuth,
+        ...accessToken,
+        clearAuth: () => {
+            persistedAuth.clearPersistedAuth()
+            accessToken.clearAccessToken()
+        },
+    }
+}

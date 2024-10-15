@@ -14,7 +14,7 @@ const ROUTES = {
 } as const;
 
 export const Navbar = () => {
-    const { isAuthenticated, user } = useAuthStore()
+    const { accessToken, user } = useAuthStore()
 
     const getProfileLink = () => {
         if (user) {
@@ -24,7 +24,7 @@ export const Navbar = () => {
     }
 
     const renderAuthSection = () => {
-        if (isAuthenticated && user) {
+        if (accessToken && user) {
             return (
                 <Link href={getProfileLink()}>
                     <Avatar className="cursor-pointer">
