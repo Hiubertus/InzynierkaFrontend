@@ -1,6 +1,5 @@
 
 import React, {useEffect, useRef, useState} from 'react';
-import {UserData} from "@/lib/stores/authStore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import { Eye, EyeOff } from "lucide-react";
 import {EditableField} from "@/components/UserProfile/EditableField";
 import {EmailForm} from "@/components/UserProfile/EmailForm";
 import {PasswordForm} from "@/components/UserProfile/PasswordForm";
+import {UserData} from "@/models/UserData";
 
 
 interface UserProfilePageProps {
@@ -55,7 +55,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64String = reader.result as string;
-                updateUserData('picture', base64String);
+                updateUserData('picture', base64String).then();
             };
             reader.readAsDataURL(file);
         }

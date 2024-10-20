@@ -1,17 +1,7 @@
 import {create, StateCreator} from 'zustand'
 import {persist, createJSONStorage, PersistOptions} from "zustand/middleware";
+import {UserData} from "@/models/UserData";
 
-export interface UserData {
-    id: number;
-    fullName: string;
-    email: string;
-    picture: string;
-    description: string;
-    badges: string[];
-    points: number;
-    role: string;
-    achievementsVisible: boolean;
-}
 
 interface PersistedAuthStore {
     user: UserData | null;

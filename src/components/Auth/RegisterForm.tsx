@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Form } from "@/components/ui/form"
-import { useAuthStore } from "@/lib/stores/authStore";
 import { AuthCard } from './AuthCard';
 import { FormFieldInput } from './FormFieldInput';
 import { registerSchema, RegisterFormValues } from './schemas';
 
 export const RegisterForm: React.FC = memo(() => {
-    const { setUser } = useAuthStore();
     const [backendError, setBackendError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
     const form = useForm<RegisterFormValues>({
