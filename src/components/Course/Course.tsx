@@ -43,8 +43,8 @@ export const Course = ({course}: {course: CourseData}) => {
     return (
         <div className="flex w-full h-screen">
             <div className="flex-grow p-6 overflow-y-auto">
-                {selectedSubChapter?.content.map(contentItem => (
-                    <ContentRenderer key={contentItem.id} content={contentItem}/>
+                {selectedSubChapter?.content.map(content => (
+                    <ContentRenderer key={content.id} content={content}/>
                 ))}
             </div>
             <div className="flex-none w-1/4 max-w-[30%] min-w-[20%] overflow-y-auto border-r border-gray-300 p-4 bg-gray-100">

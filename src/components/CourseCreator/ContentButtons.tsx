@@ -1,21 +1,24 @@
 import {Button} from "@/components/ui/button";
 import {Camera, ClipboardList, Film, Type} from "lucide-react";
 import React from "react";
+import {ImageForm, QuizForm, TextForm, VideoForm} from "@/components/CourseCreator/formSchema";
+
 
 interface ContentButtonsProps {
-    chapterId: number;
-    subchapterId: number;
-    addContentToSubChapter: (chapterId: number, subChapterId: number, contentType: 'text' | 'video' | 'image' | 'quiz') => void;
+    appendContent: (content: TextForm | ImageForm | VideoForm | QuizForm) => void;
 }
 
-export const ContentButtons: React.FC<ContentButtonsProps> = ({
-                                                                  chapterId,
-                                                                  subchapterId,
-                                                                  addContentToSubChapter
-                                                              }) => {
+export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) => {
     return (<div className="flex space-x-2 pt-4">
         <Button
-            onClick={() => addContentToSubChapter(chapterId, subchapterId, 'text')}
+            onClick={() => appendContent({
+                type: "text",
+                text: "Add Text",
+                fontSize: "small",
+                fontWeight: "normal",
+                italics: false,
+                emphasis: false
+            })}
             variant="outline"
             className="flex items-center"
             type="button"
@@ -24,7 +27,10 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({
             Text
         </Button>
         <Button
-            onClick={() => addContentToSubChapter(chapterId, subchapterId, 'image')}
+            onClick={() => appendContent({
+                type: "image",
+                image: null
+            })}
             variant="outline"
             className="flex items-center"
             type="button"
@@ -33,7 +39,10 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({
             Image
         </Button>
         <Button
-            onClick={() => addContentToSubChapter(chapterId, subchapterId, 'video')}
+            onClick={() => appendContent({
+                type: "video",
+                video: null
+            })}
             variant="outline"
             className="flex items-center"
             type="button"
@@ -42,7 +51,23 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({
             Video
         </Button>
         <Button
-            onClick={() => addContentToSubChapter(chapterId, subchapterId, 'quiz')}
+            onClick={() => appendContent({
+                type: "quiz",
+                quizContent: [{
+                    question: "Question 1",
+                    singleAnswer: true,
+                    answers: [
+                        {
+                            answer: "Answer 1",
+                            isCorrect: false,
+                        },
+                        {
+                            answer: "Answer 2",
+                            isCorrect: false,
+                        },
+                    ]
+                }]
+            })}
             variant="outline"
             className="flex items-center"
             type="button"

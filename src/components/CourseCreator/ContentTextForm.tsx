@@ -1,46 +1,28 @@
 import {FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
 import {Textarea} from "@/components/ui/textarea";
 import React from "react";
-import {ChapterData, CourseData, cText, SubChapterData} from "@/models/CourseData";
 import {UseFormReturn} from "react-hook-form";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
+import {CourseForm} from "@/components/CourseCreator/formSchema";
 
 interface ContentTextFormProps {
-    form: UseFormReturn<CourseData>;
-    contentItem: cText;
-    chapter: ChapterData;
-    subchapter: SubChapterData;
+    form: UseFormReturn<CourseForm>;
     chapterIndex: number;
-    subchapterIndex: number;
+    subChapterIndex: number;
     contentIndex: number;
-    updateTextContent: (
-        chapterId: number,
-        subChapterId: number,
-        contentId: number,
-        text: string,
-        fontSize?: "small" | "medium" | "large",
-        fontWeight?: "normal" | "bold" | "bolder",
-        italics?: boolean,
-        emphasis?: boolean
-    ) => void;
-    removeContentFromSubChapter: (chapterId: number, subChapterId: number, contentId: number) => void;
+    removeContent: (index: number) => void;
 }
 
 export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                                                     form,
-                                                                    chapter,
-                                                                    subchapter,
-                                                                    contentItem,
                                                                     chapterIndex,
-                                                                    subchapterIndex,
+                                                                    subChapterIndex,
                                                                     contentIndex,
-                                                                    updateTextContent,
-                                                                    removeContentFromSubChapter
+                                                                    removeContent
                                                                 }) => {
     return (<FormField
-        key={contentItem.id}
         control={form.control}
-        name={`chapters.${chapterIndex}.subchapters.${subchapterIndex}.content.${contentIndex}.text`}
+        name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.text`}
         render={({field}) => (
             <FormItem>
                 <FormControl>
@@ -49,13 +31,12 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                             {...field}
                             placeholder="Text Content"
                             onChange={(e) => {
-                                updateTextContent(chapter.id, subchapter.id, contentItem.id, e.target.value);
                                 field.onChange(e);
                             }}
                         />
                         <DeleteButton
                             onClick={() =>
-                                removeContentFromSubChapter(chapter.id, subchapter.id, contentItem.id)
+                                removeContent(contentIndex)
                             }
                         />
                     </div>
