@@ -4,7 +4,7 @@ import {Input} from "@/components/ui/input";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {Button} from "@/components/ui/button";
 import {Plus} from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import {useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {AnswerCreator} from "@/components/CourseCreator/AnswerCreator";
@@ -28,50 +28,98 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                                                                 removeQuestion,
                                                                 questionsLength
                                                             }) => {
-
     const {fields: answers, append: appendAnswer, remove: removeAnswer} = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers`
     });
 
+    // Watch for changes in singleAnswer field
+    const singleAnswer = form.watch(
+        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer`
+    );
+
+    // Reset answers when switching between single and multiple choice
+    useEffect(() => {
+        const currentAnswers = form.getValues(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers`);
+
+        // Reset all isCorrect values to false
+        currentAnswers.forEach((_, index) => {
+            form.setValue(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect`, false);
+        });
+    }, [chapterIndex, contentIndex, form, questionIndex, singleAnswer, subChapterIndex]);
+
     return (
-        <Card
-            className="border-l-2 border-l-purple-300">
+        <Card className="border-l-2 border-l-purple-300">
             <CardHeader className="flex flex-col rounded-lg bg-purple-50 overflow-hidden">
+                <div className="flex items-center gap-4 mb-4">
                     <FormField
                         control={form.control}
-                        name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.question`}
+                        name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer`}
                         render={({field}) => (
-                            <FormItem className="flex-grow">
-                                <FormControl>
-                                    <div className={"w-full flex justify-between"}>
-                                        <Input
-                                            {...field}
-                                            placeholder={`Question ${questionIndex + 1}`}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                            }}
+                            <FormItem className="flex items-center gap-2">
+                                <div className="flex items-center gap-4">
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            checked={field.value}
+                                            onChange={() => field.onChange(true)}
                                         />
-                                        <DeleteButton
-                                            onClick={() => {
-                                                removeQuestion(questionIndex);
-                                            }}
-                                            disabled={questionsLength <= 1}
+                                        Single Choice
+                                    </label>
+                                    <label className="flex items-center gap-2">
+                                        <input
+                                            type="radio"
+                                            checked={!field.value}
+                                            onChange={() => field.onChange(false)}
                                         />
-                                    </div>
-
-                                </FormControl>
-                                <FormMessage/>
+                                        Multiple Choice
+                                    </label>
+                                </div>
                             </FormItem>
                         )}
                     />
+                </div>
+                <FormField
+                    control={form.control}
+                    name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.question`}
+                    render={({field}) => (
+                        <FormItem className="flex-grow">
+                            <FormControl>
+                                <div className="w-full flex justify-between">
+                                    <Input
+                                        {...field}
+                                        placeholder={`Question ${questionIndex + 1}`}
+                                        onChange={(e) => {
+                                            field.onChange(e);
+                                        }}
+                                    />
+                                    <DeleteButton
+                                        onClick={() => {
+                                            removeQuestion(questionIndex);
+                                        }}
+                                        disabled={questionsLength <= 1}
+                                    />
+                                </div>
+                            </FormControl>
+                            <FormMessage/>
+                        </FormItem>
+                    )}
+                />
             </CardHeader>
             <CardContent className="bg-purple-100">
                 {answers.map((answer, answerIndex) => (
-                    <AnswerCreator key={answer.id} form={form} answersLength={answers.length}
-                                   chapterIndex={chapterIndex} subChapterIndex={subChapterIndex}
-                                   contentIndex={contentIndex} questionIndex={questionIndex} answerIndex={answerIndex}
-                                   removeAnswer={removeAnswer}/>
+                    <AnswerCreator
+                        key={answer.id}
+                        form={form}
+                        answersLength={answers.length}
+                        chapterIndex={chapterIndex}
+                        subChapterIndex={subChapterIndex}
+                        contentIndex={contentIndex}
+                        questionIndex={questionIndex}
+                        answerIndex={answerIndex}
+                        removeAnswer={removeAnswer}
+                        singleAnswer={singleAnswer}
+                    />
                 ))}
                 <Button
                     onClick={() => {
@@ -81,11 +129,12 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                         });
                     }}
                     className="mt-2"
-                    type={"button"}
+                    type="button"
                 >
                     <Plus size={16} className="mr-1"/>
                     Add Answer
                 </Button>
             </CardContent>
-        </Card>)
-}
+        </Card>
+    );
+};

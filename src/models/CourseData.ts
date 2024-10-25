@@ -2,7 +2,13 @@ export interface CourseData {
     id: number;
     name: string;
     banner: File | null;
+    price: number;
     review: number;
+    duration: number;
+    createdAt: Date;
+    updatedAt: Date;
+    tags: string[];
+    reviewNumber: number;
     userProfileID: number;
     description: string;
     chapters: ChapterData[];
@@ -13,6 +19,7 @@ export interface ChapterData {
     order: number;
     name: string;
     review: number;
+    reviewNumber: number;
     subchapters: SubChapterData[];
 }
 
@@ -24,14 +31,13 @@ export interface SubChapterData {
     content: (cText | cVideo | cImage | cQuiz)[];
 }
 
-
 export interface cText {
     id: number;
     type: 'text';
     text: string;
     order: number;
     fontSize: "small" | "medium" | "large";
-    fontWeight: "normal" | "bold" | "bolder";
+    fontWeight: "normal" | "bold";
     italics: boolean;
     emphasis: boolean;
 }

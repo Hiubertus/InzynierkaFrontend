@@ -18,7 +18,7 @@ export interface TextForm {
     type: 'text';
     text: string;
     fontSize: "small" | "medium" | "large";
-    fontWeight: "normal" | "bold" | "bolder";
+    fontWeight: "normal" | "bold" ;
     italics: boolean;
     emphasis: boolean;
 }
@@ -84,7 +84,12 @@ export const formSchema = z.object({
                         answers: z.array(z.object({
                             answer: z.string().min(1, {message: "Answer text is required"}),
                             isCorrect: z.boolean(),
-                        })).min(2, {message: "At least two answers are required"}),
+                        }))
+                            .min(2, {message: "At least two answers are required"})
+                            .refine(
+                                (answers) => answers.some(answer => answer.isCorrect),
+                                {message: "At least one answer must be marked as correct"}
+                            ),
                     })).min(1, {message: "At least one question is required"}),
                 }),
             ])).min(1, {message: "At least one content item is required"}),
