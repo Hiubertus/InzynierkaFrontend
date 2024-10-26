@@ -36,9 +36,7 @@ export const ContentFileForm: React.FC<ContentFileFormProps> = ({
                                 }}
                                 accept={contentType === 'video' ? {'video/*': []} : {'image/*': []}}
                                 maxSize={50 * 1024 * 1024}
-                            />
-                            <DeleteButton
-                                onClick={() =>
+                                removeContent={() =>
                                     removeContent(contentIndex)
                                 }
                             />

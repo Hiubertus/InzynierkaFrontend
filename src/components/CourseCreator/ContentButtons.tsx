@@ -15,9 +15,9 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) =
                 type: "text",
                 text: "Add Text",
                 fontSize: "small",
-                fontWeight: "normal",
+                bolder: false,
                 italics: false,
-                emphasis: false
+                underline: false
             })}
             variant="outline"
             className="flex items-center"

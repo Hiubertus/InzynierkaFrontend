@@ -29,19 +29,14 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                                                     removeContent
                                                                 }) => {
     const fontSize = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.fontSize`);
-    const fontWeight = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.fontWeight`);
+    const bolder = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.bolder`);
     const italics = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.italics`);
-    const emphasis = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.emphasis`);
+    const underline = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.underline`);
 
     const fontSizeClasses = {
         small: "text-sm",
         medium: "text-base",
         large: "text-lg"
-    };
-
-    const fontWeightClasses = {
-        normal: "font-normal",
-        bold: "font-bold"
     };
 
     const baseButtonClass = "p-2 border rounded flex items-center gap-1 transition-all duration-200 hover:bg-gray-100";
@@ -60,13 +55,6 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
         return "small";
     };
 
-    const toggleBold = () => {
-        const newFontWeight = fontWeight === "bold" ? "normal" : "bold";
-        form.setValue(
-            `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.fontWeight`,
-            newFontWeight
-        );
-    };
 
     return (
         <FormField
@@ -108,8 +96,11 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
 
                                 <button
                                     type="button"
-                                    onClick={toggleBold}
-                                    className={`${baseButtonClass} ${fontWeight === 'bold' ? activeButtonClass : ''}`}
+                                    onClick={() => form.setValue(
+                                        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.bolder`,
+                                        !bolder
+                                    )}
+                                    className={`${baseButtonClass} ${bolder ? activeButtonClass : ''}`}
                                     title="Toggle Bold"
                                 >
                                     <Bold className="h-4 w-4"/>
@@ -130,10 +121,10 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => form.setValue(
-                                        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.emphasis`,
-                                        !emphasis
+                                        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.underline`,
+                                        !underline
                                     )}
-                                    className={`${baseButtonClass} ${emphasis ? activeButtonClass : ''}`}
+                                    className={`${baseButtonClass} ${underline ? activeButtonClass : ''}`}
                                     title="Toggle Emphasis"
                                 >
                                     <Baseline className="h-4 w-4"/>
@@ -144,8 +135,8 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                     <Textarea
                                         {...field}
                                         placeholder="Text Content"
-                                        className={`w-full ${fontSizeClasses[fontSize]} ${fontWeightClasses[fontWeight]} 
-                                            ${italics ? "italic" : ""} ${emphasis ? "underline" : ""}`}
+                                        className={`w-full ${fontSizeClasses[fontSize]} ${bolder ? "font-bold" : "font-normal"} 
+                                            ${italics ? "italic" : ""} ${underline ? "underline" : ""}`}
                                     />
                                 </div>
                                 <DeleteButton onClick={() => removeContent(contentIndex)}/>

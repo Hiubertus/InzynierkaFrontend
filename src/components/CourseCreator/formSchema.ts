@@ -5,6 +5,9 @@ export interface CourseForm {
     banner: File | null;
     description: string;
     chapters: ChapterForm[];
+    price: number;
+    duration: number;
+    tags: string[];
 }
 export interface ChapterForm {
     name: string;
@@ -18,9 +21,9 @@ export interface TextForm {
     type: 'text';
     text: string;
     fontSize: "small" | "medium" | "large";
-    fontWeight: "normal" | "bold" ;
+    bolder: boolean ;
     italics: boolean;
-    emphasis: boolean;
+    underline: boolean;
 }
 export interface ImageForm {
     type: 'image';
@@ -46,10 +49,15 @@ export interface AnswerForm {
 
 export const formSchema = z.object({
     name: z.string().min(1, {message: "Course name is required"}),
-    banner: z.string().nullable().refine((val) => val !== null, {
+    banner: z.custom<File>().nullable().refine((val) => val !== null, {
         message: "Banner is required"
     }),
+    price: z.number().positive(),
+    duration: z.number().positive(),
     description: z.string().min(1, {message: "Course description is required"}),
+    tags: z
+        .array(z.string().min(1, { message: "Each tag must have at least one character" }))
+        .min(1, { message: "At least one tag is required" }),
     chapters: z.array(z.object({
         name: z.string().min(1, {message: "Chapter name is required"}),
         subchapters: z.array(z.object({
@@ -60,19 +68,19 @@ export const formSchema = z.object({
                     type: z.literal('text'),
                     text: z.string().min(1, {message: "Text content is required"}),
                     fontSize: z.enum(["small", "medium", "large"]).default("medium"),
-                    fontWeight: z.enum(["normal", "bold", "bolder"]).default("normal"),
+                    bolded: z.boolean().default(false),
                     italics: z.boolean().default(false),
                     emphasis: z.boolean().default(false),
                 }),
                 z.object({
                     type: z.literal('image'),
-                    image: z.string().nullable().refine((val) => val !== null, {
+                    image: z.custom<File>().nullable().refine((val) => val !== null, {
                         message: "Image is required"
-                    })
+                    }),
                 }),
                 z.object({
                     type: z.literal('video'),
-                    video: z.string().nullable().refine((val) => val !== null, {
+                    video: z.custom<File>().nullable().refine((val) => val !== null, {
                         message: "Video is required"
                     }),
                 }),

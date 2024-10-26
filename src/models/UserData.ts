@@ -1,11 +1,9 @@
-export interface UserData {
+import {ProfileData} from "@/models/ProfileData";
+
+export interface UserData extends ProfileData {
     id: number;
     fullName: string;
     email: string;
-    picture: string;
-    description: string;
-    badges: string[];
     points: number;
     role: string;
-    achievementsVisible: boolean;
 }

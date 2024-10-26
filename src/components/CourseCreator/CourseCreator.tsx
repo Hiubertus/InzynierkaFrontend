@@ -20,13 +20,16 @@ import { CoursePreview} from "@/components/CourseCreator/CoursePreview";
 
 export const CourseCreator = () => {
     const [isPreview, setIsPreview] = useState(false);
-
+    const [isPage, setIsPage] = useState(false);
     const form = useForm<CourseForm>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: '',
             banner: null,
             description: '',
+            price: 0,
+            duration: 0,
+            tags: [],
             chapters: [
                 {
                     name: 'Chapter 1',
@@ -40,6 +43,7 @@ export const CourseCreator = () => {
             ]
         },
     });
+
 
     const { fields: chapters, append: appendChapter, remove: removeChapter } = useFieldArray({
         control: form.control,
@@ -62,17 +66,37 @@ export const CourseCreator = () => {
                     Editor
                 </Button>
                 <Button
-                    onClick={() => setIsPreview(true)}
+                    onClick={() => {
+                        setIsPreview(true)
+                        setIsPage(true)
+                    }
+                    }
                     variant={isPreview ? "default" : "outline"}
                     className="flex items-center gap-2"
                 >
                     <Eye size={16} />
-                    Preview
+                    Preview Page
+                </Button>
+                <Button
+                    onClick={() => {
+                        setIsPreview(true)
+                        setIsPage(false)
+                    }
+
+                    }
+                    variant={isPreview ? "default" : "outline"}
+                    className="flex items-center gap-2"
+                >
+                    <Eye size={16} />
+                    Preview Content
                 </Button>
             </div>
 
-            {isPreview ? (
-                <CoursePreview formData={form.getValues()} />
+            {isPreview ? (<div>
+                    {isPage ? (<CoursePreview formData={form.getValues()} type={"page"} />) : (<CoursePreview formData={form.getValues()} type={"content"} />)}
+
+                </div>
+
             ) : (
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="max-w-4xl mx-auto p-4">

@@ -5,7 +5,7 @@ export const ImageContent = ({ content }: { content: cImage }) => (
         {content.image ? (<img
             src={URL.createObjectURL(content.image)}
             alt="Course content"
-            className="w-full rounded-lg shadow-lg"
+            className="w-full rounded-lg shadow-lg mx-auto"
         />) : <></>}
     </div>
 

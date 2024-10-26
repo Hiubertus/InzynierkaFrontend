@@ -9,7 +9,7 @@ export interface CourseData {
     updatedAt: Date;
     tags: string[];
     reviewNumber: number;
-    userProfileID: number;
+    ownerId: number;
     description: string;
     chapters: ChapterData[];
 }
@@ -37,9 +37,9 @@ export interface cText {
     text: string;
     order: number;
     fontSize: "small" | "medium" | "large";
-    fontWeight: "normal" | "bold";
+    bolder: boolean;
     italics: boolean;
-    emphasis: boolean;
+    underline: boolean;
 }
 
 export interface cVideo {
