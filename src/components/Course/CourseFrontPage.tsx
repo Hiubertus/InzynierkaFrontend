@@ -1,7 +1,5 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
 import { Calendar, Clock, DollarSign, Star, Tag, User } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -9,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {CourseData} from "@/models/CourseData";
 import {ProfileData} from "@/models/ProfileData";
+import MediaContent from "@/components/Course/MediaContent";
 
 interface CoursePageProps {
     course: CourseData
@@ -16,26 +15,19 @@ interface CoursePageProps {
 }
 
 export default function CourseFrontPage({ course, owner }: CoursePageProps) {
-    const [imageError, setImageError] = useState(false)
-
-    const handleImageError = () => {
-        setImageError(true)
-    }
 
     return (
         <div className="container mx-auto px-4 py-8">
             <Card className="overflow-hidden">
-                <div className="relative h-64 md:h-96">
-                    {course.banner && !imageError ? (
-                        <Image
-                            src={URL.createObjectURL(course.banner)}
-                            alt={course.name}
-                            layout="fill"
-                            objectFit="cover"
-                            onError={handleImageError}
-                        />
+                <div className="relative">
+                    {course.banner ? (
+                        <MediaContent content={{
+                            file: course.banner,
+                            type: course.bannerType || 'image',
+                            mediaType: course.bannerMediaType
+                        }} />
                     ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <div className="w-full h-64 bg-muted flex items-center justify-center">
                             <span className="text-muted-foreground">No banner available</span>
                         </div>
                     )}

@@ -2,6 +2,8 @@ export interface CourseData {
     id: number;
     name: string;
     banner: File | null;
+    bannerMediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
+    bannerType: 'image' | 'video';
     price: number;
     review: number;
     duration: number;
@@ -28,7 +30,7 @@ export interface SubChapterData {
     order: number;
     name: string;
     completed: boolean;
-    content: (cText | cVideo | cImage | cQuiz)[];
+    content: (cText | cMedia | cQuiz)[];
 }
 
 export interface cText {
@@ -40,20 +42,15 @@ export interface cText {
     bolder: boolean;
     italics: boolean;
     underline: boolean;
+    textColor: string;
 }
 
-export interface cVideo {
+export interface cMedia {
     id: number;
-    type: 'video';
+    type: 'image' | 'video';
     order: number;
-    video: File | null;
-}
-
-export interface cImage {
-    id: number;
-    type: 'image';
-    order: number;
-    image: File | null
+    file: File | null;
+    mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
 }
 
 export interface cQuiz {

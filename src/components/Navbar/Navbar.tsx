@@ -1,10 +1,11 @@
 "use client"
 
-import { Mountain, ShoppingCart } from 'lucide-react'
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import {Mountain, ShoppingCart} from 'lucide-react'
+import {Button} from "@/components/ui/button"
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
 import Link from 'next/link'
-import { useAuthStore } from "@/lib/stores/authStore"
+import {useEffect, useState} from 'react'
+import {getSession, removeSession, Session} from '@/lib/session/session'
 
 const ROUTES = {
     AUTH: '/auth',
@@ -14,30 +15,45 @@ const ROUTES = {
 } as const;
 
 export const Navbar = () => {
-    const { accessToken, user } = useAuthStore()
+    const [session, setSession] = useState<Session | null>(null);
 
-    const getProfileLink = () => {
-        if (user) {
-            return `${ROUTES.PROFILE}`
-        }
-        return ROUTES.AUTH
-    }
+    useEffect(() => {
+        const checkSession = async () => {
+            const currentSession = await getSession();
+            setSession(currentSession);
+        };
+        checkSession();
+    }, []);
+
+    const handleLogout = async () => {
+        await removeSession();
+        setSession(null); // Bezpośrednio aktualizujemy stan
+    };
 
     const renderAuthSection = () => {
-        if (accessToken && user) {
+        if (session?.accessToken) {
             return (
-                <Link href={getProfileLink()}>
-                    <Avatar className="cursor-pointer">
-                        <AvatarImage src={user.picture} alt={user.fullName} />
-                        <AvatarFallback>{user.fullName[0]}</AvatarFallback>
-                    </Avatar>
-                </Link>
+                <div className="flex">
+                    <Link href={ROUTES.PROFILE}>
+                        <Avatar className="cursor-pointer">
+                            <AvatarImage src={session.picture} alt={session.fullName}/>
+                            <AvatarFallback>{session.fullName[0]}</AvatarFallback>
+                        </Avatar>
+                    </Link>
+                    <Button
+                        variant="outline"
+                        className="ml-4"
+                        onClick={handleLogout}
+                    >
+                        Logout
+                    </Button>
+                </div>
             )
         } else {
             return (
                 <Link href={ROUTES.AUTH}>
                     <Button variant="outline" className="ml-4">
-                        Logowanie
+                        Login
                     </Button>
                 </Link>
             )
@@ -50,14 +66,14 @@ export const Navbar = () => {
                 <div className="flex items-center justify-between h-16">
                     <div className="flex items-center">
                         <Link href={ROUTES.HOME} prefetch={true} className="flex-shrink-0">
-                            <Mountain className="h-8 w-8 text-black" aria-hidden="true" />
+                            <Mountain className="h-8 w-8 text-black" aria-hidden="true"/>
                             <span className="sr-only">Home</span>
                         </Link>
                     </div>
                     <div className="flex items-center space-x-4">
                         <Link href={ROUTES.CART}>
                             <Button variant="ghost" size="icon">
-                                <ShoppingCart className="h-5 w-5" />
+                                <ShoppingCart className="h-5 w-5"/>
                                 <span className="sr-only">Koszyk</span>
                             </Button>
                         </Link>

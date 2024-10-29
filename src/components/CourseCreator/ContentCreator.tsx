@@ -1,7 +1,7 @@
 import {ContentTextForm} from "@/components/CourseCreator/ContentTextForm";
 import {ContentFileForm} from "@/components/CourseCreator/ContentFileForm";
 import {ContentQuizForm} from "@/components/CourseCreator/ContentQuizForm";
-import React from "react";
+import {FC} from "react";
 import { CourseForm } from "./formSchema";
 import {FieldArrayWithId, UseFormReturn} from "react-hook-form";
 
@@ -14,8 +14,7 @@ interface ContentCreator {
     contentIndex: number;
 }
 
-
-export const ContentCreator: React.FC<ContentCreator> = ({content,form, chapterIndex, subChapterIndex, contentIndex,removeContent}) => {
+export const ContentCreator: FC<ContentCreator> = ({content,form, chapterIndex, subChapterIndex, contentIndex,removeContent}) => {
 
     return (
         <div

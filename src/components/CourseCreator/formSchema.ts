@@ -8,40 +8,47 @@ export interface CourseForm {
     price: number;
     duration: number;
     tags: string[];
+    bannerMediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
+    bannerType: 'image' | 'video';
 }
+
 export interface ChapterForm {
     name: string;
     subchapters: SubChapterForm[];
 }
+
 export interface SubChapterForm {
     name: string;
-    content: (TextForm | VideoForm | ImageForm | QuizForm)[];
+    content: (TextForm | MediaForm | QuizForm)[];
 }
+
 export interface TextForm {
     type: 'text';
     text: string;
     fontSize: "small" | "medium" | "large";
-    bolder: boolean ;
+    bolder: boolean;
     italics: boolean;
     underline: boolean;
+    textColor: string;
 }
-export interface ImageForm {
-    type: 'image';
-    image: File | null
+
+export interface MediaForm {
+    type: 'image' | 'video';
+    file: File | null;
+    mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
 }
-export interface VideoForm {
-    type: 'video';
-    video: File | null;
-}
+
 export interface QuizForm {
     type: 'quiz';
     quizContent: QuizContentForm[];
 }
+
 export interface QuizContentForm {
     question: string;
     answers: AnswerForm[];
     singleAnswer: boolean;
 }
+
 export interface AnswerForm {
     answer: string;
     isCorrect: boolean;
@@ -52,6 +59,11 @@ export const formSchema = z.object({
     banner: z.custom<File>().nullable().refine((val) => val !== null, {
         message: "Banner is required"
     }),
+    bannerType: z.enum(['image', 'video']),
+    bannerMediaType: z.enum([
+        'image/jpeg', 'image/png', 'image/gif',
+        'video/mp4', 'video/webm'
+    ]),
     price: z.number().positive(),
     duration: z.number().positive(),
     description: z.string().min(1, {message: "Course description is required"}),
@@ -68,21 +80,20 @@ export const formSchema = z.object({
                     type: z.literal('text'),
                     text: z.string().min(1, {message: "Text content is required"}),
                     fontSize: z.enum(["small", "medium", "large"]).default("medium"),
-                    bolded: z.boolean().default(false),
+                    bolder: z.boolean().default(false),
                     italics: z.boolean().default(false),
-                    emphasis: z.boolean().default(false),
+                    underline: z.boolean().default(false),
+                    textColor: z.string().default('black'),
                 }),
                 z.object({
-                    type: z.literal('image'),
-                    image: z.custom<File>().nullable().refine((val) => val !== null, {
-                        message: "Image is required"
+                    type: z.enum(['image', 'video']),
+                    file: z.custom<File>().nullable().refine((val) => val !== null, {
+                        message: "Media file is required"
                     }),
-                }),
-                z.object({
-                    type: z.literal('video'),
-                    video: z.custom<File>().nullable().refine((val) => val !== null, {
-                        message: "Video is required"
-                    }),
+                    mediaType: z.enum([
+                        'image/jpeg', 'image/png', 'image/gif',
+                        'video/mp4', 'video/webm'
+                    ]),
                 }),
                 z.object({
                     type: z.literal('quiz'),

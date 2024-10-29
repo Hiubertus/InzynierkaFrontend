@@ -6,7 +6,8 @@ export const TextContent = ({ content }: { content: cText }) => (
             ${content.bolder ? 'font-bold' : 'font-normal'}
             ${content.italics ? 'italic' : ''}
             ${content.underline ? 'underline' : ''}
-        `}>
+        `}
+       style={{ color: content.textColor }}>
         {content.text}
     </p>
 );

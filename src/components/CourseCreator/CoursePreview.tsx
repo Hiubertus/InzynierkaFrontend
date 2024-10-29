@@ -1,8 +1,9 @@
 import React from 'react';
 import { Course } from "@/components/Course/Course";
 import { CourseForm } from "@/components/CourseCreator/formSchema";
-import { CourseData } from "@/models/CourseData";
+import {cMedia, CourseData, cQuiz, cText} from "@/models/CourseData";
 import CourseFrontPage from "@/components/Course/CourseFrontPage";
+import {ProfileData} from "@/models/ProfileData";
 
 export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 'page' | 'content' }) => {
     const convertFormToCourseData = (form: CourseForm): CourseData => {
@@ -10,6 +11,8 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
             id: 0,
             name: form.name,
             banner: form.banner,
+            bannerType: form.bannerType,
+            bannerMediaType: form.bannerMediaType,
             price: form.price || 0,
             review: 0,
             reviewNumber: 0,
@@ -45,19 +48,21 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
                                     bolder: content.bolder,
                                     italics: content.italics,
                                     underline: content.underline,
-                                };
+                                } as cText
                             case 'video':
                                 return {
                                     ...baseContent,
                                     type: 'video',
-                                    video: content.video,
-                                };
+                                    file: content.file,
+                                    mediaType: content.mediaType,
+                                } as cMedia
                             case 'image':
                                 return {
                                     ...baseContent,
                                     type: 'image',
-                                    image: content.image,
-                                };
+                                    file: content.file,
+                                    mediaType: content.mediaType,
+                                } as cMedia
                             case 'quiz':
                                 return {
                                     ...baseContent,
@@ -74,7 +79,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
                                             isCorrect: answer.isCorrect,
                                         })),
                                     })),
-                                };
+                                } as cQuiz
                             default:
                                 return baseContent;
                         }
@@ -87,15 +92,26 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
     const courseData = convertFormToCourseData(formData);
 
 
-    return (<div>
-        {type === "content" ? (<Course course={courseData} />) : (<CourseFrontPage course={courseData} owner={{
-            id: 1,
-            fullName: "Hubert Ozarowski",
-            description: "test",
-            badges: [],
-            picture: "",
-            role: "User",
-            achievementsVisible: false
-        }}/>)}
-    </div>);
+    const mockOwner: ProfileData = {
+        id: 1,
+        fullName: "Hubert Ozarowski",
+        description: "test",
+        badges: [],
+        picture: "",
+        role: "User",
+        achievementsVisible: false
+    };
+
+    return (
+        <div>
+            {type === "content" ? (
+                <Course course={courseData} />
+            ) : (
+                <CourseFrontPage
+                    course={courseData}
+                    owner={mockOwner}
+                />
+            )}
+        </div>
+    );
 };

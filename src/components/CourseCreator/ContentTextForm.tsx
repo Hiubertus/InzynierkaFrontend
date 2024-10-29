@@ -10,7 +10,7 @@ import {
     Italic,
     Baseline,
     MoveUp,
-    MoveDown
+    MoveDown, Palette
 } from "lucide-react";
 
 interface ContentTextFormProps {
@@ -32,6 +32,7 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
     const bolder = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.bolder`);
     const italics = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.italics`);
     const underline = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.underline`);
+    const textColor = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`);
 
     const fontSizeClasses = {
         small: "text-sm",
@@ -129,7 +130,27 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                 >
                                     <Baseline className="h-4 w-4"/>
                                 </button>
+                                <div className="relative flex items-center">
+                                    <button
+                                        type="button"
+                                        className={`${baseButtonClass} ${textColor !== 'black' ? activeButtonClass : ''}`}
+                                        title="Text Color"
+                                    >
+                                        <Palette className="h-4 w-4" style={{color: textColor}}/>
+                                        <input
+                                            type="color"
+                                            value={textColor}
+                                            onChange={(e) => form.setValue(
+                                                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`,
+                                                e.target.value
+                                            )}
+                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+
+                                        />
+                                    </button>
+                                </div>
                             </div>
+
                             <div className="flex justify-between">
                                 <div className="flex-1">
                                     <Textarea
@@ -137,6 +158,7 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                         placeholder="Text Content"
                                         className={`w-full ${fontSizeClasses[fontSize]} ${bolder ? "font-bold" : "font-normal"} 
                                             ${italics ? "italic" : ""} ${underline ? "underline" : ""}`}
+                                        style={{ color: textColor }}
                                     />
                                 </div>
                                 <DeleteButton onClick={() => removeContent(contentIndex)}/>

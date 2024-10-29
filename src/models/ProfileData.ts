@@ -4,6 +4,5 @@ export interface ProfileData {
     picture: string;
     description: string;
     badges: string[];
-    role: string;
     achievementsVisible: boolean;
 }

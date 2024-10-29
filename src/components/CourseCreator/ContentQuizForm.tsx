@@ -30,8 +30,7 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
 
     return (
         <div className={"flex justify-between"}>
-            <div
-                 className="space-y-4 p-4 w-full bg-indigo-50 border border-gray-200 border-l-2 border-l-indigo-300">
+            <div className="space-y-4 p-4 w-full bg-indigo-50 border border-gray-200 border-l-2 border-l-indigo-300">
                 {questions.map((question, questionIndex) => (
                     <QuestionCreator key={question.id} form={form} questionsLength={questions.length}
                                      chapterIndex={chapterIndex} subChapterIndex={subChapterIndex}

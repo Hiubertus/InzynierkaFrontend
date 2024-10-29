@@ -39,7 +39,11 @@ export const CourseDataForm: React.FC<CourseDataFormProps> = ({ form }) => {
                         render={({field}) => (
                             <FormItem>
                                 <FormControl>
-                                    <FileUpload onFileUploaded={(file) => field.onChange(file)} accept={{'image/*': []}}
+                                    <FileUpload onFileUploaded={(file) => field.onChange(file)}
+                                                accept={{
+                                                    'image/*': [],
+                                                    'video/*': []
+                                                }}
                                                 maxSize={5 * 1024 * 1024}/>
                                 </FormControl>
                                 <FormMessage/>

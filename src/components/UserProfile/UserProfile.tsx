@@ -1,15 +1,41 @@
 "use client"
 
-import { UserProfilePageSkeleton} from "@/components/UserProfile/UserProfilePageSkeleton";
-import { UserProfilePage } from "@/components/UserProfile/UserProfilePage";
-import {useAuthStore} from "@/lib/stores/authStore";
+import { useEffect, useState } from 'react'
+import { UserProfilePageSkeleton } from "@/components/UserProfile/UserProfilePageSkeleton"
+import { UserProfilePage } from "@/components/UserProfile/UserProfilePage"
+import { getSession, type Session } from '@/lib/session/session'
+import { updateUserField } from '@/lib/session/profileData'
 
 export const UserProfile = () => {
-    const { user, loading, updateUserField } = useAuthStore();
+    const [loading, setLoading] = useState(true)
+    const [userData, setUserData] = useState<Session | null>(null)
 
-    if (loading || !user) {
-        return <UserProfilePageSkeleton />;
+    useEffect(() => {
+        const fetchUserData = async () => {
+            const session = await getSession()
+            if (session?.accessToken) {
+                setUserData(session)
+            }
+            setLoading(false)
+        }
+
+        fetchUserData().then()
+    }, [])
+
+    const handleUpdateField = async (field: keyof Session, value: Session[keyof Session]) => {
+        const result = await updateUserField(field, value)
+        if (result.success && result.session) {
+            setUserData(result.session)
+        } else {
+            throw new Error(result.error)
+        }
     }
 
-    return <UserProfilePage user={user} updateUserField={updateUserField} />;
-};
+    if (loading || !userData) {
+        return <UserProfilePageSkeleton />
+    }
+
+    return <UserProfilePage session={userData} updateUserField={handleUpdateField} />
+}
+
+
