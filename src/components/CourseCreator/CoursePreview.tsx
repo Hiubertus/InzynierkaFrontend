@@ -48,6 +48,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
                                     bolder: content.bolder,
                                     italics: content.italics,
                                     underline: content.underline,
+                                    textColor: content.textColor,
                                 } as cText
                             case 'video':
                                 return {
@@ -98,7 +99,6 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
         description: "test",
         badges: [],
         picture: "",
-        role: "User",
         achievementsVisible: false
     };
 

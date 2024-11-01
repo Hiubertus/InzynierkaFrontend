@@ -8,15 +8,16 @@ export async function updateUserField(field: keyof Session, value: Session[keyof
         if (!session?.accessToken) {
             throw new Error('No active session')
         }
-        const response = await fetch(`${process.env.BACKEND_ADDRESS}/user/update`, {
-            method: 'PATCH',
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user-profile/update`, {
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session.accessToken}`
             },
             body: JSON.stringify({ [field]: value })
         })
-
+        // console.log(session.accessToken)
+        // console.log(response)
         if (response.ok) {
             const updatedSession: Session = {
                 ...session,

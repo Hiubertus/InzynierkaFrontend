@@ -24,7 +24,7 @@ export const RegisterForm: React.FC = memo(() => {
 
     async function onSubmit(values: RegisterFormValues) {
         try {
-            const response = await fetch(`${process.env.BACKEND_ADDRESS}/user/register`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

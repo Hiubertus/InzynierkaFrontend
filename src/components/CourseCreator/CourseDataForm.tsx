@@ -6,13 +6,14 @@ import { Textarea } from "@/components/ui/textarea";
 import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { CourseForm } from "@/components/CourseCreator/formSchema";
-import {TagInput} from "@/components/CourseCreator/TagInput";
+import { TagInput } from "@/components/CourseCreator/TagInput";
 
 interface CourseDataFormProps {
     form: UseFormReturn<CourseForm>
 }
 
 export const CourseDataForm: React.FC<CourseDataFormProps> = ({ form }) => {
+    const currentBanner = form.watch('banner');
 
     return (
         <Card className="mb-4 shadow-md">
@@ -39,12 +40,33 @@ export const CourseDataForm: React.FC<CourseDataFormProps> = ({ form }) => {
                         render={({field}) => (
                             <FormItem>
                                 <FormControl>
-                                    <FileUpload onFileUploaded={(file) => field.onChange(file)}
-                                                accept={{
-                                                    'image/*': [],
-                                                    'video/*': []
-                                                }}
-                                                maxSize={5 * 1024 * 1024}/>
+                                    <FileUpload
+                                        onFileUploaded={(file) => {
+                                            field.onChange(file);
+                                            if (file) {
+                                                if (file.type.startsWith('image/')) {
+                                                    form.setValue('bannerType', 'image');
+                                                    form.setValue('bannerMediaType',
+                                                        file.type === 'image/jpeg' ? 'image/jpeg' :
+                                                            file.type === 'image/png' ? 'image/png' :
+                                                                file.type === 'image/gif' ? 'image/gif' : 'image/jpeg'
+                                                    );
+                                                } else if (file.type.startsWith('video/')) {
+                                                    form.setValue('bannerType', 'video');
+                                                    form.setValue('bannerMediaType',
+                                                        file.type === 'video/mp4' ? 'video/mp4' :
+                                                            file.type === 'video/webm' ? 'video/webm' : 'video/mp4'
+                                                    );
+                                                }
+                                            }
+                                        }}
+                                        currentFile={currentBanner}
+                                        accept={{
+                                            'image/*': [],
+                                            'video/*': []
+                                        }}
+                                        maxSize={5 * 1024 * 1024}
+                                    />
                                 </FormControl>
                                 <FormMessage/>
                             </FormItem>

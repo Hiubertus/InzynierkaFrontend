@@ -9,7 +9,7 @@ import {
     FormMessage,
 } from "@/components/ui/form"
 import { AlertCircle } from "lucide-react";
-import { cn } from "@/lib/utils/utils";
+import { cn } from "@/lib/utils";
 
 interface FormFieldProps<T extends FieldValues> {
     control: UseFormReturn<T>['control'];

@@ -10,9 +10,11 @@ import { FormFieldInput } from './FormFieldInput';
 import { loginSchema, LoginFormValues } from './schemas';
 import { login } from '@/lib/session/auth';
 import { useRouter } from 'next/navigation';
+import {useSession} from "@/lib/session/SessionContext";
 
 export const LoginForm: React.FC = memo(() => {
     const router = useRouter();
+    const { updateSessionData } = useSession();
     const [backendError, setBackendError] = useState<string | null>(null);
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -25,7 +27,7 @@ export const LoginForm: React.FC = memo(() => {
     async function onSubmit(values: LoginFormValues) {
         const result = await login(values.email, values.password);
         if (result.success) {
-            console.log(result)
+            updateSessionData(result.session);
             router.push('/');
         } else {
             setBackendError(result.error);

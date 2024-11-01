@@ -8,6 +8,7 @@ import React, { useEffect } from "react";
 import {useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {AnswerCreator} from "@/components/CourseCreator/AnswerCreator";
+import OrderButtons from "@/components/CourseCreator/OrderButtons";
 
 interface QuizCreatorProps {
     form: UseFormReturn<CourseForm>;
@@ -17,6 +18,7 @@ interface QuizCreatorProps {
     contentIndex: number;
     questionIndex: number;
     removeQuestion: (index: number) => void;
+    swap: (from: number, to: number) => void;
 }
 
 export const QuestionCreator: React.FC<QuizCreatorProps> = ({
@@ -26,23 +28,25 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                                                                 contentIndex,
                                                                 questionIndex,
                                                                 removeQuestion,
-                                                                questionsLength
+                                                                questionsLength,
+                                                                swap
                                                             }) => {
-    const {fields: answers, append: appendAnswer, remove: removeAnswer} = useFieldArray({
+    const {
+        fields: answers,
+        append: appendAnswer,
+        remove: removeAnswer,
+        swap: swapAnswer
+    } = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers`
     });
 
-    // Watch for changes in singleAnswer field
     const singleAnswer = form.watch(
         `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer`
     );
 
-    // Reset answers when switching between single and multiple choice
     useEffect(() => {
         const currentAnswers = form.getValues(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers`);
-
-        // Reset all isCorrect values to false
         currentAnswers.forEach((_, index) => {
             form.setValue(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect`, false);
         });
@@ -51,60 +55,70 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
     return (
         <Card className="border-l-2 border-l-purple-300">
             <CardHeader className="flex flex-col rounded-lg bg-purple-50 overflow-hidden">
-                <div className="flex items-center gap-4 mb-4">
-                    <FormField
-                        control={form.control}
-                        name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer`}
-                        render={({field}) => (
-                            <FormItem className="flex items-center gap-2">
-                                <div className="flex items-center gap-4">
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            checked={field.value}
-                                            onChange={() => field.onChange(true)}
-                                        />
-                                        Single Choice
-                                    </label>
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            checked={!field.value}
-                                            onChange={() => field.onChange(false)}
-                                        />
-                                        Multiple Choice
-                                    </label>
-                                </div>
-                            </FormItem>
-                        )}
+                <div className="flex w-full">
+                    <OrderButtons
+                        onMoveUp={() => swap(questionIndex, questionIndex - 1)}
+                        onMoveDown={() => swap(questionIndex, questionIndex + 1)}
+                        canMoveUp={questionIndex > 0}
+                        canMoveDown={questionIndex < questionsLength - 1}
                     />
+                    <div className="flex-1">
+                        <div className="flex items-center gap-4 mb-4">
+                            <FormField
+                                control={form.control}
+                                name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer`}
+                                render={({field}) => (
+                                    <FormItem className="flex items-center gap-2">
+                                        <div className="flex items-center gap-4">
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="radio"
+                                                    checked={field.value}
+                                                    onChange={() => field.onChange(true)}
+                                                />
+                                                Single Choice
+                                            </label>
+                                            <label className="flex items-center gap-2">
+                                                <input
+                                                    type="radio"
+                                                    checked={!field.value}
+                                                    onChange={() => field.onChange(false)}
+                                                />
+                                                Multiple Choice
+                                            </label>
+                                        </div>
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <FormField
+                            control={form.control}
+                            name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.question`}
+                            render={({field}) => (
+                                <FormItem className="flex-grow">
+                                    <FormControl>
+                                        <div className="w-full flex justify-between">
+                                            <Input
+                                                {...field}
+                                                placeholder={`Question ${questionIndex + 1}`}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                }}
+                                            />
+                                            <DeleteButton
+                                                onClick={() => {
+                                                    removeQuestion(questionIndex);
+                                                }}
+                                                disabled={questionsLength <= 1}
+                                            />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage/>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
-                <FormField
-                    control={form.control}
-                    name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.question`}
-                    render={({field}) => (
-                        <FormItem className="flex-grow">
-                            <FormControl>
-                                <div className="w-full flex justify-between">
-                                    <Input
-                                        {...field}
-                                        placeholder={`Question ${questionIndex + 1}`}
-                                        onChange={(e) => {
-                                            field.onChange(e);
-                                        }}
-                                    />
-                                    <DeleteButton
-                                        onClick={() => {
-                                            removeQuestion(questionIndex);
-                                        }}
-                                        disabled={questionsLength <= 1}
-                                    />
-                                </div>
-                            </FormControl>
-                            <FormMessage/>
-                        </FormItem>
-                    )}
-                />
             </CardHeader>
             <CardContent className="bg-purple-100">
                 {answers.map((answer, answerIndex) => (
@@ -119,6 +133,7 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                         answerIndex={answerIndex}
                         removeAnswer={removeAnswer}
                         singleAnswer={singleAnswer}
+                        swap={swapAnswer}
                     />
                 ))}
                 <Button

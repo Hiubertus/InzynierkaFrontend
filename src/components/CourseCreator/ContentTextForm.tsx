@@ -10,8 +10,9 @@ import {
     Italic,
     Baseline,
     MoveUp,
-    MoveDown, Palette
+    MoveDown
 } from "lucide-react";
+import ColorPicker from "@/components/CourseCreator/ColorPicker";
 
 interface ContentTextFormProps {
     form: UseFormReturn<CourseForm>;
@@ -130,25 +131,17 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                 >
                                     <Baseline className="h-4 w-4"/>
                                 </button>
-                                <div className="relative flex items-center">
-                                    <button
-                                        type="button"
-                                        className={`${baseButtonClass} ${textColor !== 'black' ? activeButtonClass : ''}`}
-                                        title="Text Color"
-                                    >
-                                        <Palette className="h-4 w-4" style={{color: textColor}}/>
-                                        <input
-                                            type="color"
-                                            value={textColor}
-                                            onChange={(e) => form.setValue(
-                                                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`,
-                                                e.target.value
-                                            )}
-                                            className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-
-                                        />
-                                    </button>
-                                </div>
+                                <ColorPicker
+                                    value={textColor}
+                                    onChange={(color) => {
+                                        console.log('ContentTextForm: before setValue, color:', color);
+                                        form.setValue(
+                                            `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`,
+                                            color
+                                        );
+                                        console.log('ContentTextForm: after setValue:', form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`));
+                                    }}
+                                />
                             </div>
 
                             <div className="flex justify-between">

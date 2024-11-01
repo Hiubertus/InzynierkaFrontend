@@ -4,6 +4,7 @@ import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import React from "react";
 import {UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
+import OrderButtons from "@/components/CourseCreator/OrderButtons";
 
 interface AnswerCreatorProps {
     form: UseFormReturn<CourseForm>;
@@ -15,6 +16,7 @@ interface AnswerCreatorProps {
     answerIndex: number;
     removeAnswer: (index: number) => void;
     singleAnswer: boolean;
+    swap: (from: number, to: number) => void;
 }
 
 export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
@@ -26,7 +28,8 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
                                                                 questionIndex,
                                                                 answerIndex,
                                                                 removeAnswer,
-                                                                singleAnswer
+                                                                singleAnswer,
+                                                                swap
                                                             }) => {
 
     const handleSingleAnswerChange = (checked: boolean) => {
@@ -41,7 +44,13 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
     };
 
     return (
-        <div className="flex flex-col py-4 rounded-lg overflow-hidden">
+        <div className="flex py-4 rounded-lg overflow-hidden">
+            <OrderButtons
+                onMoveUp={() => swap(answerIndex, answerIndex - 1)}
+                onMoveDown={() => swap(answerIndex, answerIndex + 1)}
+                canMoveUp={answerIndex > 0}
+                canMoveDown={answerIndex < answersLength - 1}
+            />
             <FormField
                 control={form.control}
                 name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${answerIndex}.answer`}

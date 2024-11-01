@@ -8,6 +8,7 @@ import React from "react";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
 import {SubChapterCreator} from "@/components/CourseCreator/SubChapterCreator";
+import OrderButtons from "@/components/CourseCreator/OrderButtons";
 
 interface ChapterCreatorProps {
     chapter: FieldArrayWithId<CourseForm, "chapters", "id">;
@@ -15,18 +16,18 @@ interface ChapterCreatorProps {
     chapterIndex: number;
     removeChapter: (index: number) => void;
     form: UseFormReturn<CourseForm>;
+    swap: (from: number, to: number) => void; // Add this prop
 }
-
 
 export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                                                                   chapter,
                                                                   chapterIndex,
                                                                   chaptersLength,
                                                                   removeChapter,
-                                                                  form
+                                                                  form,
+                                                                  swap
                                                               }) => {
-
-    const {fields: subChapters, append: appendSubChapter, remove: removeSubChapter} = useFieldArray({
+    const {fields: subChapters, append: appendSubChapter, remove: removeSubChapter, swap: swapSubChapter} = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters`
     });
@@ -34,44 +35,58 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
     return (
         <Card className="mb-4 shadow-md border-l-4 border-l-blue-300">
             <CardHeader className="flex flex-col bg-blue-100 overflow-hidden">
-                <div className={"w-full"}>
-                    <FormField
-                        control={form.control}
-                        name={`chapters.${chapterIndex}.name`}
-                        render={({field}) => (
-                            <FormItem className="flex-grow">
-                                <FormControl>
-                                    <div className="flex justify-between">
-                                        <Input
-                                            {...field}
-                                            placeholder={`Chapter ${chapterIndex + 1} Name`}
-                                            value={chapter.name}
-                                            onChange={(e) => {
-                                                field.onChange(e);
-                                            }}
-                                        />
-                                        <DeleteButton
-                                            onClick={() => {
-                                                if (chaptersLength > 1) {
-                                                    removeChapter(chapterIndex);
-                                                }
-                                            }}
-                                            disabled={chaptersLength <= 1}
-                                        />
-                                    </div>
-
-                                </FormControl>
-                                <FormMessage/>
-                            </FormItem>
-                        )}
+                <div className="flex w-full">
+                    <OrderButtons
+                        onMoveUp={() => swap(chapterIndex, chapterIndex - 1)}
+                        onMoveDown={() => swap(chapterIndex, chapterIndex + 1)}
+                        canMoveUp={chapterIndex > 0}
+                        canMoveDown={chapterIndex < chaptersLength - 1}
                     />
+                    <div className="flex-1">
+                        <FormField
+                            control={form.control}
+                            name={`chapters.${chapterIndex}.name`}
+                            render={({field}) => (
+                                <FormItem className="flex-grow">
+                                    <FormControl>
+                                        <div className="flex justify-between">
+                                            <Input
+                                                {...field}
+                                                placeholder={`Chapter ${chapterIndex + 1} Name`}
+                                                value={chapter.name}
+                                                onChange={(e) => {
+                                                    field.onChange(e);
+                                                }}
+                                            />
+                                            <DeleteButton
+                                                onClick={() => {
+                                                    if (chaptersLength > 1) {
+                                                        removeChapter(chapterIndex);
+                                                    }
+                                                }}
+                                                disabled={chaptersLength <= 1}
+                                            />
+                                        </div>
+                                    </FormControl>
+                                    <FormMessage/>
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 </div>
             </CardHeader>
             <CardContent className="space-y-4 bg-indigo-200">
                 {subChapters.map((subChapter, subChapterIndex) => (
-                    <SubChapterCreator key={subChapter.id} subChapter={subChapter} subChaptersLength={subChapters.length}
-                                       chapterIndex={chapterIndex} subChapterIndex={subChapterIndex}
-                                       removeSubChapter={removeSubChapter} form={form}/>
+                    <SubChapterCreator
+                        key={subChapter.id}
+                        subChapter={subChapter}
+                        subChaptersLength={subChapters.length}
+                        chapterIndex={chapterIndex}
+                        subChapterIndex={subChapterIndex}
+                        removeSubChapter={removeSubChapter}
+                        form={form}
+                        swap={swapSubChapter}
+                    />
                 ))}
                 <Button
                     onClick={() => appendSubChapter({
@@ -88,5 +103,4 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
             </CardContent>
         </Card>
     )
-
 }

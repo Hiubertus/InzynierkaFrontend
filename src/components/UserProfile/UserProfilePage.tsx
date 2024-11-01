@@ -5,20 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {Camera, Trophy} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Eye, EyeOff } from "lucide-react";
 
 import {EditableField} from "@/components/UserProfile/EditableField";
-// import {EmailForm} from "@/components/UserProfile/EmailForm";
-// import {PasswordForm} from "@/components/UserProfile/PasswordForm";
 import {Session} from "@/lib/session/session";
 
 type PendingChanges = Partial<Pick<Session,
     'fullName' |
     'picture' |
     'description' |
-    'badgesVisible' |
-    'email'
+    'badgesVisible'
 >>;
 
 type UserProfilePageProps = {
@@ -35,12 +31,15 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
     const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    console.log(pendingChanges)
+
     useEffect(() => {
         setAchievementsVisible(session.badgesVisible);
     }, [session]);
 
     const toggleAchievementsVisibility = (visible: boolean) => {
         setAchievementsVisible(visible);
+        console.log(pendingChanges)
         setPendingChanges(prev => ({ ...prev, badgesVisible: visible }));
     };
 

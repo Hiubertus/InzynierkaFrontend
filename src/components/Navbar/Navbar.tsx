@@ -1,39 +1,43 @@
 "use client"
 
-import {Mountain, ShoppingCart} from 'lucide-react'
-import {Button} from "@/components/ui/button"
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
+import { Mountain, ShoppingCart } from 'lucide-react'
+import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from 'next/link'
-import {useEffect, useState} from 'react'
-import {getSession, removeSession, Session} from '@/lib/session/session'
+import { useSession } from "@/lib/session/SessionContext";
+import { logout } from '@/lib/session/auth'
+import { useRouter } from 'next/navigation'
 
 const ROUTES = {
     AUTH: '/auth',
     HOME: "/",
-    PROFILE: "/profile",
+    PROFILE: "/profile/edit",
     CART: "/cart"
 } as const;
 
 export const Navbar = () => {
-    const [session, setSession] = useState<Session | null>(null);
-
-    useEffect(() => {
-        const checkSession = async () => {
-            const currentSession = await getSession();
-            setSession(currentSession);
-        };
-        checkSession();
-    }, []);
+    const { session, clearSessionData } = useSession();
+    const router = useRouter();
 
     const handleLogout = async () => {
-        await removeSession();
-        setSession(null); // Bezpośrednio aktualizujemy stan
+        try {
+            const result = await logout();
+            if (result.success) {
+                clearSessionData();
+                router.push(ROUTES.HOME);
+            } else {
+                console.error('Logout failed:', result.error);
+
+            }
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
     };
 
     const renderAuthSection = () => {
         if (session?.accessToken) {
             return (
-                <div className="flex">
+                <div className="flex items-center">
                     <Link href={ROUTES.PROFILE}>
                         <Avatar className="cursor-pointer">
                             <AvatarImage src={session.picture} alt={session.fullName}/>
@@ -49,15 +53,15 @@ export const Navbar = () => {
                     </Button>
                 </div>
             )
-        } else {
-            return (
-                <Link href={ROUTES.AUTH}>
-                    <Button variant="outline" className="ml-4">
-                        Login
-                    </Button>
-                </Link>
-            )
         }
+
+        return (
+            <Link href={ROUTES.AUTH}>
+                <Button variant="outline" className="ml-4">
+                    Login
+                </Button>
+            </Link>
+        )
     }
 
     return (

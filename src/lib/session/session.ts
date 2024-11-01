@@ -43,30 +43,30 @@ export const removeSession = async () => {
     const cookieStore = cookies();
     cookieStore.delete('session');
 };
-const SESSION_STORAGE_KEY = 'session_last_updated';
+// const SESSION_STORAGE_KEY = 'session_last_updated';
 
-export async function refreshSession(): Promise<Session | null> {
-    const session = await getSession();
-
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString());
-    }
-
-    return session;
-}
-
-export async function updateSession(newSession: Session): Promise<void> {
-    await setSession(newSession);
-
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString());
-    }
-}
-
-export async function clearSession(): Promise<void> {
-    await removeSession();
-
-    if (typeof window !== 'undefined') {
-        localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString());
-    }
-}
+// export async function refreshSession(): Promise<Session | null> {
+//     const session = await getSession();
+//
+//     if (typeof window !== 'undefined') {
+//         localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString());
+//     }
+//
+//     return session;
+// }
+//
+// export async function updateSession(newSession: Session): Promise<void> {
+//     await setSession(newSession);
+//
+//     if (typeof window !== 'undefined') {
+//         localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString());
+//     }
+// }
+//
+// export async function clearSession(): Promise<void> {
+//     await removeSession();
+//
+//     if (typeof window !== 'undefined') {
+//         localStorage.setItem(SESSION_STORAGE_KEY, Date.now().toString());
+//     }
+// }

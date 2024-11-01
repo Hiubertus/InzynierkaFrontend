@@ -8,8 +8,8 @@ export interface CourseForm {
     price: number;
     duration: number;
     tags: string[];
-    bannerMediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
-    bannerType: 'image' | 'video';
+    bannerMediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm' | null;
+    bannerType: 'image' | 'video' | null;
 }
 
 export interface ChapterForm {
@@ -83,7 +83,7 @@ export const formSchema = z.object({
                     bolder: z.boolean().default(false),
                     italics: z.boolean().default(false),
                     underline: z.boolean().default(false),
-                    textColor: z.string().default('black'),
+                    textColor: z.string().default('#000000'),
                 }),
                 z.object({
                     type: z.enum(['image', 'video']),

@@ -2,9 +2,17 @@
 
 import { getSession, setSession, removeSession, type Session } from './session'
 
+type LoginResponse = {
+    success: true;
+    session: Session;
+} | {
+    success: false;
+    error: string;
+};
+
 export async function refreshAccessToken(refresh_token: string) {
     try {
-        const response = await fetch(`${process.env.BACKEND_ADDRESS}/user/refresh`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/refresh`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -35,9 +43,9 @@ export async function refreshAccessToken(refresh_token: string) {
     }
 }
 
-export async function login(email: string, password: string) {
+export async function login(email: string, password: string): Promise<LoginResponse> {
     try {
-        const response = await fetch(`${process.env.BACKEND_ADDRESS}/user/login`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -50,10 +58,10 @@ export async function login(email: string, password: string) {
             const session: Session = {
                 id: data.data.user.id,
                 fullName: data.data.user.fullName,
-                picture: data.data.user.picture ? data.data.user.picture : [],
-                description: data.data.user.description ? data.data.user.description : '',
-                badges: data.data.user.badges ? data.data.user.badges : [],
-                badgesVisible: data.data.user.badgesVisible ? data.data.user.badgesVisible : false,
+                picture: data.data.user.picture ?? '',
+                description: data.data.user.description ?? '',
+                badges: data.data.user.badges ?? [],
+                badgesVisible: data.data.user.badgesVisible ?? false,
                 email: data.data.user.email,
                 points: data.data.user.points,
                 accessToken: data.data.user.accessToken,
@@ -62,14 +70,39 @@ export async function login(email: string, password: string) {
             }
 
             await setSession(session)
-            console.log(session)
             return { success: true, session }
         } else {
             const errorData = await response.json()
             return { success: false, error: errorData.message || 'Login failed' }
         }
     } catch (error) {
-        console.log('Error during login:', error)
+        console.error('Error during login:', error)
         return { success: false, error: 'An unexpected error occurred' }
+    }
+}
+export async function logout() {
+    try {
+        // const session = await getSession();
+        // if (session?.accessToken) {
+        //     // Wywołaj endpoint wylogowania na backendzie
+        //     await fetch(`${process.env.BACKEND_ADDRESS}/user/logout`, {
+        //         method: 'POST',
+        //         headers: {
+        //             'Authorization': `Bearer ${session.accessToken}`,
+        //             'Content-Type': 'application/json',
+        //         },
+        //     });
+        // }
+
+        await removeSession();
+
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem('session_last_updated');
+        }
+
+        return { success: true };
+    } catch (error) {
+        console.error('Error during logout:', error);
+        return { success: false, error: 'An unexpected error occurred during logout' };
     }
 }

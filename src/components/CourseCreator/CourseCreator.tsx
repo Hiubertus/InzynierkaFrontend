@@ -11,10 +11,11 @@ import { CoursePreview} from "@/components/CourseCreator/CoursePreview";
 
 type PreviewMode = 'editor' | 'page' | 'content';
 
-// Initial form values
 const INITIAL_FORM_VALUES: CourseForm = {
     name: '',
     banner: null,
+    bannerType: null,
+    bannerMediaType: null,
     description: '',
     price: 0,
     duration: 0,
@@ -45,7 +46,7 @@ export const CourseCreator = () => {
         defaultValues: INITIAL_FORM_VALUES
     });
 
-    const { fields: chapters, append: appendChapter, remove: removeChapter } = useFieldArray({
+    const { fields: chapters, append: appendChapter, remove: removeChapter, swap: swapChapter } = useFieldArray({
         control: form.control,
         name: "chapters"
     });
@@ -96,6 +97,7 @@ export const CourseCreator = () => {
                         chapterIndex={index}
                         removeChapter={removeChapter}
                         form={form}
+                        swap={swapChapter}
                     />
                 ))}
 
