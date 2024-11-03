@@ -9,6 +9,7 @@ import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
 import {SubChapterCreator} from "@/components/CourseCreator/SubChapterCreator";
 import OrderButtons from "@/components/CourseCreator/OrderButtons";
+import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
 
 interface ChapterCreatorProps {
     chapter: FieldArrayWithId<CourseForm, "chapters", "id">;
@@ -27,7 +28,7 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                                                                   form,
                                                                   swap
                                                               }) => {
-    const {fields: subChapters, append: appendSubChapter, remove: removeSubChapter, swap: swapSubChapter} = useFieldArray({
+    const {fields: subChapters, append: appendSubChapter, remove: removeSubChapter, swap: swapSubChapter, move: moveSubChapter} = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters`
     });
@@ -76,18 +77,36 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                 </div>
             </CardHeader>
             <CardContent className="space-y-4 bg-indigo-200">
-                {subChapters.map((subChapter, subChapterIndex) => (
-                    <SubChapterCreator
-                        key={subChapter.id}
-                        subChapter={subChapter}
-                        subChaptersLength={subChapters.length}
-                        chapterIndex={chapterIndex}
-                        subChapterIndex={subChapterIndex}
-                        removeSubChapter={removeSubChapter}
-                        form={form}
-                        swap={swapSubChapter}
-                    />
-                ))}
+                <DraggableList
+                    items={subChapters}
+                    onReorder={(newOrder) => {
+
+                        const movedItemId = newOrder.find((item, index) => item.id !== subChapters[index]?.id)?.id;
+                        if (movedItemId) {
+
+                            const oldIndex = subChapters.findIndex(item => item.id === movedItemId);
+                            const newIndex = newOrder.findIndex(item => item.id === movedItemId);
+
+                            moveSubChapter(oldIndex, newIndex);
+                        }
+                    }}
+                    getId={(item) => item.id}
+                    renderItem={(subChapter, index) => (
+                        <SubChapterCreator
+                            key={subChapter.id}
+                            subChapter={subChapter}
+                            subChaptersLength={subChapters.length}
+                            chapterIndex={chapterIndex}
+                            subChapterIndex={index}
+                            removeSubChapter={removeSubChapter}
+                            form={form}
+                            swap={swapSubChapter}
+                        />
+                    )}
+                    className="space-y-4"
+                    itemClassName="hover:shadow-md"
+                    activationDelay={250}
+                />
                 <Button
                     onClick={() => appendSubChapter({
                         name: `SubChapter ${subChapters.length + 1}`,

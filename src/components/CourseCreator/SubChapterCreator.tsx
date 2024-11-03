@@ -8,6 +8,7 @@ import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {ContentCreator} from "@/components/CourseCreator/ContentCreator";
 import OrderButtons from "@/components/CourseCreator/OrderButtons";
+import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
 
 interface SubChapterCreatorProps {
     subChapter: FieldArrayWithId<CourseForm, `chapters.${number}.subchapters`, "id">;
@@ -29,7 +30,7 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                                                                         swap
                                                                     }) => {
 
-    const {fields: contents, append: appendContent, remove: removeContent, swap: swapContent} = useFieldArray({
+    const {fields: contents, append: appendContent, remove: removeContent, swap: swapContent, move: moveContent} = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content`
     });
@@ -78,19 +79,35 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                 </div>
             </CardHeader>
             <CardContent className="bg-indigo-50">
-                {contents.map((content, contentIndex) => (
-                    <ContentCreator
-                        key={content.id}
-                        content={content}
-                        form={form}
-                        chapterIndex={chapterIndex}
-                        subChapterIndex={subChapterIndex}
-                        contentIndex={contentIndex}
-                        removeContent={removeContent}
-                        swap={swapContent}
-                        contentsLength={contents.length}
-                    />
-                ))}
+                <DraggableList
+                    items={contents}
+                    onReorder={(newOrder) => {
+                        const movedItemId = newOrder.find((item, index) => item.id !== contents[index]?.id)?.id;
+                        if (movedItemId) {
+                            const oldIndex = contents.findIndex(item => item.id === movedItemId);
+                            const newIndex = newOrder.findIndex(item => item.id === movedItemId);
+
+                            moveContent(oldIndex, newIndex);
+                        }
+                    }}
+                    getId={(item) => item.id}
+                    renderItem={(content, index) => (
+                        <ContentCreator
+                            key={content.id}
+                            content={content}
+                            form={form}
+                            chapterIndex={chapterIndex}
+                            subChapterIndex={subChapterIndex}
+                            contentIndex={index}
+                            removeContent={removeContent}
+                            swap={swapContent}
+                            contentsLength={contents.length}
+                        />
+                    )}
+                    className="space-y-4"
+                    itemClassName="hover:shadow-md"
+                    activationDelay={200}
+                />
                 <ContentButtons
                     appendContent={appendContent}
                 />

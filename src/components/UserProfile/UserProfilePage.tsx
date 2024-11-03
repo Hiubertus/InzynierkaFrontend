@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {Camera, Trophy} from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Eye, EyeOff } from "lucide-react";
-
 import {EditableField} from "@/components/UserProfile/EditableField";
 import {Session} from "@/lib/session/session";
 
@@ -19,7 +18,7 @@ type PendingChanges = Partial<Pick<Session,
 
 type UserProfilePageProps = {
     session: Session;
-    updateUserField: (field: keyof Session, value: Session[keyof Session]) => Promise<void>;
+    updateUserField: (changes: Partial<Session>) => Promise<void>;
 }
 
 export const UserProfilePage: React.FC<UserProfilePageProps> = ({
@@ -30,24 +29,36 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
     const [isHoveringAvatar, setIsHoveringAvatar] = useState<boolean>(false);
     const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    console.log(pendingChanges)
+    const [isSaving, setIsSaving] = useState(false);
 
     useEffect(() => {
         setAchievementsVisible(session.badgesVisible);
     }, [session]);
 
-    const toggleAchievementsVisibility = (visible: boolean) => {
-        setAchievementsVisible(visible);
-        console.log(pendingChanges)
-        setPendingChanges(prev => ({ ...prev, badgesVisible: visible }));
+    const handleChange = (field: keyof PendingChanges, value: Session[keyof Session]) => {
+        setPendingChanges(prev => ({
+            ...prev,
+            [field]: value
+        }));
     };
 
-    const updateUserData = async <K extends keyof PendingChanges>(
-        field: K,
-        value: PendingChanges[K]
-    ): Promise<void> => {
-        setPendingChanges(prev => ({ ...prev, [field]: value }));
+    const handleSaveChanges = async () => {
+        if (Object.keys(pendingChanges).length === 0) return;
+
+        try {
+            setIsSaving(true);
+            await updateUserField(pendingChanges);
+            setPendingChanges({});
+        } catch (error) {
+            console.error('Error saving changes:', error);
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const toggleAchievementsVisibility = (visible: boolean) => {
+        setAchievementsVisible(visible);
+        handleChange('badgesVisible', visible);
     };
 
     const handleAvatarClick = (): void => {
@@ -60,28 +71,13 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64String = reader.result as string;
-                void updateUserData('picture', base64String);
+                handleChange('picture', base64String);
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSubmitAllChanges = async (): Promise<void> => {
-        try {
-            const updatePromises = Object.entries(pendingChanges).map(([key, value]) =>
-                updateUserField(
-                    key as keyof Session,
-                    value as Session[keyof Session]
-                )
-            );
-
-            await Promise.all(updatePromises);
-            setPendingChanges({});
-            console.log('All changes submitted successfully');
-        } catch (error) {
-            console.error('Error updating user data:', error);
-        }
-    };
+    const hasChanges = Object.keys(pendingChanges).length > 0;
 
     return (
         <div className="container mx-auto p-4">
@@ -119,7 +115,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                         <h2 className="text-3xl font-bold mb-2">
                             <EditableField
                                 value={pendingChanges.fullName || session.fullName}
-                                onSave={(value) => updateUserData('fullName', value)}
+                                onSave={(value) => handleChange('fullName', value)}
                                 fieldName="fullName"
                                 inputType="input"
                             />
@@ -132,7 +128,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                         <h3 className="text-xl font-semibold mb-2">Description:</h3>
                         <EditableField
                             value={pendingChanges.description || session.description}
-                            onSave={(value) => updateUserData('description', value)}
+                            onSave={(value) => handleChange('description', value)}
                             fieldName="description"
                             inputType="textarea"
                         />
@@ -181,31 +177,15 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                         )}
                     </div>
 
-                    <Button
-                        onClick={handleSubmitAllChanges}
-                        className="w-full mb-6"
-                        disabled={Object.keys(pendingChanges).length === 0}
-                    >
-                        Save All Changes
-                    </Button>
-
-                    {/*<h3 className="text-2xl font-bold mb-4">Account Settings</h3>*/}
-
-                    {/*<Tabs defaultValue="email" className="w-full">*/}
-                    {/*    <TabsList className="grid w-full grid-cols-2">*/}
-                    {/*        <TabsTrigger value="email">Change email</TabsTrigger>*/}
-                    {/*        <TabsTrigger value="password">Change password</TabsTrigger>*/}
-                    {/*    </TabsList>*/}
-                    {/*    <TabsContent value="email">*/}
-                    {/*        <EmailForm*/}
-                    {/*            email={session.email}*/}
-                    {/*            onEmailUpdate={(email) => updateUserField('email', email)}*/}
-                    {/*        />*/}
-                    {/*    </TabsContent>*/}
-                    {/*    <TabsContent value="password">*/}
-                    {/*        <PasswordForm />*/}
-                    {/*    </TabsContent>*/}
-                    {/*</Tabs>*/}
+                    {hasChanges && (
+                        <Button
+                            onClick={handleSaveChanges}
+                            className="w-full"
+                            disabled={isSaving}
+                        >
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                    )}
                 </CardContent>
             </Card>
         </div>

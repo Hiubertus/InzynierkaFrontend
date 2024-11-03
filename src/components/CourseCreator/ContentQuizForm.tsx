@@ -5,6 +5,7 @@ import React from "react";
 import {useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {QuestionCreator} from "@/components/CourseCreator/QuestionCreator";
+import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
 
 interface ContentQuizFormProps {
     form: UseFormReturn<CourseForm>;
@@ -25,7 +26,8 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
         fields: questions,
         append: appendQuestion,
         remove: removeQuestion,
-        swap: swapQuestion
+        swap: swapQuestion,
+        move: moveQuestion
     } = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent`
@@ -34,19 +36,35 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
     return (
         <div className="flex justify-between">
             <div className="space-y-4 p-4 w-full bg-indigo-50 border border-gray-200 border-l-2 border-l-indigo-300">
-                {questions.map((question, questionIndex) => (
-                    <QuestionCreator
-                        key={question.id}
-                        form={form}
-                        questionsLength={questions.length}
-                        chapterIndex={chapterIndex}
-                        subChapterIndex={subChapterIndex}
-                        contentIndex={contentIndex}
-                        questionIndex={questionIndex}
-                        removeQuestion={removeQuestion}
-                        swap={swapQuestion}
-                    />
-                ))}
+                <DraggableList
+                    items={questions}
+                    onReorder={(newOrder) => {
+                        const movedItemId = newOrder.find((item, index) => item.id !== questions[index]?.id)?.id;
+                        if (movedItemId) {
+                            const oldIndex = questions.findIndex(item => item.id === movedItemId);
+                            const newIndex = newOrder.findIndex(item => item.id === movedItemId);
+
+                            moveQuestion(oldIndex, newIndex);
+                        }
+                    }}
+                    getId={(item) => item.id}
+                    renderItem={(question, index) => (
+                        <QuestionCreator
+                            key={question.id}
+                            form={form}
+                            questionsLength={questions.length}
+                            chapterIndex={chapterIndex}
+                            subChapterIndex={subChapterIndex}
+                            contentIndex={contentIndex}
+                            questionIndex={index}
+                            removeQuestion={removeQuestion}
+                            swap={swapQuestion}
+                        />
+                    )}
+                    className="space-y-4"
+                    itemClassName="hover:shadow-md"
+                    activationDelay={250}
+                />
                 <Button
                     onClick={() => {
                         appendQuestion({

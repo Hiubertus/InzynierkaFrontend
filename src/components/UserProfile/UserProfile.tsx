@@ -9,25 +9,42 @@ import { updateUserField } from '@/lib/session/profileData'
 export const UserProfile = () => {
     const [loading, setLoading] = useState(true)
     const [userData, setUserData] = useState<Session | null>(null)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         const fetchUserData = async () => {
-            const session = await getSession()
-            if (session?.accessToken) {
-                setUserData(session)
+            try {
+                const session = await getSession()
+                if (session?.accessToken) {
+                    setUserData(session)
+                }
+            } catch (e) {
+                setError('Failed to fetch user data')
+                console.error(e)
+            } finally {
+                setLoading(false)
             }
-            setLoading(false)
         }
 
-        fetchUserData().then()
+        fetchUserData()
     }, [])
 
-    const handleUpdateField = async (field: keyof Session, value: Session[keyof Session]) => {
-        const result = await updateUserField(field, value)
-        if (result.success && result.session) {
-            setUserData(result.session)
-        } else {
-            throw new Error(result.error)
+    const handleUpdateFields = async (changes: Partial<Session>) => {
+        try {
+            setError(null)
+            console.log('Updating profile with changes:', changes)
+
+            const result = await updateUserField(changes)
+
+            if (result.success && result.session) {
+                setUserData(result.session)
+            } else {
+                throw new Error('Update failed')
+            }
+        } catch (e) {
+            setError('Failed to update profile')
+            console.error('Update error:', e)
+            throw e
         }
     }
 
@@ -35,7 +52,14 @@ export const UserProfile = () => {
         return <UserProfilePageSkeleton />
     }
 
-    return <UserProfilePage session={userData} updateUserField={handleUpdateField} />
+    if (error) {
+        return <div className="text-red-500">{error}</div>
+    }
+
+    return (
+        <UserProfilePage
+            session={userData}
+            updateUserField={handleUpdateFields}
+        />
+    )
 }
-
-

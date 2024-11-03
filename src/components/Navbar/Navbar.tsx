@@ -12,7 +12,9 @@ const ROUTES = {
     AUTH: '/auth',
     HOME: "/",
     PROFILE: "/profile/edit",
-    CART: "/cart"
+    CART: "/cart",
+    COURSES: "/courses",
+    TASKS: "/tasks"
 } as const;
 
 export const Navbar = () => {
@@ -68,10 +70,20 @@ export const Navbar = () => {
         <nav className="bg-white border-b border-gray-200 sticky top-0 left-0 z-50">
             <div className="container mx-auto px-5 sm:px-7 lg:px-9">
                 <div className="flex items-center justify-between h-16">
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-4">
                         <Link href={ROUTES.HOME} prefetch={true} className="flex-shrink-0">
                             <Mountain className="h-8 w-8 text-black" aria-hidden="true"/>
                             <span className="sr-only">Home</span>
+                        </Link>
+                        <Link href={ROUTES.COURSES}>
+                            <Button variant="ghost">
+                                Courses
+                            </Button>
+                        </Link>
+                        <Link href={ROUTES.TASKS}>
+                            <Button variant="ghost">
+                                Tasks
+                            </Button>
                         </Link>
                     </div>
                     <div className="flex items-center space-x-4">

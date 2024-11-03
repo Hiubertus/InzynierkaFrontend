@@ -8,6 +8,7 @@ import { Form,} from '@/components/ui/form';
 import { CourseDataForm } from "@/components/CourseCreator/CourseDataForm";
 import { ChapterCreator } from "@/components/CourseCreator/ChapterCreator";
 import { CoursePreview} from "@/components/CourseCreator/CoursePreview";
+import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
 
 type PreviewMode = 'editor' | 'page' | 'content';
 
@@ -46,7 +47,7 @@ export const CourseCreator = () => {
         defaultValues: INITIAL_FORM_VALUES
     });
 
-    const { fields: chapters, append: appendChapter, remove: removeChapter, swap: swapChapter } = useFieldArray({
+    const { fields: chapters, append: appendChapter, remove: removeChapter, swap: swapChapter, move: moveChapter } = useFieldArray({
         control: form.control,
         name: "chapters"
     });
@@ -89,17 +90,35 @@ export const CourseCreator = () => {
 
                 <CourseDataForm form={form} />
 
-                {chapters.map((chapter, index) => (
-                    <ChapterCreator
-                        key={chapter.id}
-                        chapter={chapter}
-                        chaptersLength={chapters.length}
-                        chapterIndex={index}
-                        removeChapter={removeChapter}
-                        form={form}
-                        swap={swapChapter}
-                    />
-                ))}
+                <DraggableList
+                    items={chapters}
+                    onReorder={(newOrder) => {
+
+                        const movedItemId = newOrder.find((item, index) => item.id !== chapters[index]?.id)?.id;
+                        if (movedItemId) {
+
+                            const oldIndex = chapters.findIndex(item => item.id === movedItemId);
+                            const newIndex = newOrder.findIndex(item => item.id === movedItemId);
+
+                            moveChapter(oldIndex, newIndex);
+                        }
+                    }}
+                    getId={(item) => item.id}
+                    renderItem={(chapter, index) => (
+                        <ChapterCreator
+                            key={chapter.id}
+                            chapter={chapter}
+                            chaptersLength={chapters.length}
+                            chapterIndex={index}
+                            removeChapter={removeChapter}
+                            form={form}
+                            swap={swapChapter}
+                        />
+                    )}
+                    className="space-y-4"
+                    itemClassName="hover:shadow-md"
+                    activationDelay={250}
+                />
 
                 <Button
                     onClick={handleAddChapter}

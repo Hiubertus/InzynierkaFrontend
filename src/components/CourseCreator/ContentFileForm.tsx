@@ -33,6 +33,7 @@ export const ContentFileForm: React.FC<ContentFileFormProps> = ({
                         <FileUpload
                             onFileUploaded={(file) => {
                                 field.onChange(file);
+                                console.log(file)
                             }}
                             currentFile={currentFile}
                             accept={contentType === 'video' ? {'video/*': []} : {'image/*': []}}
