@@ -1,45 +1,38 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useRef, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {Camera, Trophy} from "lucide-react";
+import { Camera, Trophy, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
-import { Eye, EyeOff } from "lucide-react";
-import {EditableField} from "@/components/UserProfile/EditableField";
-import {Session} from "@/lib/session/session";
+import { EditableField } from "@/components/UserProfile/EditableField";
+import { useAuthStore } from "@/lib/stores/authStore";
+import {UserData, useUserStore} from "@/lib/stores/userStore";
+import { updateUserProfile} from "@/lib/session/profileData";
 
-type PendingChanges = Partial<Pick<Session,
-    'fullName' |
-    'picture' |
-    'description' |
-    'badgesVisible'
->>;
+type PendingChanges = {
+    fullName?: string;
+    description?: string;
+    badgesVisible?: boolean;
+    picture?: File;
+    pictureType?: string;
+};
 
-type UserProfilePageProps = {
-    session: Session;
-    updateUserField: (changes: Partial<Session>) => Promise<void>;
-}
-
-export const UserProfilePage: React.FC<UserProfilePageProps> = ({
-                                                                    session,
-                                                                    updateUserField
-                                                                }) => {
-    const [achievementsVisible, setAchievementsVisible] = useState<boolean>(session.badgesVisible);
-    const [isHoveringAvatar, setIsHoveringAvatar] = useState<boolean>(false);
+export const UserProfilePage = () => {
+    const { accessToken } = useAuthStore();
+    const { userData, updateUserField } = useUserStore();
     const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
-    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isHoveringAvatar, setIsHoveringAvatar] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    useEffect(() => {
-        setAchievementsVisible(session.badgesVisible);
-    }, [session]);
+    if (!userData || !accessToken) return null;
 
-    const handleChange = (field: keyof PendingChanges, value: Session[keyof Session]) => {
-        setPendingChanges(prev => ({
-            ...prev,
-            [field]: value
-        }));
+    const handleChange = <T extends keyof PendingChanges>(
+        field: T,
+        value: PendingChanges[T]
+    ) => {
+        setPendingChanges(prev => ({ ...prev, [field]: value }));
     };
 
     const handleSaveChanges = async () => {
@@ -47,7 +40,25 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
 
         try {
             setIsSaving(true);
-            await updateUserField(pendingChanges);
+            const formData = new FormData();
+
+            Object.entries(pendingChanges).forEach(([key, value]) => {
+                if (value !== undefined) {
+                    if (key === 'picture') {
+                        formData.append('picture', value as File);
+                        formData.append('pictureType', (value as File).type);
+                    } else {
+                        formData.append(key, String(value));
+                    }
+                }
+            });
+
+            await updateUserProfile(formData, accessToken);
+
+            Object.entries(pendingChanges).forEach(([key, value]) => {
+                updateUserField(key as keyof UserData, value);
+            });
+
             setPendingChanges({});
         } catch (error) {
             console.error('Error saving changes:', error);
@@ -56,28 +67,21 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
         }
     };
 
-    const toggleAchievementsVisibility = (visible: boolean) => {
-        setAchievementsVisible(visible);
-        handleChange('badgesVisible', visible);
-    };
+    const handleAvatarClick = () => fileInputRef.current?.click();
 
-    const handleAvatarClick = (): void => {
-        fileInputRef.current?.click();
-    };
-
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                const base64String = reader.result as string;
-                handleChange('picture', base64String);
-            };
-            reader.readAsDataURL(file);
+            handleChange('picture', file);
+            handleChange('pictureType', file.type);
         }
     };
 
-    const hasChanges = Object.keys(pendingChanges).length > 0;
+    const getAvatarSrc = () => {
+        const picture = pendingChanges.picture || userData.picture;
+        if (!picture) return undefined;
+        return URL.createObjectURL(picture);
+    };
 
     return (
         <div className="container mx-auto p-4">
@@ -90,17 +94,20 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                         onClick={handleAvatarClick}
                     >
                         <Avatar className="h-24 w-24 cursor-pointer">
-                            <AvatarImage
-                                src={pendingChanges.picture || session.picture}
-                                alt={`Profile picture of ${session.fullName}`}
-                            />
-                            <AvatarFallback>
-                                {session.fullName.split(' ').map(n => n[0]).join('')}
-                            </AvatarFallback>
+                            {(userData.picture || pendingChanges.picture) ? (
+                                <AvatarImage
+                                    src={getAvatarSrc()}
+                                    alt={`Profile picture of ${userData.fullName}`}
+                                />
+                            ) : (
+                                <AvatarFallback>
+                                    {userData.fullName.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>
+                            )}
                         </Avatar>
                         {isHoveringAvatar && (
                             <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
-                                <Camera className="text-white" />
+                                <Camera className="text-white"/>
                             </div>
                         )}
                         <input
@@ -114,20 +121,20 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                     <div className="text-center sm:text-left w-full">
                         <h2 className="text-3xl font-bold mb-2">
                             <EditableField
-                                value={pendingChanges.fullName || session.fullName}
+                                value={pendingChanges.fullName ?? userData.fullName}
                                 onSave={(value) => handleChange('fullName', value)}
                                 fieldName="fullName"
                                 inputType="input"
                             />
                         </h2>
-                        <p className="text-lg text-muted-foreground">{session.email}</p>
+                        <p className="text-lg text-muted-foreground">{userData.email}</p>
                     </div>
                 </CardHeader>
                 <CardContent>
                     <div className="mb-6">
                         <h3 className="text-xl font-semibold mb-2">Description:</h3>
                         <EditableField
-                            value={pendingChanges.description || session.description}
+                            value={pendingChanges.description ?? userData.description}
                             onSave={(value) => handleChange('description', value)}
                             fieldName="description"
                             inputType="textarea"
@@ -139,32 +146,32 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                             <h3 className="text-xl font-semibold">Achievements:</h3>
                             <div className="flex items-center space-x-2">
                                 <Switch
-                                    checked={achievementsVisible}
-                                    onCheckedChange={toggleAchievementsVisibility}
+                                    checked={pendingChanges.badgesVisible ?? userData.badgesVisible}
+                                    onCheckedChange={(visible) => handleChange('badgesVisible', visible)}
                                     id="achievements-visibility"
                                 />
                                 <label
                                     htmlFor="achievements-visibility"
                                     className="text-sm text-muted-foreground cursor-pointer"
                                 >
-                                    {achievementsVisible ? (
-                                        <Eye className="h-4 w-4" />
+                                    {userData.badgesVisible ? (
+                                        <Eye className="h-4 w-4"/>
                                     ) : (
-                                        <EyeOff className="h-4 w-4" />
+                                        <EyeOff className="h-4 w-4"/>
                                     )}
                                 </label>
                             </div>
                         </div>
-                        {achievementsVisible && (
+                        {userData.badgesVisible && (
                             <div className="flex flex-wrap gap-2">
-                                {session.badges.length > 0 ? (
-                                    session.badges.map((achievement, index) => (
+                                {userData.badges.length > 0 ? (
+                                    userData.badges.map((achievement, index) => (
                                         <Badge
                                             key={index}
                                             variant="secondary"
                                             className="flex items-center gap-1 text-sm py-1 px-2"
                                         >
-                                            <Trophy className="h-4 w-4" />
+                                            <Trophy className="h-4 w-4"/>
                                             {achievement}
                                         </Badge>
                                     ))
@@ -177,7 +184,7 @@ export const UserProfilePage: React.FC<UserProfilePageProps> = ({
                         )}
                     </div>
 
-                    {hasChanges && (
+                    {Object.keys(pendingChanges).length > 0 && (
                         <Button
                             onClick={handleSaveChanges}
                             className="w-full"

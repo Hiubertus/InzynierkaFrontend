@@ -1,65 +1,54 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { UserProfilePageSkeleton } from "@/components/UserProfile/UserProfilePageSkeleton"
 import { UserProfilePage } from "@/components/UserProfile/UserProfilePage"
-import { getSession, type Session } from '@/lib/session/session'
-import { updateUserField } from '@/lib/session/profileData'
+import { useAuthStore } from "@/lib/stores/authStore";
+import { useUserStore } from "@/lib/stores/userStore";
 
 export const UserProfile = () => {
-    const [loading, setLoading] = useState(true)
-    const [userData, setUserData] = useState<Session | null>(null)
-    const [error, setError] = useState<string | null>(null)
+    const { accessToken } = useAuthStore()
+    const { userData, setUserData } = useUserStore()
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                const session = await getSession()
-                if (session?.accessToken) {
-                    setUserData(session)
-                }
-            } catch (e) {
-                setError('Failed to fetch user data')
-                console.error(e)
-            } finally {
-                setLoading(false)
+                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/get`, {
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Failed to fetch user data');
+
+                const data = await response.json();
+
+                setUserData({
+                    id: data.id,
+                    fullName: data.fullName,
+                    picture: null,
+                    pictureBase64: data.picture,
+                    pictureType: data.pictureType,
+                    description: data.description ?? '',
+                    badges: data.badges ?? [],
+                    badgesVisible: data.badgesVisible ?? false,
+                    email: data.email,
+                    points: data.points,
+                    role: data.role,
+                });
+            } catch (error) {
+                console.error('Error fetching user data:', error);
             }
+        };
+
+        if (accessToken && !userData) {
+            fetchUserData();
         }
+    }, [accessToken, userData, setUserData]);
 
-        fetchUserData()
-    }, [])
-
-    const handleUpdateFields = async (changes: Partial<Session>) => {
-        try {
-            setError(null)
-            console.log('Updating profile with changes:', changes)
-
-            const result = await updateUserField(changes)
-
-            if (result.success && result.session) {
-                setUserData(result.session)
-            } else {
-                throw new Error('Update failed')
-            }
-        } catch (e) {
-            setError('Failed to update profile')
-            console.error('Update error:', e)
-            throw e
-        }
+    if (!accessToken || !userData) {
+        return <UserProfilePageSkeleton />;
     }
 
-    if (loading || !userData) {
-        return <UserProfilePageSkeleton />
-    }
-
-    if (error) {
-        return <div className="text-red-500">{error}</div>
-    }
-
-    return (
-        <UserProfilePage
-            session={userData}
-            updateUserField={handleUpdateFields}
-        />
-    )
-}
+    return <UserProfilePage />;
+};

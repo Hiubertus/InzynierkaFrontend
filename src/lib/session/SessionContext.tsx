@@ -1,33 +1,72 @@
 "use client"
 
-import {createContext, ReactNode, useCallback, useContext, useEffect, useState} from 'react';
-import { Session } from "@/lib/session/session";
+import {ReactNode, useEffect} from 'react';
+import {useAuthStore} from '@/lib/stores/authStore';
+import {useUserStore} from '@/lib/stores/userStore';
 
-type SessionContextType = {
-    session: Session | null;
-    updateSessionData: (newSession: Session) => void;
-    clearSessionData: () => void;
+type StoreProviderProps = {
+    initialAccessToken: string | null;
+    initialUserData: {
+        id: number;
+        email: string;
+        points: number;
+        fullName: string;
+        picture: File | null;
+        pictureBase64: string;
+        pictureType: string;
+        description: string;
+        badges: string[];
+        badgesVisible: boolean;
+        role: 'USER' | 'VERIFIED' | 'TEACHER' | 'ADMIN';
+    } | null;
+    children: ReactNode;
 };
 
-const SessionContext = createContext<SessionContextType | undefined>(undefined);
+export function StoreProvider({
+                                  initialAccessToken,
+                                  initialUserData,
+                                  children
+                              }: StoreProviderProps) {
+    const { setAccessToken, clearAuth } = useAuthStore();
+    const { setUserData, clearUserData } = useUserStore();
 
-export function SessionProvider({
-                                    children,
-                                    initialSession
-                                }: {
-    children: ReactNode;
-    initialSession: Session | null;
-}) {
-    const [session, setSession] = useState<Session | null>(initialSession);
+    useEffect(() => {
+        if (initialAccessToken) {
+            setAccessToken(initialAccessToken);
+        }
+        if (initialUserData) {
+            setUserData(initialUserData);
+        }
+    }, [initialAccessToken, initialUserData, setAccessToken, setUserData]);
+
+    useEffect(() => {
+        const refreshTokenInterval = setInterval(async () => {
+            try {
+                const response = await fetch('/api/auth/refresh', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to refresh token');
+                }
+
+                const data = await response.json();
+                setAccessToken(data.accessToken);
+            } catch (error) {
+                console.error('Error refreshing token:', error);
+                clearAuth();
+                clearUserData();
+            }
+        }, 14 * 60 * 1000);
+
+        return () => clearInterval(refreshTokenInterval);
+    }, [clearAuth, clearUserData, setAccessToken]);
+
     useEffect(() => {
         function handleStorageChange(e: StorageEvent) {
-            if (e.key === 'session_last_updated') {
-                fetch('/api/session')
-                    .then(res => res.json())
-                    .then(newSession => {
-                        setSession(newSession);
-                    })
-                    .catch(console.error);
+            if (e.key === 'auth-storage' || e.key === 'user-storage') {
+                window.location.reload();
             }
         }
 
@@ -35,29 +74,5 @@ export function SessionProvider({
         return () => window.removeEventListener('storage', handleStorageChange);
     }, []);
 
-    const updateSessionData = (newSession: Session) => {
-        setSession(newSession);
-    };
-
-    const clearSessionData = useCallback(async () => {
-        setSession(null);
-
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('session_last_updated');
-        }
-    }, []);
-
-    return (
-        <SessionContext.Provider value={{ session, updateSessionData, clearSessionData }}>
-            {children}
-        </SessionContext.Provider>
-    );
-}
-
-export function useSession() {
-    const context = useContext(SessionContext);
-    if (context === undefined) {
-        throw new Error('useSession must be used within a SessionProvider');
-    }
-    return context;
+    return <>{children}</>;
 }

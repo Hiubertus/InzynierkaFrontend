@@ -1,49 +1,8 @@
-'use server'
+"use server"
 
-import { getSession, setSession, removeSession, type Session } from './session'
+import { cookies } from 'next/headers';
 
-type LoginResponse = {
-    success: true;
-    session: Session;
-} | {
-    success: false;
-    error: string;
-};
-
-export async function refreshAccessToken(refresh_token: string) {
-    try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/refresh`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ refresh_token }),
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-            const session = await getSession()
-
-            if (session) {
-                const updatedSession: Session = {
-                    ...session,
-                    accessToken: data.accesToken,
-                }
-                await setSession(updatedSession)
-                return updatedSession
-            }
-        }
-
-        await removeSession()
-        return null
-    } catch (error) {
-        console.error('Error refreshing token:', error)
-        await removeSession()
-        return null
-    }
-}
-
-export async function login(email: string, password: string): Promise<LoginResponse> {
+export async function login(email: string, password: string) {
     try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/login`, {
             method: 'POST',
@@ -51,55 +10,51 @@ export async function login(email: string, password: string): Promise<LoginRespo
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ email, password }),
-        })
+        });
 
         if (response.ok) {
-            const data = await response.json()
-            const session: Session = {
-                id: data.data.user.id,
-                fullName: data.data.user.fullName,
-                picture: data.data.user.picture ?? '',
-                description: data.data.user.description ?? '',
-                badges: data.data.user.badges ?? [],
-                badgesVisible: data.data.user.badgesVisible ?? false,
-                email: data.data.user.email,
-                points: data.data.user.points,
-                accessToken: data.data.user.accessToken,
-                refreshToken: data.data.user.refreshToken,
-                role: data.data.user.role,
-            }
+            const data = await response.json();
 
-            await setSession(session)
-            return { success: true, session }
+            const cookieStore = cookies();
+
+            cookieStore.set('refresh_token', data.data.user.refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                path: '/'
+            });
+
+            return {
+                success: true,
+                accessToken: data.data.user.accessToken,
+                userData: {
+                    id: data.data.user.id,
+                    fullName: data.data.user.fullName,
+                    picture: null,
+                    pictureBase64: data.data.user.picture,
+                    pictureType: data.data.user.pictureType,
+                    description: data.data.user.description ?? '',
+                    badges: data.data.user.badges ?? [],
+                    badgesVisible: data.data.user.badgesVisible ?? false,
+                    email: data.data.user.email,
+                    points: data.data.user.points,
+                    role: data.data.user.role,
+                }
+            };
         } else {
-            const errorData = await response.json()
-            return { success: false, error: errorData.message || 'Login failed' }
+            const errorData = await response.json();
+            return { success: false, error: errorData.message || 'Login failed' };
         }
     } catch (error) {
-        console.error('Error during login:', error)
-        return { success: false, error: 'An unexpected error occurred' }
+        console.error('Error during login:', error);
+        return { success: false, error: 'An unexpected error occurred' };
     }
 }
+
 export async function logout() {
     try {
-        // const session = await getSession();
-        // if (session?.accessToken) {
-        //     // Wywołaj endpoint wylogowania na backendzie
-        //     await fetch(`${process.env.BACKEND_ADDRESS}/user/logout`, {
-        //         method: 'POST',
-        //         headers: {
-        //             'Authorization': `Bearer ${session.accessToken}`,
-        //             'Content-Type': 'application/json',
-        //         },
-        //     });
-        // }
-
-        await removeSession();
-
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem('session_last_updated');
-        }
-
+        const cookieStore = cookies();
+        cookieStore.delete('refresh_token');
         return { success: true };
     } catch (error) {
         console.error('Error during logout:', error);

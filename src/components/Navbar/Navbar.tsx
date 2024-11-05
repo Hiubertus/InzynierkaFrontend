@@ -4,9 +4,11 @@ import { Mountain, ShoppingCart } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Link from 'next/link'
-import { useSession } from "@/lib/session/SessionContext";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { useUserStore } from "@/lib/stores/userStore";
 import { logout } from '@/lib/session/auth'
 import { useRouter } from 'next/navigation'
+import React from "react";
 
 const ROUTES = {
     AUTH: '/auth',
@@ -18,32 +20,41 @@ const ROUTES = {
 } as const;
 
 export const Navbar = () => {
-    const { session, clearSessionData } = useSession();
-    const router = useRouter();
+    const { accessToken, setAccessToken, clearAuth } = useAuthStore()
+    const { userData, clearUserData } = useUserStore()
+    const router = useRouter()
 
     const handleLogout = async () => {
         try {
-            const result = await logout();
+            const result = await logout()
             if (result.success) {
-                clearSessionData();
-                router.push(ROUTES.HOME);
+                setAccessToken(null);
+                clearUserData();
+                clearAuth();
+                router.push(ROUTES.HOME)
             } else {
-                console.error('Logout failed:', result.error);
-
+                console.error('Logout failed:', result.error)
             }
         } catch (error) {
-            console.error('Error during logout:', error);
+            console.error('Error during logout:', error)
         }
-    };
+    }
 
     const renderAuthSection = () => {
-        if (session?.accessToken) {
+        if (accessToken && userData) {
             return (
                 <div className="flex items-center">
                     <Link href={ROUTES.PROFILE}>
                         <Avatar className="cursor-pointer">
-                            <AvatarImage src={session.picture} alt={session.fullName}/>
-                            <AvatarFallback>{session.fullName[0]}</AvatarFallback>
+                            {(userData.picture)
+                                ? (<AvatarImage
+                                    src={URL.createObjectURL(userData.picture)}
+                                    alt={`Profile picture of ${userData.fullName}`}
+                                />)
+                                : (<AvatarFallback>
+                                    {userData.fullName.split(' ').map(n => n[0]).join('')}
+                                </AvatarFallback>)
+                            }
                         </Avatar>
                     </Link>
                     <Button

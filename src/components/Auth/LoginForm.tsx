@@ -10,12 +10,15 @@ import { FormFieldInput } from './FormFieldInput';
 import { loginSchema, LoginFormValues } from './schemas';
 import { login } from '@/lib/session/auth';
 import { useRouter } from 'next/navigation';
-import {useSession} from "@/lib/session/SessionContext";
+import { useAuthStore } from '@/lib/stores/authStore';
+import { useUserStore } from '@/lib/stores/userStore';
 
 export const LoginForm: React.FC = memo(() => {
     const router = useRouter();
-    const { updateSessionData } = useSession();
+    const { setAccessToken } = useAuthStore();
+    const { setUserData } = useUserStore();
     const [backendError, setBackendError] = useState<string | null>(null);
+
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
         defaultValues: {
@@ -25,12 +28,20 @@ export const LoginForm: React.FC = memo(() => {
     })
 
     async function onSubmit(values: LoginFormValues) {
-        const result = await login(values.email, values.password);
-        if (result.success) {
-            updateSessionData(result.session);
-            router.push('/');
-        } else {
-            setBackendError(result.error);
+        try {
+            const result = await login(values.email, values.password);
+
+            if (result.success && result.userData) {
+                setAccessToken(result.accessToken);
+                setUserData(result.userData);
+
+                router.push('/');
+            } else {
+                setBackendError(result.error);
+            }
+        } catch (error) {
+            setBackendError('An unexpected error occurred');
+            console.error('Login error:', error);
         }
     }
 

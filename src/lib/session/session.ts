@@ -1,45 +1,18 @@
-'use server';
+"use server"
 
-import { cookies } from 'next/headers';
-import {decrypt, encrypt} from "@/lib/session/encrypt";
+import { cookies } from 'next/headers'
 
-export type Session = {
-    id: number;
-    email: string;
-    points: number;
-    accessToken: string;
-    refreshToken: string;
-    fullName: string;
-    picture: string;
-    description: string;
-    badges: string[];
-    badgesVisible: boolean;
-    role: 'USER' | 'VERIFIED' | 'TEACHER' | 'ADMIN'
-};
 
-export const getSession = async (): Promise<Session | null> => {
-    const cookieStore = cookies();
-    const session = cookieStore.get('session');
+export const getRefreshToken = async (): Promise<string | null> => {
+    const cookieStore = cookies()
+    const refreshTokenCookie = cookieStore.get('refresh_token')
 
-    if (session?.value) {
+    if (refreshTokenCookie?.value) {
         try {
-            const decrypted = decrypt(session.value);
-            return JSON.parse(decrypted) as Session;
+            return refreshTokenCookie.value
         } catch {
             return null
         }
     }
-
-    return null;
-};
-
-export const setSession = async (session: Session) => {
-    const cookieStore = cookies();
-    const encrypted = encrypt(JSON.stringify(session));
-    cookieStore.set('session', encrypted);
-};
-
-export const removeSession = async () => {
-    const cookieStore = cookies();
-    cookieStore.delete('session');
-};
+    return null
+}
