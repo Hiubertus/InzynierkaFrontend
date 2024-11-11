@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 
 export const UserProfilePageSkeleton: React.FC = () => {
     return (
@@ -34,31 +34,31 @@ export const UserProfilePageSkeleton: React.FC = () => {
 
                     <Skeleton className="h-10 w-full mb-6" />
 
-                    {/*<Skeleton className="h-8 w-1/3 mb-4" />*/}
+                    <Skeleton className="h-8 w-1/3 mb-4" />
 
-                    {/*<Tabs defaultValue="email" className="w-full">*/}
-                    {/*    <TabsList className="grid w-full grid-cols-2">*/}
-                    {/*        <TabsTrigger value="email">*/}
-                    {/*            <Skeleton className="h-5 w-24" />*/}
-                    {/*        </TabsTrigger>*/}
-                    {/*        <TabsTrigger value="password">*/}
-                    {/*            <Skeleton className="h-5 w-32" />*/}
-                    {/*        </TabsTrigger>*/}
-                    {/*    </TabsList>*/}
-                    {/*    <TabsContent value="email">*/}
-                    {/*        <div className="space-y-4">*/}
-                    {/*            <Skeleton className="h-10 w-full" />*/}
-                    {/*            <Skeleton className="h-10 w-full" />*/}
-                    {/*        </div>*/}
-                    {/*    </TabsContent>*/}
-                    {/*    <TabsContent value="password">*/}
-                    {/*        <div className="space-y-4">*/}
-                    {/*            <Skeleton className="h-10 w-full" />*/}
-                    {/*            <Skeleton className="h-10 w-full" />*/}
-                    {/*            <Skeleton className="h-10 w-full" />*/}
-                    {/*        </div>*/}
-                    {/*    </TabsContent>*/}
-                    {/*</Tabs>*/}
+                    <Tabs defaultValue="email" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="email">
+                                <Skeleton className="h-5 w-24" />
+                            </TabsTrigger>
+                            <TabsTrigger value="password">
+                                <Skeleton className="h-5 w-32" />
+                            </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="email">
+                            <div className="space-y-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="password">
+                            <div className="space-y-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
                 </CardContent>
             </Card>
         </div>

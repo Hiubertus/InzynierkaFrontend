@@ -1,8 +1,16 @@
 "use server"
 
-import { cookies } from 'next/headers';
+import {setRefreshToken} from "@/lib/session/auth/setRefreshToken";
+import {UserData} from "@/lib/stores/userStore";
 
-export async function login(email: string, password: string) {
+interface LoginResponse {
+    success: boolean;
+    accessToken?: string;
+    userData?: UserData;
+    error?: string;
+}
+
+export const login = async (email: string, password: string): Promise<LoginResponse> => {
     try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/login`, {
             method: 'POST',
@@ -15,14 +23,7 @@ export async function login(email: string, password: string) {
         if (response.ok) {
             const data = await response.json();
 
-            const cookieStore = cookies();
-
-            cookieStore.set('refresh_token', data.data.user.refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                path: '/'
-            });
+            setRefreshToken(data.data.user.refreshToken);
 
             return {
                 success: true,
@@ -32,7 +33,7 @@ export async function login(email: string, password: string) {
                     fullName: data.data.user.fullName,
                     picture: null,
                     pictureBase64: data.data.user.picture,
-                    pictureType: data.data.user.pictureType,
+                    mimeType: data.data.user.mimeType,
                     description: data.data.user.description ?? '',
                     badges: data.data.user.badges ?? [],
                     badgesVisible: data.data.user.badgesVisible ?? false,
@@ -48,16 +49,5 @@ export async function login(email: string, password: string) {
     } catch (error) {
         console.error('Error during login:', error);
         return { success: false, error: 'An unexpected error occurred' };
-    }
-}
-
-export async function logout() {
-    try {
-        const cookieStore = cookies();
-        cookieStore.delete('refresh_token');
-        return { success: true };
-    } catch (error) {
-        console.error('Error during logout:', error);
-        return { success: false, error: 'An unexpected error occurred during logout' };
     }
 }

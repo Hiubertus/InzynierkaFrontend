@@ -6,21 +6,27 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Camera, Trophy, Eye, EyeOff } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { EditableField } from "@/components/UserProfile/EditableField";
-import { useAuthStore } from "@/lib/stores/authStore";
-import {UserData, useUserStore} from "@/lib/stores/userStore";
-import { updateUserProfile} from "@/lib/session/profileData";
+import {UserData} from "@/lib/stores/userStore";
+import { updateUserProfile } from "@/lib/session/userData/updateUserProfile";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {EmailForm} from "@/components/UserProfile/EmailForm";
+import {PasswordForm} from "@/components/UserProfile/PasswordForm";
 
 type PendingChanges = {
     fullName?: string;
     description?: string;
     badgesVisible?: boolean;
     picture?: File;
-    pictureType?: string;
 };
 
-export const UserProfilePage = () => {
-    const { accessToken } = useAuthStore();
-    const { userData, updateUserField } = useUserStore();
+type Props = {
+    accessToken: string;
+    userData: UserData;
+    updateUserField: <K extends keyof UserData>(field: K, value: UserData[K]) => void;
+
+}
+
+export const UserProfilePage = ({accessToken,  userData  ,updateUserField}: Props) => {
     const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
     const [isHoveringAvatar, setIsHoveringAvatar] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -28,10 +34,7 @@ export const UserProfilePage = () => {
 
     if (!userData || !accessToken) return null;
 
-    const handleChange = <T extends keyof PendingChanges>(
-        field: T,
-        value: PendingChanges[T]
-    ) => {
+    const handleChange = <T extends keyof PendingChanges>(field: T, value: PendingChanges[T]) => {
         setPendingChanges(prev => ({ ...prev, [field]: value }));
     };
 
@@ -46,7 +49,6 @@ export const UserProfilePage = () => {
                 if (value !== undefined) {
                     if (key === 'picture') {
                         formData.append('picture', value as File);
-                        formData.append('pictureType', (value as File).type);
                     } else {
                         formData.append(key, String(value));
                     }
@@ -73,7 +75,6 @@ export const UserProfilePage = () => {
         const file = event.target.files?.[0];
         if (file) {
             handleChange('picture', file);
-            handleChange('pictureType', file.type);
         }
     };
 
@@ -193,6 +194,25 @@ export const UserProfilePage = () => {
                             {isSaving ? 'Saving...' : 'Save Changes'}
                         </Button>
                     )}
+                    <div className="mt-8">
+                        <Tabs defaultValue="email" className="w-full">
+                            <TabsList className="grid w-full grid-cols-2">
+                                <TabsTrigger value="email">Change Email</TabsTrigger>
+                                <TabsTrigger value="password">Change Password</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="email" className="mt-4">
+                                <EmailForm
+                                    email={userData.email}
+                                    accessToken={accessToken}
+                                />
+                            </TabsContent>
+                            <TabsContent value="password" className="mt-4">
+                                <PasswordForm
+                                    accessToken={accessToken}
+                                />
+                            </TabsContent>
+                        </Tabs>
+                    </div>
                 </CardContent>
             </Card>
         </div>

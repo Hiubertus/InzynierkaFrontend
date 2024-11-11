@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { getSession } from "@/lib/session/session";
 
-const AUTH_ROUTES = [
-    '/auth',
-    '/auth/login',
-    '/auth/register',
-]
 
 const PROTECTED_ROUTES = [
     '/profile/edit',
@@ -15,17 +9,13 @@ const PROTECTED_ROUTES = [
 ]
 
 export async function middleware(request: NextRequest) {
-    const session = await getSession()
-    const path = request.nextUrl.pathname
+    const refreshToken = request.cookies.get('refresh_token')
 
-    const isAuthenticated = !!session?.accessToken
+    const hasAuthToken = !!refreshToken?.value
 
-    if (isAuthenticated && AUTH_ROUTES.some(route => path.startsWith(route))) {
-        return NextResponse.redirect(new URL('/', request.url))
-    }
-
-    if (!isAuthenticated && PROTECTED_ROUTES.some(route => path.startsWith(route))) {
-        return NextResponse.redirect(new URL('/auth', request.url))
+    if (!hasAuthToken && PROTECTED_ROUTES.includes(request?.nextUrl?.pathname)) {
+        const absoluteUrl = new URL("/", request.nextUrl.origin);
+        return NextResponse.redirect(absoluteUrl.toString());
     }
 
     return NextResponse.next()
@@ -33,11 +23,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
     matcher: [
-        // Ścieżki auth
-        '/auth',
-        // Chronione ścieżki
-        '/profile/:path*',
-        '/settings/:path*',
-        '/courses/creator/:path*',
+        '/((?!api|_next/static|_next/image|favicon.ico).*)',
     ]
 }

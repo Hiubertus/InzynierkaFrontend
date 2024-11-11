@@ -1,54 +1,38 @@
 "use client"
 
-import { useEffect } from 'react'
-import { UserProfilePageSkeleton } from "@/components/UserProfile/UserProfilePageSkeleton"
-import { UserProfilePage } from "@/components/UserProfile/UserProfilePage"
-import { useAuthStore } from "@/lib/stores/authStore";
-import { useUserStore } from "@/lib/stores/userStore";
+import {useEffect} from 'react'
+import {UserProfilePageSkeleton} from "@/components/UserProfile/UserProfilePageSkeleton"
+import {UserProfilePage} from "@/components/UserProfile/UserProfilePage"
+import {useAuthStore} from "@/lib/stores/authStore"
+import {useUserStore} from "@/lib/stores/userStore"
+import {fetchUserData} from "@/lib/session/userData/fetchUserData";
 
 export const UserProfile = () => {
-    const { accessToken } = useAuthStore()
-    const { userData, setUserData } = useUserStore()
+    const {accessToken, clearAuth} = useAuthStore()
+    const {userData, updateUserField, setUserData, clearUserData} = useUserStore()
 
     useEffect(() => {
-        const fetchUserData = async () => {
-            try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/get`, {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`
-                    }
-                });
-
-                if (!response.ok) throw new Error('Failed to fetch user data');
-
-                const data = await response.json();
-
-                setUserData({
-                    id: data.id,
-                    fullName: data.fullName,
-                    picture: null,
-                    pictureBase64: data.picture,
-                    pictureType: data.pictureType,
-                    description: data.description ?? '',
-                    badges: data.badges ?? [],
-                    badgesVisible: data.badgesVisible ?? false,
-                    email: data.email,
-                    points: data.points,
-                    role: data.role,
-                });
-            } catch (error) {
-                console.error('Error fetching user data:', error);
+        const loadUserData = async () => {
+            const data = await fetchUserData(accessToken);
+            if (data) {
+                setUserData(data);
+            } else {
+                clearAuth()
+                clearUserData();
             }
         };
 
-        if (accessToken && !userData) {
-            fetchUserData();
+        if (accessToken) {
+            loadUserData();
+        } else {
+            clearAuth()
+            clearUserData();
         }
-    }, [accessToken, userData, setUserData]);
-
+    }, [accessToken, clearAuth, clearUserData, setUserData]);
     if (!accessToken || !userData) {
-        return <UserProfilePageSkeleton />;
+        return <UserProfilePageSkeleton/>;
     }
 
-    return <UserProfilePage />;
+    return <UserProfilePage accessToken={accessToken}
+                            userData={userData} updateUserField={updateUserField}/>;
 };

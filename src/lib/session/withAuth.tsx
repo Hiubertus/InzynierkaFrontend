@@ -1,0 +1,178 @@
+"use client"
+
+import React, {useEffect, useState, useRef} from 'react';
+import {useRouter} from 'next/navigation';
+import {useAuthStore} from '@/lib/stores/authStore';
+import {UserData, useUserStore} from '@/lib/stores/userStore';
+import {Loader2} from "lucide-react";
+import {toast} from "@/hooks/use-toast";
+
+type ComponentType<P> = React.ComponentType<P>;
+type UserRole = 'USER' | 'VERIFIED' | 'TEACHER' | 'ADMIN';
+
+type AccessRestriction = {
+    type: 'auth' | 'public' | 'role';
+    roles?: UserRole[];
+    restrictionName?: string;
+};
+
+const Loader = () => (
+    <div className="fixed inset-0 bg-white/50 dark:bg-gray-900/50 flex items-center justify-center z-50">
+        <Loader2
+            className="animate-spin text-primary"
+            style={{width: '200px', height: '200px', opacity: 0.2, color: '#fc7f03'}}
+        />
+    </div>
+);
+
+
+
+const checkAccess = (
+    restriction: AccessRestriction,
+    accessToken: string | null,
+    userData: UserData | null
+): boolean => {
+    const isAuthenticated = !!accessToken && !!userData;
+
+    switch (restriction.type) {
+        case 'auth':
+            return isAuthenticated;
+        case 'public':
+            return !isAuthenticated;
+        case 'role':
+            return isAuthenticated &&
+                !!userData &&
+                !!restriction.roles?.includes(userData.role);
+        default:
+            return false;
+    }
+};
+
+const getAccessDeniedMessage = (restriction: AccessRestriction, userData: UserData | null): string => {
+    switch (restriction.type) {
+        case 'auth':
+            return "Musisz być zalogowany, aby uzyskać dostęp do tej strony.";
+        case 'public':
+            return "Ta strona jest dostępna tylko dla niezalogowanych użytkowników.";
+        case 'role':
+            if (!restriction.roles || !restriction.restrictionName) return "Brak wymaganych uprawnień.";
+
+            if (!userData) return "Musisz być zalogowany, aby uzyskać dostęp do tej strony.";
+
+            switch (restriction.restrictionName) {
+                case 'verified':
+                    return "Ta strona wymaga weryfikacji konta. Zweryfikuj swój adres email.";
+                case 'teacher':
+                    return "Ta strona jest dostępna tylko dla nauczycieli.";
+                case 'admin':
+                    return "Ta strona jest dostępna tylko dla administratorów.";
+                default:
+                    return "Brak wymaganych uprawnień.";
+            }
+        default:
+            return "Brak dostępu do tej strony.";
+    }
+};
+
+const withAccessControl = <P extends object>(
+    WrappedComponent: ComponentType<P>,
+    restriction: AccessRestriction
+) => {
+    return function WithAccessControlComponent(props: P) {
+        const router = useRouter();
+        const {accessToken, isInitialized: isAuthInitialized} = useAuthStore();
+        const {userData, isInitialized: isUserInitialized} = useUserStore();
+        const [isFirstMount, setIsFirstMount] = useState(true);
+        const lastValidContent = useRef<React.ReactNode>(null);
+
+        const areStoresInitialized = isAuthInitialized && isUserInitialized;
+        const hasAccess = checkAccess(restriction, accessToken, userData);
+
+        useEffect(() => {
+            setIsFirstMount(false);
+        }, []);
+
+        useEffect(() => {
+            if (!areStoresInitialized) return;
+
+            if (!hasAccess) {
+                const isAuthenticated = !!accessToken && !!userData;
+                const redirectPath = isAuthenticated ? '/' : '/auth';
+
+                toast({
+                    title: "Brak dostępu",
+                    description: getAccessDeniedMessage(restriction, userData),
+                    variant: "destructive",
+                    duration: 5000,
+                });
+
+                setTimeout(() => {
+                    router.replace(redirectPath);
+                }, 100);
+            }
+        }, [accessToken, userData, hasAccess, areStoresInitialized, router]);
+
+        if (hasAccess) {
+            lastValidContent.current = <WrappedComponent {...props} />;
+        }
+
+        if (isFirstMount && (!areStoresInitialized || !hasAccess)) {
+            return <Loader/>;
+        }
+
+        if (!areStoresInitialized) {
+            return (
+                <>
+                    {lastValidContent.current || <WrappedComponent {...props} />}
+                    <Loader/>
+                </>
+            );
+        }
+
+        if (!hasAccess && lastValidContent.current) {
+            return (
+                <>
+                    {lastValidContent.current}
+                    <Loader/>
+                </>
+            );
+        }
+
+        if (hasAccess) {
+            return <WrappedComponent {...props} />;
+        }
+
+        return <Loader/>;
+    };
+};
+
+export const withProtectedAuth = <P extends object>(Component: ComponentType<P>) =>
+    withAccessControl(Component, {
+        type: 'auth'
+    });
+
+export const withPublicAuth = <P extends object>(Component: ComponentType<P>) =>
+    withAccessControl(Component, {
+        type: 'public'
+    });
+
+export const withVerifiedAuth = <P extends object>(Component: ComponentType<P>) =>
+    withAccessControl(Component, {
+        type: 'role',
+        roles: ['VERIFIED', 'TEACHER', 'ADMIN'],
+        restrictionName: 'verified'
+    });
+
+export const withTeacherAuth = <P extends object>(Component: ComponentType<P>) =>
+    withAccessControl(Component, {
+        type: 'role',
+        roles: ['TEACHER', 'ADMIN'],
+        restrictionName: 'teacher'
+    });
+
+export const withAdminAuth = <P extends object>(Component: ComponentType<P>) =>
+    withAccessControl(Component, {
+        type: 'role',
+        roles: ['ADMIN'],
+        restrictionName: 'admin'
+    });

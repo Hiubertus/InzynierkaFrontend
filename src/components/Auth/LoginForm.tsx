@@ -8,15 +8,15 @@ import { Form } from "@/components/ui/form"
 import { AuthCard } from './AuthCard';
 import { FormFieldInput } from './FormFieldInput';
 import { loginSchema, LoginFormValues } from './schemas';
-import { login } from '@/lib/session/auth';
+import { login } from "@/lib/session/auth/login";
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUserStore } from '@/lib/stores/userStore';
 
 export const LoginForm: React.FC = memo(() => {
     const router = useRouter();
-    const { setAccessToken } = useAuthStore();
-    const { setUserData } = useUserStore();
+    const { setAccessToken, setInitialized: setAuthInitialized } = useAuthStore();
+    const { setUserData, setInitialized: setUserInitialized } = useUserStore();
     const [backendError, setBackendError] = useState<string | null>(null);
 
     const form = useForm<LoginFormValues>({
@@ -31,12 +31,13 @@ export const LoginForm: React.FC = memo(() => {
         try {
             const result = await login(values.email, values.password);
 
-            if (result.success && result.userData) {
+            if (result.success && result.accessToken && result.userData) {
+                setAuthInitialized(false);
+                setUserInitialized(false);
+                router.push('/');
                 setAccessToken(result.accessToken);
                 setUserData(result.userData);
-
-                router.push('/');
-            } else {
+            } else if (result.error) {
                 setBackendError(result.error);
             }
         } catch (error) {

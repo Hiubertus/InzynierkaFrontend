@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { Form } from "@/components/ui/form"
 import { AuthCard } from './AuthCard';
 import { FormFieldInput } from './FormFieldInput';
-import { registerSchema, RegisterFormValues } from './schemas';
+import {registerSchema, RegisterFormValues} from './schemas';
 
 export const RegisterForm: React.FC = memo(() => {
     const [backendError, setBackendError] = useState<string | null>(null);
@@ -29,11 +29,14 @@ export const RegisterForm: React.FC = memo(() => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(values),
+                body: JSON.stringify({
+                    email: values.email,
+                    password: values.password,
+                    fullName: values.fullName,
+                }),
             });
 
             if (response.ok) {
-                console.log('Registration successful');
                 setBackendError(null);
                 setIsSuccess(true);
                 form.reset();

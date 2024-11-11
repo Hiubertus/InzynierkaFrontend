@@ -1,5 +1,5 @@
-export const convertPictureToFile = (pictureBase64: string | null, pictureType: string | null): File | null => {
-    if (!pictureBase64 || !pictureType) {
+export const convertPictureToFile = (pictureBase64: string | null, mimeType: string | null): File | null => {
+    if (!pictureBase64 || !mimeType) {
         return null;
     }
     try {
@@ -9,8 +9,8 @@ export const convertPictureToFile = (pictureBase64: string | null, pictureType: 
             byteNumbers[i] = byteCharacters.charCodeAt(i);
         }
         const byteArray = new Uint8Array(byteNumbers);
-        const blob = new Blob([byteArray], { type: pictureType });
-        return new File([blob], 'profile-picture', { type: pictureType });
+        const blob = new Blob([byteArray], { type: mimeType });
+        return new File([blob], 'profile-picture', { type: mimeType });
     } catch (error) {
         console.error('Error converting picture to File:', error);
         return null;

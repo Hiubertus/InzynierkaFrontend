@@ -2,7 +2,6 @@
 
 import { cookies } from 'next/headers'
 
-
 export const getRefreshToken = async (): Promise<string | null> => {
     const cookieStore = cookies()
     const refreshTokenCookie = cookieStore.get('refresh_token')
@@ -11,6 +10,7 @@ export const getRefreshToken = async (): Promise<string | null> => {
         try {
             return refreshTokenCookie.value
         } catch {
+
             return null
         }
     }

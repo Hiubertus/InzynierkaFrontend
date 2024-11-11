@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getRefreshToken } from '@/lib/session/session';
+import { getRefreshToken } from "@/lib/session/auth/getRefreshToken";
 import axios from 'axios';
 
 export async function POST() {

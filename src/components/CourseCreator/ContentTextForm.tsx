@@ -134,12 +134,10 @@ export const ContentTextForm: React.FC<ContentTextFormProps> = ({
                                 <ColorPicker
                                     value={textColor}
                                     onChange={(color) => {
-                                        console.log('ContentTextForm: before setValue, color:', color);
                                         form.setValue(
                                             `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`,
                                             color
                                         );
-                                        console.log('ContentTextForm: after setValue:', form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.textColor`));
                                     }}
                                 />
                             </div>

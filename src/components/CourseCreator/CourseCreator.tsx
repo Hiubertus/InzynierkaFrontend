@@ -3,12 +3,17 @@ import {useFieldArray, useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CourseForm, formSchema } from "@/components/CourseCreator/formSchema";
 import { Button } from '@/components/ui/button';
-import {Plus, Eye, Edit} from 'lucide-react';
+import {Plus, Eye, Edit, Loader2} from 'lucide-react';
 import { Form,} from '@/components/ui/form';
 import { CourseDataForm } from "@/components/CourseCreator/CourseDataForm";
 import { ChapterCreator } from "@/components/CourseCreator/ChapterCreator";
 import { CoursePreview} from "@/components/CourseCreator/CoursePreview";
 import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
+import {useUserStore} from "@/lib/stores/userStore";
+import {useAuthStore} from "@/lib/stores/authStore";
+import {useRouter} from "next/navigation";
+import {toast} from "@/hooks/use-toast";
+import {createCourse} from "@/lib/course/createCourse";
 
 type PreviewMode = 'editor' | 'page' | 'content';
 
@@ -41,7 +46,10 @@ const PREVIEW_MODES = [
 
 export const CourseCreator = () => {
     const [previewMode, setPreviewMode] = useState<PreviewMode>('editor');
-
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const router = useRouter();
+    const { accessToken } = useAuthStore();
+    const { userData } = useUserStore();
     const form = useForm<CourseForm>({
         resolver: zodResolver(formSchema),
         defaultValues: INITIAL_FORM_VALUES
@@ -52,9 +60,126 @@ export const CourseCreator = () => {
         name: "chapters"
     });
 
-    const handleSubmit = () => {
-        console.log("test");
+    const handleSubmit = async (formData: CourseForm) => {
+        if (!accessToken || !userData) {
+            toast({
+                title: "Error",
+                description: "You must be logged in to create a course",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const data = new FormData();
+
+            data.append('banner', formData.banner as File);
+
+            const contentFiles: File[] = []
+            const courseData = {
+                name: formData.name,
+                description: formData.description,
+                price: formData.price,
+                duration: formData.duration,
+                tags: formData.tags,
+                chapters: formData.chapters.map((chapter, chapterIndex) => ({
+                    name: chapter.name,
+                    order: chapterIndex + 1,
+                    subchapters: chapter.subchapters.map((subchapter, subchapterIndex) => ({
+                        name: subchapter.name,
+                        order: subchapterIndex + 1,
+                        content: subchapter.content.map((content, contentIndex) => {
+                            const baseContent = {
+                                order: contentIndex + 1,
+                                type: content.type,
+                            };
+
+                            switch (content.type) {
+                                case 'text':
+                                    return {
+                                        ...baseContent,
+                                        text: content.text,
+                                        fontSize: content.fontSize,
+                                        bolder: content.bolder,
+                                        italics: content.italics,
+                                        underline: content.underline,
+                                        textColor: content.textColor,
+                                    };
+                                case 'image':
+                                case 'video':
+                                    if (content.file) {
+                                        contentFiles.push(content.file);
+                                        return {
+                                            ...baseContent
+                                        };
+                                    }
+                                    return baseContent;
+                                case 'quiz':
+                                    return {
+                                        ...baseContent,
+                                        quizContent: content.quizContent.map((quiz, qIndex) => ({
+                                            order: qIndex + 1,
+                                            question: quiz.question,
+                                            singleAnswer: quiz.singleAnswer,
+                                            answers: quiz.answers.map((answer, aIndex) => ({
+                                                order: aIndex + 1,
+                                                answer: answer.answer,
+                                                isCorrect: answer.isCorrect,
+                                            })),
+                                        })),
+                                    };
+                                default:
+                                    return baseContent;
+                            }
+                        }),
+                    })),
+                }))
+            };
+
+            data.append('courseData', JSON.stringify(courseData));
+            contentFiles.forEach(contentFile => {
+                data.append('contentFiles', contentFile as File)
+            })
+
+            const result = await createCourse(data, accessToken);
+
+            if (result.success) {
+                toast({
+                    title: "Success",
+                    description: "Course created successfully"
+                });
+                // if (userData.role !== 'TEACHER' && userData.role !== 'ADMIN') {
+                //     toast({
+                //         title: "Error",
+                //         description: "You don't have permission to create courses",
+                //         variant: "destructive"
+                //     });
+                //     return;
+                // }
+                if (result) {
+                    router.push(`/`);
+                } else {
+                    router.push('/');
+                }
+            } else {
+                toast({
+                    title: "Error",
+                    description: result.message || "Failed to create course",
+                    variant: "destructive"
+                });
+            }
+        } catch(err: unknown) {
+            toast({
+                title: "Error",
+                description: String(err),
+                variant: "destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
+
     const handleAddChapter = () => {
         appendChapter({
             name: `Chapter ${chapters.length + 1}`,
@@ -85,7 +210,7 @@ export const CourseCreator = () => {
 
     const renderEditor = () => (
         <Form {...form}>
-            <form onSubmit={handleSubmit} className="max-w-4xl mx-auto p-4">
+            <form onSubmit={form.handleSubmit(handleSubmit)} className="max-w-4xl mx-auto p-4">
                 <h1 className="text-2xl font-bold mb-4">Create a New Course</h1>
 
                 <CourseDataForm form={form} />
@@ -130,8 +255,19 @@ export const CourseCreator = () => {
                     Add Chapter
                 </Button>
 
-                <Button type="submit" className="w-full mt-4">
-                    Create Course
+                <Button
+                    type="submit"
+                    className="w-full mt-4"
+                    disabled={isSubmitting}
+                >
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating Course...
+                        </>
+                    ) : (
+                        'Create Course'
+                    )}
                 </Button>
             </form>
         </Form>

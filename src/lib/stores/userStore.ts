@@ -8,7 +8,7 @@ export interface UserData {
     fullName: string;
     picture: File | null;
     pictureBase64: string | null;
-    pictureType: string | null;
+    mimeType: string | null;
     description: string;
     badges: string[];
     badgesVisible: boolean;
@@ -17,17 +17,20 @@ export interface UserData {
 
 interface UserState {
     userData: UserData | null;
+    isInitialized: boolean;
     setUserData: (data: Omit<UserData, 'picture'> & { picture?: File | null }) => void;
     updateUserField: <K extends keyof UserData>(field: K, value: UserData[K]) => void;
     clearUserData: () => void;
+    setInitialized: (value: boolean) => void;
 }
 
 export const useUserStore = create<UserState>((set) => ({
     userData: null,
+    isInitialized: false,
     setUserData: (data) => {
 
         const pictureFile = data.pictureBase64 ?
-            convertPictureToFile(data.pictureBase64, data.pictureType) :
+            convertPictureToFile(data.pictureBase64, data.mimeType) :
             data.picture || null;
 
         const newUserData = {
@@ -36,9 +39,6 @@ export const useUserStore = create<UserState>((set) => ({
         };
 
         set({ userData: newUserData });
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('session_last_updated', Date.now().toString());
-        }
     },
     updateUserField: (field, value) =>
         set((state) => {
@@ -46,17 +46,14 @@ export const useUserStore = create<UserState>((set) => ({
 
             const newUserData = { ...state.userData, [field]: value };
 
-            if (field === 'pictureBase64' || field === 'pictureType') {
+            if (field === 'pictureBase64' || field === 'mimeType') {
                 newUserData.picture = convertPictureToFile(
                     newUserData.pictureBase64,
-                    newUserData.pictureType
+                    newUserData.mimeType
                 );
-            }
-
-            if (typeof window !== 'undefined') {
-                localStorage.setItem('session_last_updated', Date.now().toString());
             }
             return { userData: newUserData };
         }),
-    clearUserData: () => set({ userData: null }),
+    clearUserData: () => set({ userData: null, isInitialized: false }),
+    setInitialized: (value) => set({ isInitialized: value })
 }));

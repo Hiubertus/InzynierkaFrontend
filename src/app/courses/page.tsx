@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { CourseCard} from "@/components/Course/CourseCard"
 import {CourseData} from "@/models/CourseData";
 
-const courses: CourseData = [
+const courses = [
     {
         id: 1,
         name: "Introduction to React",
@@ -33,11 +33,11 @@ const courses: CourseData = [
 export default function Page() {
     const [searchTerm, setSearchTerm] = useState("")
 
-    const filteredCourses = courses.filter(course =>
-        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    )
+    // const filteredCourses = courses.filter(course =>
+    //     course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //     course.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    //     course.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    // )
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -51,9 +51,9 @@ export default function Page() {
                 />
             </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredCourses.map(course => (
-                    <CourseCard key={course.id} course={course} />
-                ))}
+                {/*{courses.map(course => (*/}
+                {/*    <CourseCard key={course.id} course={course}  userProfile=/>*/}
+                {/*))}*/}
             </div>
         </div>
     )
