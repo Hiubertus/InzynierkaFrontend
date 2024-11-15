@@ -39,7 +39,7 @@ export const getInitialData = async () => {
                 badgesVisible: userData.badgesVisible ?? false,
                 email: userData.email,
                 points: userData.points,
-                role: userData.role,
+                roles: userData.roles,
             }
         };
     } catch (error) {

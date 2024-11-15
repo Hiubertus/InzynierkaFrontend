@@ -13,7 +13,7 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) =
             <Button
                 onClick={() => appendContent({
                     type: "text",
-                    text: "Add Text",
+                    text: "",
                     fontSize: "small",
                     bolder: false,
                     italics: false,

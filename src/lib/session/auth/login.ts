@@ -39,7 +39,7 @@ export const login = async (email: string, password: string): Promise<LoginRespo
                     badgesVisible: data.data.user.badgesVisible ?? false,
                     email: data.data.user.email,
                     points: data.data.user.points,
-                    role: data.data.user.role,
+                    roles: data.data.user.role,
                 }
             };
         } else {

@@ -2,7 +2,6 @@
 
 import {UserProfile} from "@/components";
 import {withProtectedAuth,
-    // withTeacherAuth
 } from "@/lib/session/withAuth";
 
 function Page() {
@@ -10,4 +9,3 @@ function Page() {
 }
 
 export default withProtectedAuth(Page)
-// export default withTeacherAuth(Page)

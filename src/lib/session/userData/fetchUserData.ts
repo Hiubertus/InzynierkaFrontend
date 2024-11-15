@@ -30,7 +30,7 @@ export const fetchUserData = async (accessToken: string | null): Promise<UserDat
             badgesVisible: data.badgesVisible ?? false,
             email: data.email,
             points: data.points,
-            role: data.role,
+            roles: data.roles,
         };
     } catch (error) {
 

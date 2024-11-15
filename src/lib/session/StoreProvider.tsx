@@ -2,7 +2,7 @@
 
 import {ReactNode, useCallback, useEffect} from 'react';
 import {useAuthStore} from '@/lib/stores/authStore';
-import {useUserStore} from '@/lib/stores/userStore';
+import {Roles, useUserStore} from '@/lib/stores/userStore';
 import {toast} from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 
@@ -19,7 +19,7 @@ type StoreProviderProps = {
         description: string;
         badges: string[];
         badgesVisible: boolean;
-        role: 'USER' | 'VERIFIED' | 'TEACHER' | 'ADMIN';
+        roles: Roles[];
     } | null;
     children: ReactNode;
 };
@@ -76,7 +76,7 @@ export function StoreProvider({
 
 
     useEffect(() => {
-        if (initialAccessToken && initialUserData?.role === 'USER') {
+        if (initialAccessToken && initialUserData?.roles?.includes(Roles.USER)) {
             toast({
                 title: "Weryfikacja email wymagana",
                 description: "Prosze zweryfikować email by móc korzystać z większej ilości usług.",
@@ -93,31 +93,33 @@ export function StoreProvider({
                 ),
             });
         }
-    }, [handleVerificationRequest, initialAccessToken, initialUserData?.role]);
+    }, [handleVerificationRequest, initialAccessToken, initialUserData?.roles]);
 
     useEffect(() => {
-        const refreshTokenInterval = setInterval(async () => {
-            try {
-                const response = await fetch('/api/auth/refresh', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
+        if (initialAccessToken && initialUserData?.roles?.includes(Roles.USER)) {
+            const refreshTokenInterval = setInterval(async () => {
+                try {
+                    const response = await fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
 
-                if (!response.ok) {
-                    throw new Error('Failed to refresh token');
+                    if (!response.ok) {
+                        throw new Error('Failed to refresh token');
+                    }
+
+                    const data = await response.json();
+                    setAccessToken(data.accessToken);
+                } catch (error) {
+                    console.error('Error refreshing token:', error);
+                    clearAuth();
+                    clearUserData();
                 }
+            }, 14 * 60 * 1000);
 
-                const data = await response.json();
-                setAccessToken(data.accessToken);
-            } catch (error) {
-                console.error('Error refreshing token:', error);
-                clearAuth();
-                clearUserData();
-            }
-        }, 14 * 60 * 1000);
-
-        return () => clearInterval(refreshTokenInterval);
-    }, [clearAuth, clearUserData, setAccessToken]);
+            return () => clearInterval(refreshTokenInterval);
+        }
+    }, [clearAuth, clearUserData, initialAccessToken, initialUserData?.roles, setAccessToken]);
 
     useEffect(() => {
         function handleStorageChange(e: StorageEvent) {

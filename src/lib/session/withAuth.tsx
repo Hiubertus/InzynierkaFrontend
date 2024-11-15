@@ -3,16 +3,15 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useRouter} from 'next/navigation';
 import {useAuthStore} from '@/lib/stores/authStore';
-import {UserData, useUserStore} from '@/lib/stores/userStore';
+import {Roles, UserData, useUserStore} from '@/lib/stores/userStore';
 import {Loader2} from "lucide-react";
 import {toast} from "@/hooks/use-toast";
 
 type ComponentType<P> = React.ComponentType<P>;
-type UserRole = 'USER' | 'VERIFIED' | 'TEACHER' | 'ADMIN';
 
 type AccessRestriction = {
     type: 'auth' | 'public' | 'role';
-    roles?: UserRole[];
+    roles?: Roles[];
     restrictionName?: string;
 };
 
@@ -40,9 +39,10 @@ const checkAccess = (
         case 'public':
             return !isAuthenticated;
         case 'role':
-            return isAuthenticated &&
-                !!userData &&
-                !!restriction.roles?.includes(userData.role);
+            if (!isAuthenticated || !userData || !restriction.roles) return false;
+            return restriction.roles.every(requiredRole =>
+                userData.roles.includes(requiredRole)
+            );
         default:
             return false;
     }
@@ -159,20 +159,20 @@ export const withPublicAuth = <P extends object>(Component: ComponentType<P>) =>
 export const withVerifiedAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
         type: 'role',
-        roles: ['VERIFIED', 'TEACHER', 'ADMIN'],
+        roles: [Roles.VERIFIED, Roles.TEACHER, Roles.ADMIN],
         restrictionName: 'verified'
     });
 
 export const withTeacherAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
         type: 'role',
-        roles: ['TEACHER', 'ADMIN'],
+        roles: [Roles.TEACHER, Roles.ADMIN],
         restrictionName: 'teacher'
     });
 
 export const withAdminAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
         type: 'role',
-        roles: ['ADMIN'],
+        roles: [Roles.ADMIN],
         restrictionName: 'admin'
     });

@@ -99,7 +99,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
         description: "test",
         badges: [],
         picture: "",
-        achievementsVisible: false
+        badgesVisible: false
     };
 
     return (

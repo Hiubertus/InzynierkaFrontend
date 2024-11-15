@@ -7,8 +7,6 @@ import axios from "axios";
 import {initiateChangeEmail} from "@/lib/session/auth/initiateChangeEmail";
 import {completeChangeEmail} from "@/lib/session/auth/completeChangeEmail";
 
-import {UserData} from "@/lib/stores/userStore";
-
 interface EmailFormProps {
     email: string;
     accessToken: string;

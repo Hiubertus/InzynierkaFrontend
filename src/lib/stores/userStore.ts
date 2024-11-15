@@ -1,6 +1,14 @@
 import { create } from 'zustand'
 import {convertPictureToFile} from "@/lib/utils/conversionFunction";
 
+
+export enum Roles {
+    USER,
+    VERIFIED,
+    TEACHER,
+    ADMIN
+}
+
 export interface UserData {
     id: number;
     email: string;
@@ -12,7 +20,7 @@ export interface UserData {
     description: string;
     badges: string[];
     badgesVisible: boolean;
-    role: 'USER' | 'VERIFIED' | 'TEACHER' | 'ADMIN';
+    roles: Roles[];
 }
 
 interface UserState {

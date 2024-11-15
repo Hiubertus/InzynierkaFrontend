@@ -7,6 +7,7 @@ interface ProfileStore {
     error: string | null;
 
     setProfiles: (profiles: ProfileData[]) => void;
+    addProfile: (profile: ProfileData) => void;
     setLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
 }
@@ -17,9 +18,11 @@ const useProfileStore = create<ProfileStore>((set) => ({
     error: null,
 
     setProfiles: (profiles) => set({ profiles }),
+    addProfile: (profile) => set((state) => ({
+        profiles: [...state.profiles, profile]
+    })),
     setLoading: (isLoading) => set({ isLoading }),
     setError: (error) => set({ error }),
-
 }))
 
 export default useProfileStore
