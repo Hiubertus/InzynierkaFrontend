@@ -4,6 +4,7 @@ import useProfileStore from "@/lib/stores/profileStore";
 import { ProfileData } from "@/models/front_models/ProfileData";
 import {fetchCoursesCards} from "@/lib/course/fetchCoursesCards";
 import {convertPictureToFile} from "@/lib/utils/conversionFunction";
+import {CoursesDataFetched} from "@/models/backend_models/CoursesDataFetched";
 
 interface CourseStore {
     courses: CourseData[];
@@ -24,7 +25,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
     fetchCourses: async () => {
         set({ isLoading: true, error: null });
         try {
-            const allData = await fetchCoursesCards();
+            const allData: CoursesDataFetched = await fetchCoursesCards();
 
             const profileStore = useProfileStore.getState();
             const currentProfiles = profileStore.profiles;
@@ -32,44 +33,46 @@ const useCourseStore = create<CourseStore>((set, get) => ({
 
             const newCourses: CourseData[] = [];
 
-            allData.forEach((course) => {
-                // Sprawdzanie i dodawanie profilu
+            allData.courses.forEach((data) => {
+
+                const ownerData = data.ownerData;
+                const courseData = data.courseData;
                 const profileExists = currentProfiles.some(
-                    profile => profile.id === course.ownerData.id
+                    profile => profile.id === ownerData.id
                 );
 
                 if (!profileExists) {
                     const newProfile: ProfileData = {
-                        id: course.ownerData.id,
-                        fullName: course.ownerData.fullName,
-                        picture: convertPictureToFile(course.ownerData.picture.data, course.ownerData.picture.mimeType),
-                        description: course.ownerData.description,
-                        badges: course.ownerData.badges,
-                        badgesVisible: course.ownerData.badgesVisible,
-                        createdAt: course.ownerData.createdAt,
+                        id: ownerData.id,
+                        fullName: ownerData.fullName,
+                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        description: ownerData.description,
+                        badges: ownerData.badges,
+                        badgesVisible: ownerData.badgesVisible,
+                        createdAt: new Date(ownerData.createdAt),
                     };
                     profileStore.addProfile(newProfile);
                 }
 
-                // Sprawdzanie i dodawanie kursu
                 const courseExists = currentCourses.some(
-                    existingCourse => existingCourse.id === course.courseData.id
+                    existingCourse => existingCourse.id === courseData.id
                 );
 
                 if (!courseExists) {
                     const newCourse: CourseData = {
-                        id: course.courseData.id,
-                        name: course.courseData.name,
-                        banner: convertPictureToFile(course.courseData.banner.data, course.courseData.banner.mimeType),
-                        price: course.courseData.price,
-                        review: course.courseData.review,
-                        duration: course.courseData.duration,
-                        createdAt: new Date(course.courseData.createdAt),
-                        updatedAt: new Date(course.courseData.updatedAt),
-                        tags: course.courseData.tags,
-                        reviewNumber: course.courseData.reviewNumber,
-                        ownerId: course.courseData.ownerId,
-                        description: course.courseData.description,
+                        id: courseData.id,
+                        name: courseData.name,
+                        banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
+                        mimeType: courseData.banner.mimeType,
+                        price: courseData.price,
+                        review: courseData.review,
+                        duration: courseData.duration,
+                        createdAt: new Date(courseData.createdAt),
+                        updatedAt: new Date(courseData.updatedAt),
+                        tags: courseData.tags,
+                        reviewNumber: courseData.reviewNumber,
+                        ownerId: courseData.ownerId,
+                        description: courseData.description,
                         chapters: []
                     };
                     newCourses.push(newCourse);

@@ -2,7 +2,7 @@ import React from 'react';
 import { Course } from "@/components/Course/Course";
 import { CourseForm } from "@/components/CourseCreator/formSchema";
 import {cMedia, CourseData, cQuiz, cText} from "@/models/front_models/CourseData";
-import CourseFrontPage from "@/components/Course/CourseFrontPage";
+import { CourseFrontPage }from "@/components/Course/CourseFrontPage";
 import {ProfileData} from "@/models/front_models/ProfileData";
 
 export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 'page' | 'content' }) => {
@@ -11,8 +11,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
             id: 0,
             name: form.name,
             banner: form.banner,
-            bannerType: form.bannerType,
-            bannerMediaType: form.bannerMediaType,
+            mimeType: form.bannerMediaType,
             price: form.price || 0,
             review: 0,
             reviewNumber: 0,
@@ -98,8 +97,9 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
         fullName: "Hubert Ozarowski",
         description: "test",
         badges: [],
-        picture: "",
-        badgesVisible: false
+        picture: null,
+        badgesVisible: false,
+        createdAt: new Date(),
     };
 
     return (

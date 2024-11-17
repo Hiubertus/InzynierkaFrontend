@@ -2,6 +2,7 @@ export interface CourseData {
     id: number;
     name: string;
     banner: File | null;
+    mimeType: string;
     price: number;
     review: number;
     duration: number;

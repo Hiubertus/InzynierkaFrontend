@@ -1,4 +1,4 @@
-import CourseCard from "@/components/Course/CourseCard";
+import { CourseCard } from "@/components/Course/CourseCard";
 import {CourseCardSkeleton} from "@/components/Course/CourseCardSkeleton";
 import {CourseData} from "@/models/front_models/CourseData";
 import {ProfileData} from "@/models/front_models/ProfileData";

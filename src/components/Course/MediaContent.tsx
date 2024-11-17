@@ -4,14 +4,13 @@ import {DialogContent} from '@/components/ui/dialog';
 import {Play} from "lucide-react"
 
 type Props = {
-    file: File | null,
-    mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm',
-    type: 'image' | 'video',
+    file: File | null
+    mimeType: string
 }
 
 export const MediaContent = ({content}: {content : Props}) => {
     const [isOpen, setIsOpen] = useState(false);
-    const isImage = content.type === 'image';
+    const isImage = content.mimeType.startsWith('image/');
 
     return (
         <div>
@@ -35,7 +34,7 @@ export const MediaContent = ({content}: {content : Props}) => {
                                     muted
                                     style={{pointerEvents: 'none'}}
                                 >
-                                    <source src={URL.createObjectURL(content.file)} type={content.mediaType}/>
+                                    <source src={URL.createObjectURL(content.file)} type={content.mimeType}/>
                                     Your browser does not support the video tag.
                                 </video>
                                 <div className="absolute inset-0 flex items-center justify-center">
@@ -61,7 +60,7 @@ export const MediaContent = ({content}: {content : Props}) => {
                                         controls
                                         autoPlay
                                     >
-                                        <source src={URL.createObjectURL(content.file)} type={content.mediaType}/>
+                                        <source src={URL.createObjectURL(content.file)} type={content.mimeType}/>
                                         Your browser does not support the video tag.
                                     </video>
                                 )}
@@ -81,5 +80,3 @@ export const MediaContent = ({content}: {content : Props}) => {
         </div>
     );
 };
-
-export default MediaContent;
