@@ -2,12 +2,7 @@ import { create } from 'zustand'
 import {convertPictureToFile} from "@/lib/utils/conversionFunction";
 
 
-export enum Roles {
-    USER,
-    VERIFIED,
-    TEACHER,
-    ADMIN
-}
+export type Roles = 'USER' | 'ADMIN' | 'VERIFIED' | 'TEACHER'
 
 export interface UserData {
     id: number;

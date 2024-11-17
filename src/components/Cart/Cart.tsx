@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
 import { PointsCard } from "@/components/Cart/PointsCard";
 import { PointsSkeleton } from "@/components/Cart/PointsSkeleton";
-import type { PointOffer, PointsApiResponse} from "@/models/pointsData";
+import type { PointOffer, PointsApiResponse} from "@/models/backend_models/pointsData";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useUserStore } from "@/lib/stores/userStore";
 

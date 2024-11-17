@@ -2,8 +2,8 @@ import { Calendar, DollarSign, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import {CourseData} from "@/models/CourseData";
-import {ProfileData} from "@/models/ProfileData";
+import {CourseData} from "@/models/front_models/CourseData";
+import {ProfileData} from "@/models/front_models/ProfileData";
 
 export const CourseCard = ({ course, userProfile }: {course: CourseData, userProfile: ProfileData}) => {
     return (
@@ -25,7 +25,8 @@ export const CourseCard = ({ course, userProfile }: {course: CourseData, userPro
                     </div>
                     <div className="flex items-center text-sm">
                         <Calendar className="h-4 w-4 mr-1" />
-                        {course.createdAt.toLocaleDateString()}
+
+                        {String(course.createdAt)}
                     </div>
                 </div>
                 <div className="flex flex-wrap gap-1 mb-2">

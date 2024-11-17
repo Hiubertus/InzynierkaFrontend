@@ -1,4 +1,4 @@
-import {cQuiz} from "@/models/CourseData";
+import {cQuiz} from "@/models/front_models/CourseData";
 
 export const QuizContent = ({ content }: { content: cQuiz }) => (
     <div className="bg-gray-100 p-4 rounded-lg shadow">

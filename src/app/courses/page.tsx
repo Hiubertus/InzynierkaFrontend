@@ -1,18 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Input } from "@/components/ui/input"
-import { CourseCard } from "@/components/Course/CourseCard"
+import {useState, useEffect} from 'react'
+import {Input} from "@/components/ui/input"
+import {CourseCard} from "@/components/Course/CourseCard"
 
 import useCourseStore from "@/lib/stores/courseStore";
 import useProfileStore from "@/lib/stores/profileStore";
+import {CourseGrid} from "@/components/Course/CoursesGrid";
 
 export default function Page() {
     const [searchTerm, setSearchTerm] = useState("")
-    const { courses, isLoading, error, fetchCourses } = useCourseStore()
-    const { profiles } = useProfileStore()
+    const {courses, isLoading, error, fetchCourses} = useCourseStore()
+    const {profiles} = useProfileStore()
 
     useEffect(() => {
+
         const fetchData = async () => {
             try {
                 await fetchCourses();
@@ -38,18 +40,7 @@ export default function Page() {
                     className="w-full"
                 />
             </div>
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {/*{courses.map(course => {*/}
-                {/*    const ownerProfile = profiles.find(profile => profile.id === course.ownerId);*/}
-                {/*    return (*/}
-                {/*        <CourseCard*/}
-                {/*            key={course.id}*/}
-                {/*            course={course}*/}
-                {/*            userProfile={ownerProfile!}*/}
-                {/*        />*/}
-                {/*    );*/}
-                {/*})}*/}
-            </div>
+                <CourseGrid courses={courses} profiles={profiles} isLoading={isLoading} />
         </div>
     )
 }

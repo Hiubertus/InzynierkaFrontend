@@ -5,8 +5,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import {CourseData} from "@/models/CourseData";
-import {ProfileData} from "@/models/ProfileData";
+import {CourseData} from "@/models/front_models/CourseData";
+import {ProfileData} from "@/models/front_models/ProfileData";
 import MediaContent from "@/components/Course/MediaContent";
 
 interface CoursePageProps {

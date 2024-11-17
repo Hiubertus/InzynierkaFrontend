@@ -5,7 +5,7 @@ import {
     AccordionItem,
     AccordionTrigger,
 } from "@/components/ui/accordion";
-import { ChapterData, SubChapterData } from "@/models/CourseData";
+import { ChapterData, SubChapterData } from "@/models/front_models/CourseData";
 import { Chapter } from "@/components/Course/Chapter";
 import { SubChapterList } from "@/components/Course/SubChapterList";
 

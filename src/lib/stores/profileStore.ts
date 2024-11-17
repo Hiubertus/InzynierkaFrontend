@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { ProfileData } from '@/models/ProfileData'
+import { ProfileData } from '@/models/front_models/ProfileData'
 
 interface ProfileStore {
     profiles: ProfileData[];

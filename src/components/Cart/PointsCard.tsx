@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { PointOffer} from "@/models/pointsData";
+import type { PointOffer} from "@/models/backend_models/pointsData";
 
 interface PointsCardProps {
     offer: PointOffer;

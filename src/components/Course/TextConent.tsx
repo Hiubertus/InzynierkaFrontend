@@ -1,4 +1,4 @@
-import {cText} from "@/models/CourseData";
+import {cText} from "@/models/front_models/CourseData";
 
 export const TextContent = ({ content }: { content: cText }) => (
     <p className={`whitespace-pre-wrap

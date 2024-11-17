@@ -24,7 +24,7 @@ export async function POST() {
         );
 
         return NextResponse.json({
-            accessToken: response.data.data.accessToken
+            accessToken: response.data.accessToken
         });
     } catch (error) {
         console.error('Error in refresh API route:', error);

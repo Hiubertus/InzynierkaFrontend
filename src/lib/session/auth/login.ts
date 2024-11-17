@@ -2,6 +2,7 @@
 
 import {setRefreshToken} from "@/lib/session/auth/setRefreshToken";
 import {UserData} from "@/lib/stores/userStore";
+import axios from "axios";
 
 interface LoginResponse {
     success: boolean;
@@ -12,39 +13,41 @@ interface LoginResponse {
 
 export const login = async (email: string, password: string): Promise<LoginResponse> => {
     try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/login`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email, password }),
-        });
+        const response = await axios.post(
+            `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/login`,
+            { email, password },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }
+        );
 
-        if (response.ok) {
-            const data = await response.json();
+        if (response.data.data.user) {
+            const data = response.data.data.user
 
-            setRefreshToken(data.data.user.refreshToken);
+            await setRefreshToken(data.refreshToken);
+
 
             return {
                 success: true,
-                accessToken: data.data.user.accessToken,
+                accessToken: data.accessToken,
                 userData: {
-                    id: data.data.user.id,
-                    fullName: data.data.user.fullName,
+                    id: data.id,
+                    fullName: data.fullName,
                     picture: null,
-                    pictureBase64: data.data.user.picture,
-                    mimeType: data.data.user.mimeType,
-                    description: data.data.user.description ?? '',
-                    badges: data.data.user.badges ?? [],
-                    badgesVisible: data.data.user.badgesVisible ?? false,
-                    email: data.data.user.email,
-                    points: data.data.user.points,
-                    roles: data.data.user.role,
+                    pictureBase64: data.picture.data ,
+                    mimeType: data.picture.mimeType,
+                    description: data.description ?? '',
+                    badges: data.badges ?? [],
+                    badgesVisible: data.badgesVisible ?? false,
+                    email: data.email,
+                    points: data.points,
+                    roles: data.roles
                 }
             };
         } else {
-            const errorData = await response.json();
-            return { success: false, error: errorData.message || 'Login failed' };
+            return { success: false, error: 'Login failed' };
         }
     } catch (error) {
         console.error('Error during login:', error);

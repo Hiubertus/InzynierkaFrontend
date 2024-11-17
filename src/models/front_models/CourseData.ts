@@ -2,8 +2,6 @@ export interface CourseData {
     id: number;
     name: string;
     banner: File | null;
-    bannerMediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
-    bannerType: 'image' | 'video';
     price: number;
     review: number;
     duration: number;

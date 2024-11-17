@@ -1,7 +1,7 @@
 "use server"
 
 import axios from "axios";
-import { UserData } from "@/lib/stores/userStore";
+import {Roles, UserData} from "@/lib/stores/userStore";
 
 export const fetchUserData = async (accessToken: string | null): Promise<UserData | null> => {
     if (!accessToken) {
@@ -23,14 +23,14 @@ export const fetchUserData = async (accessToken: string | null): Promise<UserDat
             id: data.id,
             fullName: data.fullName,
             picture: null,
-            pictureBase64: data.picture,
-            mimeType: data.mimeType,
+            pictureBase64: data.picture.data,
+            mimeType: data.picture.mimeType,
             description: data.description ?? '',
             badges: data.badges ?? [],
             badgesVisible: data.badgesVisible ?? false,
             email: data.email,
             points: data.points,
-            roles: data.roles,
+            roles: data.roles
         };
     } catch (error) {
 

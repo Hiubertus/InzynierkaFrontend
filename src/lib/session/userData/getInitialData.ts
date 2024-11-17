@@ -3,6 +3,7 @@
 import {getRefreshToken} from "@/lib/session/auth/getRefreshToken";
 import {getAccessToken} from "@/lib/session/auth/getAccessToken";
 import {getUserData} from "@/lib/session/userData/getUserData";
+import {Roles} from "@/lib/stores/userStore";
 
 export const getInitialData = async () => {
     const token = await getRefreshToken();
@@ -32,14 +33,14 @@ export const getInitialData = async () => {
                 id: userData.id,
                 fullName: userData.fullName,
                 picture: null,
-                pictureBase64: userData.picture,
-                mimeType: userData.mimeType,
+                pictureBase64: userData.picture.data,
+                mimeType: userData.picture.mimeType,
                 description: userData.description ?? '',
                 badges: userData.badges ?? [],
                 badgesVisible: userData.badgesVisible ?? false,
                 email: userData.email,
                 points: userData.points,
-                roles: userData.roles,
+                roles: userData.roles
             }
         };
     } catch (error) {

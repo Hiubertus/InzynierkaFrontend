@@ -40,6 +40,7 @@ const checkAccess = (
             return !isAuthenticated;
         case 'role':
             if (!isAuthenticated || !userData || !restriction.roles) return false;
+
             return restriction.roles.every(requiredRole =>
                 userData.roles.includes(requiredRole)
             );
@@ -159,20 +160,20 @@ export const withPublicAuth = <P extends object>(Component: ComponentType<P>) =>
 export const withVerifiedAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
         type: 'role',
-        roles: [Roles.VERIFIED, Roles.TEACHER, Roles.ADMIN],
+        roles: ['VERIFIED', 'ADMIN', 'TEACHER'],
         restrictionName: 'verified'
     });
 
 export const withTeacherAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
         type: 'role',
-        roles: [Roles.TEACHER, Roles.ADMIN],
+        roles: ['ADMIN', 'TEACHER'],
         restrictionName: 'teacher'
     });
 
 export const withAdminAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
         type: 'role',
-        roles: [Roles.ADMIN],
+        roles: ['ADMIN'],
         restrictionName: 'admin'
     });

@@ -1,5 +1,5 @@
 import { ChapterAccordion } from "@/components/Course/ChapterAccordion";
-import { CourseData, cQuiz, cText, cMedia, SubChapterData } from "@/models/CourseData";
+import { CourseData, cQuiz, cText, cMedia, SubChapterData } from "@/models/front_models/CourseData";
 import { useState } from "react";
 import { QuizContent } from "@/components/Course/QuizContent";
 import { TextContent } from "@/components/Course/TextConent";

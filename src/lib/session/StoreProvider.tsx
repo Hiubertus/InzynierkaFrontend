@@ -74,9 +74,8 @@ export function StoreProvider({
         }
     }, [initialAccessToken]);
 
-
     useEffect(() => {
-        if (initialAccessToken && initialUserData?.roles?.includes(Roles.USER)) {
+        if (initialAccessToken && initialUserData?.roles?.includes('USER')) {
             toast({
                 title: "Weryfikacja email wymagana",
                 description: "Prosze zweryfikować email by móc korzystać z większej ilości usług.",
@@ -96,7 +95,7 @@ export function StoreProvider({
     }, [handleVerificationRequest, initialAccessToken, initialUserData?.roles]);
 
     useEffect(() => {
-        if (initialAccessToken && initialUserData?.roles?.includes(Roles.USER)) {
+        if (initialAccessToken && initialUserData?.roles?.includes('USER')) {
             const refreshTokenInterval = setInterval(async () => {
                 try {
                     const response = await fetch('/api/auth/refresh', {

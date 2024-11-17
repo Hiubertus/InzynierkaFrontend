@@ -1,4 +1,4 @@
-import { SubChapterData } from "@/models/CourseData";
+import { SubChapterData } from "@/models/front_models/CourseData";
 import React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 

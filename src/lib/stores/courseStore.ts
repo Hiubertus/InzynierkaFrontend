@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import { CourseData } from '@/models/CourseData'
-import axios from 'axios'
+import { CourseData } from '@/models/front_models/CourseData'
 import useProfileStore from "@/lib/stores/profileStore";
-import { ProfileData } from "@/models/ProfileData";
+import { ProfileData } from "@/models/front_models/ProfileData";
+import {fetchCoursesCards} from "@/lib/course/fetchCoursesCards";
+import {convertPictureToFile} from "@/lib/utils/conversionFunction";
 
 interface CourseStore {
     courses: CourseData[];
@@ -23,36 +24,55 @@ const useCourseStore = create<CourseStore>((set, get) => ({
     fetchCourses: async () => {
         set({ isLoading: true, error: null });
         try {
-            console.log("kek")
-            const response = await axios.get(
-                `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/course/get`
-            );
-
-            const allData = response.data.data.courses;
-
+            const allData = await fetchCoursesCards();
 
             const profileStore = useProfileStore.getState();
             const currentProfiles = profileStore.profiles;
             const currentCourses = get().courses;
 
             const newCourses: CourseData[] = [];
-            console.log("still good")
-            allData.forEach((course: { courseData: CourseData, ownerData: ProfileData }) => {
 
+            allData.forEach((course) => {
+                // Sprawdzanie i dodawanie profilu
                 const profileExists = currentProfiles.some(
                     profile => profile.id === course.ownerData.id
                 );
-                console.log("awww dang it")
+
                 if (!profileExists) {
-                    profileStore.addProfile(course.ownerData);
+                    const newProfile: ProfileData = {
+                        id: course.ownerData.id,
+                        fullName: course.ownerData.fullName,
+                        picture: convertPictureToFile(course.ownerData.picture.data, course.ownerData.picture.mimeType),
+                        description: course.ownerData.description,
+                        badges: course.ownerData.badges,
+                        badgesVisible: course.ownerData.badgesVisible,
+                        createdAt: course.ownerData.createdAt,
+                    };
+                    profileStore.addProfile(newProfile);
                 }
 
+                // Sprawdzanie i dodawanie kursu
                 const courseExists = currentCourses.some(
                     existingCourse => existingCourse.id === course.courseData.id
                 );
-                console.log("awww dang it kek")
+
                 if (!courseExists) {
-                    newCourses.push(course.courseData);
+                    const newCourse: CourseData = {
+                        id: course.courseData.id,
+                        name: course.courseData.name,
+                        banner: convertPictureToFile(course.courseData.banner.data, course.courseData.banner.mimeType),
+                        price: course.courseData.price,
+                        review: course.courseData.review,
+                        duration: course.courseData.duration,
+                        createdAt: new Date(course.courseData.createdAt),
+                        updatedAt: new Date(course.courseData.updatedAt),
+                        tags: course.courseData.tags,
+                        reviewNumber: course.courseData.reviewNumber,
+                        ownerId: course.courseData.ownerId,
+                        description: course.courseData.description,
+                        chapters: []
+                    };
+                    newCourses.push(newCourse);
                 }
             });
 
@@ -62,7 +82,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             return updatedCourses;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Wystąpił błąd podczas pobierania kursów';
-            set({ error: errorMessage });
+            set({ error: null });
             throw new Error(errorMessage);
         } finally {
             set({ isLoading: false });

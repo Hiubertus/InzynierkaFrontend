@@ -1,9 +1,9 @@
 import React from 'react';
 import { Course } from "@/components/Course/Course";
 import { CourseForm } from "@/components/CourseCreator/formSchema";
-import {cMedia, CourseData, cQuiz, cText} from "@/models/CourseData";
+import {cMedia, CourseData, cQuiz, cText} from "@/models/front_models/CourseData";
 import CourseFrontPage from "@/components/Course/CourseFrontPage";
-import {ProfileData} from "@/models/ProfileData";
+import {ProfileData} from "@/models/front_models/ProfileData";
 
 export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 'page' | 'content' }) => {
     const convertFormToCourseData = (form: CourseForm): CourseData => {
