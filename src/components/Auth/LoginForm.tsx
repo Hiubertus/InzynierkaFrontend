@@ -12,6 +12,7 @@ import { login } from "@/lib/session/auth/login";
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUserStore } from '@/lib/stores/userStore';
+import {ROUTES} from "@/components/Navbar/routes";
 
 export const LoginForm: React.FC = memo(() => {
     const router = useRouter();
@@ -34,7 +35,7 @@ export const LoginForm: React.FC = memo(() => {
             if (result.success && result.accessToken && result.userData) {
                 setAuthInitialized(false);
                 setUserInitialized(false);
-                router.push('/');
+                router.push(ROUTES.HOME);
                 setAccessToken(result.accessToken);
                 setUserData(result.userData);
             } else if (result.error) {

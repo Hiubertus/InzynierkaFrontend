@@ -1,7 +1,7 @@
 "use server"
 
 import axios from "axios";
-import {Roles, UserData} from "@/lib/stores/userStore";
+import {UserData} from "@/lib/stores/userStore";
 
 export const fetchUserData = async (accessToken: string | null): Promise<UserData | null> => {
     if (!accessToken) {

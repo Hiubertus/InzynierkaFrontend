@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { Button } from "@/components/ui/button";
+import {Button} from "@/components/ui/button";
 import {Mountain} from "lucide-react";
 import {ROUTES} from "@/components/Navbar/routes";
+import {Roles} from "@/lib/stores/userStore";
 
 
-
-export const NavLinks = () => {
+export const NavLinks = ({roles}: { roles: Roles[] | undefined }) => {
     return (
         <div className="flex items-center space-x-4">
             <Link href={ROUTES.HOME} prefetch={true} className="flex-shrink-0">
@@ -22,6 +22,14 @@ export const NavLinks = () => {
                     Tasks
                 </Button>
             </Link>
+            { roles?.includes('USER') && !roles?.includes('TEACHER') &&
+                (<Link href={ROUTES.BECOME_TEACHER}>
+                    <Button variant="ghost">
+                        Become Teacher
+                    </Button>
+                </Link>)
+            }
+
         </div>
     );
 };

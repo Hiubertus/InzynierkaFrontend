@@ -1,13 +1,16 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { useUserStore } from '@/lib/stores/userStore';
+import { useToast} from "@/hooks/use-toast";
+import { PointOffer} from "@/models/backend_models/pointsData";
 import { PointsCard } from "@/components/Cart/PointsCard";
-import { PointsSkeleton } from "@/components/Cart/PointsSkeleton";
-import type { PointOffer, PointsApiResponse} from "@/models/backend_models/pointsData";
-import { useAuthStore } from "@/lib/stores/authStore";
-import { useUserStore } from "@/lib/stores/userStore";
+import { PointsSkeleton} from "@/components/Cart/PointsSkeleton";
+import { getPointOffers} from "@/lib/session/cart/getOffers";
+import { buyPoints } from "@/lib/session/cart/buyPoints";
+import {ROUTES} from "@/components/Navbar/routes";
 
 export const Cart = () => {
     const router = useRouter();
@@ -20,12 +23,8 @@ export const Cart = () => {
     useEffect(() => {
         const fetchPointPackages = async () => {
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/points/get-offers`);
-
-                if (!response.ok) throw new Error('Failed to fetch offers');
-                const data: PointsApiResponse = await response.json();
-
-                setPointPackages(data.data.offers);
+                const offers: PointOffer[] = await getPointOffers();
+                setPointPackages(offers);
             } catch {
                 toast({
                     title: "Błąd",
@@ -37,7 +36,7 @@ export const Cart = () => {
             }
         };
 
-        fetchPointPackages().then();
+        fetchPointPackages();
     }, [toast]);
 
     const handleBuyPoints = async (offer: PointOffer) => {
@@ -51,15 +50,7 @@ export const Cart = () => {
         }
 
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/points/buy/${offer.id}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${accessToken}`,
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to purchase points');
+            await buyPoints(offer.id, accessToken);
 
             if (userData) {
                 const newPoints = userData.points + offer.points;
@@ -71,8 +62,7 @@ export const Cart = () => {
                 description: `Zakupiono ${offer.points} punktów`,
             });
 
-            // Przekierowanie na stronę główną po udanym zakupie
-            router.push('/');
+            router.push(ROUTES.HOME);
         } catch {
             toast({
                 title: "Błąd",

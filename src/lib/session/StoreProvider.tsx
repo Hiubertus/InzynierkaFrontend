@@ -33,6 +33,19 @@ export function StoreProvider({
     const { setUserData, clearUserData, setInitialized: setUserInitialized  } = useUserStore();
 
     useEffect(() => {
+        function handleStorageChange(e: StorageEvent) {
+            if (e.key === 'auth-storage' || e.key === 'user-storage') {
+                setAuthInitialized(false);
+                setUserInitialized(false);
+                window.location.reload();
+            }
+        }
+
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+    }, [setAuthInitialized, setUserInitialized]);
+
+    useEffect(() => {
         if (initialAccessToken) {
             setAccessToken(initialAccessToken);
         }
@@ -74,8 +87,9 @@ export function StoreProvider({
         }
     }, [initialAccessToken]);
 
+
     useEffect(() => {
-        if (initialAccessToken && initialUserData?.roles?.includes('USER')) {
+        if (initialAccessToken && initialUserData?.roles?.includes('USER') && !initialUserData?.roles?.includes('VERIFIED')) {
             toast({
                 title: "Weryfikacja email wymagana",
                 description: "Prosze zweryfikować email by móc korzystać z większej ilości usług.",
@@ -120,18 +134,7 @@ export function StoreProvider({
         }
     }, [clearAuth, clearUserData, initialAccessToken, initialUserData?.roles, setAccessToken]);
 
-    useEffect(() => {
-        function handleStorageChange(e: StorageEvent) {
-            if (e.key === 'auth-storage' || e.key === 'user-storage') {
-                setAuthInitialized(false);
-                setUserInitialized(false);
-                window.location.reload();
-            }
-        }
 
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, [setAuthInitialized, setUserInitialized]);
 
     return <>{children}</>;
 }

@@ -49,7 +49,7 @@ export interface cMedia {
     type: 'image' | 'video';
     order: number;
     file: File | null;
-    mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
+    mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
 }
 
 export interface cQuiz {

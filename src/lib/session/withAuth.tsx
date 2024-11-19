@@ -10,7 +10,7 @@ import {toast} from "@/hooks/use-toast";
 type ComponentType<P> = React.ComponentType<P>;
 
 type AccessRestriction = {
-    type: 'auth' | 'public' | 'role';
+    type: 'auth' | 'public' | 'roles';
     roles?: Roles[];
     restrictionName?: string;
 };
@@ -38,10 +38,10 @@ const checkAccess = (
             return isAuthenticated;
         case 'public':
             return !isAuthenticated;
-        case 'role':
+        case 'roles':
             if (!isAuthenticated || !userData || !restriction.roles) return false;
 
-            return restriction.roles.every(requiredRole =>
+            return restriction.roles.some(requiredRole =>
                 userData.roles.includes(requiredRole)
             );
         default:
@@ -55,17 +55,17 @@ const getAccessDeniedMessage = (restriction: AccessRestriction, userData: UserDa
             return "Musisz być zalogowany, aby uzyskać dostęp do tej strony.";
         case 'public':
             return "Ta strona jest dostępna tylko dla niezalogowanych użytkowników.";
-        case 'role':
+        case 'roles':
             if (!restriction.roles || !restriction.restrictionName) return "Brak wymaganych uprawnień.";
 
             if (!userData) return "Musisz być zalogowany, aby uzyskać dostęp do tej strony.";
 
             switch (restriction.restrictionName) {
-                case 'verified':
+                case 'VERIFIED':
                     return "Ta strona wymaga weryfikacji konta. Zweryfikuj swój adres email.";
-                case 'teacher':
+                case 'TEACHER':
                     return "Ta strona jest dostępna tylko dla nauczycieli.";
-                case 'admin':
+                case 'ADMIN':
                     return "Ta strona jest dostępna tylko dla administratorów.";
                 default:
                     return "Brak wymaganych uprawnień.";
@@ -121,6 +121,7 @@ const withAccessControl = <P extends object>(
             return <Loader/>;
         }
 
+        console.log(userData?.roles)
         if (!areStoresInitialized) {
             return (
                 <>
@@ -159,21 +160,21 @@ export const withPublicAuth = <P extends object>(Component: ComponentType<P>) =>
 
 export const withVerifiedAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
-        type: 'role',
+        type: 'roles',
         roles: ['VERIFIED', 'ADMIN', 'TEACHER'],
-        restrictionName: 'verified'
+        restrictionName: 'VERIFIED'
     });
 
 export const withTeacherAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
-        type: 'role',
+        type: 'roles',
         roles: ['ADMIN', 'TEACHER'],
-        restrictionName: 'teacher'
+        restrictionName: 'TEACHER'
     });
 
 export const withAdminAuth = <P extends object>(Component: ComponentType<P>) =>
     withAccessControl(Component, {
-        type: 'role',
+        type: 'roles',
         roles: ['ADMIN'],
-        restrictionName: 'admin'
+        restrictionName: 'ADMIN'
     });

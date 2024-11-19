@@ -1,13 +1,28 @@
-export interface CoursesDataFetched {
+export interface OwnedCoursesDataFetched {
+    currentPage: number,
+    totalPages: number,
+    totalItems: number,
+    courses: [{
+        courseData: CourseInfo,
+        ownerData: OwnerInfo,
+        }]
+}
+export interface ShopCoursesDataFetched {
     currentPage: number,
     totalPages: number,
     totalItems: number,
     courses: [{
         ownerData: OwnerInfo,
         courseData: CourseInfo
-    }
-
-    ]
+    }]
+}
+export interface CreatedCoursesDataFetched {
+    currentPage: number,
+    totalPages: number,
+    totalItems: number,
+    courses: [{
+        courseData: CourseInfo
+    }]
 }
 
 export interface CourseInfo {

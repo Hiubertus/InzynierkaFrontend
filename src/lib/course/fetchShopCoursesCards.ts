@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const fetchCoursesCards = async () => {
+export const fetchShopCoursesCards = async () => {
     try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/course/get`);
         return response.data.data;

@@ -3,7 +3,6 @@
 import {getRefreshToken} from "@/lib/session/auth/getRefreshToken";
 import {getAccessToken} from "@/lib/session/auth/getAccessToken";
 import {getUserData} from "@/lib/session/userData/getUserData";
-import {Roles} from "@/lib/stores/userStore";
 
 export const getInitialData = async () => {
     const token = await getRefreshToken();

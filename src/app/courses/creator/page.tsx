@@ -1,7 +1,7 @@
 "use client"
 
 import CourseCreator from "@/components/CourseCreator/CourseCreator";
-import {withProtectedAuth} from "@/lib/session/withAuth";
+import {withTeacherAuth} from "@/lib/session/withAuth";
 
 function Page() {
     return (
@@ -9,4 +9,4 @@ function Page() {
     )
 }
 
-export default withProtectedAuth(Page)
+export default withTeacherAuth(Page)
