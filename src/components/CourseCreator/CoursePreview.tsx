@@ -4,6 +4,7 @@ import { CourseForm } from "@/components/CourseCreator/formSchema";
 import {cMedia, CourseData, cQuiz, cText} from "@/models/front_models/CourseData";
 import { CourseFrontPage }from "@/components/Course/CourseFrontPage";
 import {ProfileData} from "@/models/front_models/ProfileData";
+import {CourseContentPreview} from "@/components/CourseCreator/CourseContentPreview";
 
 export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 'page' | 'content' }) => {
     const convertFormToCourseData = (form: CourseForm): CourseData => {
@@ -21,6 +22,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
             tags: form.tags || [],
             ownerId: 0,
             description: form.description,
+            relationshipType: "OWNER",
             chapters: form.chapters.map((chapter, chapterIndex) => ({
                 id: chapterIndex + 1,
                 order: chapterIndex + 1,
@@ -30,7 +32,6 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
                     id: subchapterIndex + 1,
                     order: subchapterIndex + 1,
                     name: subchapter.name,
-                    completed: false,
                     content: subchapter.content.map((content, contentIndex) => {
                         const baseContent = {
                             id: contentIndex + 1,
@@ -54,14 +55,14 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
                                     ...baseContent,
                                     type: 'video',
                                     file: content.file,
-                                    mediaType: content.mediaType,
+                                    mimeType: content.mediaType,
                                 } as cMedia
                             case 'image':
                                 return {
                                     ...baseContent,
                                     type: 'image',
                                     file: content.file,
-                                    mediaType: content.mediaType,
+                                    mimeType: content.mediaType,
                                 } as cMedia
                             case 'quiz':
                                 return {
@@ -105,7 +106,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
     return (
         <div>
             {type === "content" ? (
-                <Course course={courseData} />
+                <CourseContentPreview course={courseData} />
             ) : (
                 <CourseFrontPage
                     course={courseData}

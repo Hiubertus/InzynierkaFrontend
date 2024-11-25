@@ -1,12 +1,12 @@
 import axios from "axios";
 
-export const fetchShopCoursesCards = async (accessToken: string | null) => {
+export const getCourseFrontData = async (courseId: number, accessToken: string | null) => {
     try {
         const config = accessToken
             ? { headers: { 'Authorization': `Bearer ${accessToken}` } }
             : {};
         const response = await axios.get(
-            `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/course/get`,
+            `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/course/get-one/${courseId}`,
             config
         );
         return response.data.data;
@@ -16,4 +16,4 @@ export const fetchShopCoursesCards = async (accessToken: string | null) => {
             : 'Wystąpił błąd podczas pobierania kursów';
         throw new Error(errorMessage);
     }
-};
+}

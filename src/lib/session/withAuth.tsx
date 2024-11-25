@@ -100,12 +100,15 @@ const withAccessControl = <P extends object>(
                 const isAuthenticated = !!accessToken && !!userData;
                 const redirectPath = isAuthenticated ? '/' : '/auth';
 
-                toast({
-                    title: "Brak dostępu",
-                    description: getAccessDeniedMessage(restriction, userData),
-                    variant: "destructive",
-                    duration: 5000,
-                });
+                // Nie pokazujemy toastu dla publicznych stron
+                if (restriction.type !== 'public') {
+                    toast({
+                        title: "Brak dostępu",
+                        description: getAccessDeniedMessage(restriction, userData),
+                        variant: "destructive",
+                        duration: 5000,
+                    });
+                }
 
                 setTimeout(() => {
                     router.replace(redirectPath);
@@ -113,15 +116,25 @@ const withAccessControl = <P extends object>(
             }
         }, [accessToken, userData, hasAccess, areStoresInitialized, router]);
 
-        if (hasAccess) {
-            lastValidContent.current = <WrappedComponent {...props} />;
+        // Specjalna obsługa dla publicznych stron (np. strona logowania)
+        if (restriction.type === 'public') {
+            // Jeśli stores są zainicjowane, pokazujemy komponent lub przekierowujemy
+            if (areStoresInitialized) {
+                if (hasAccess) {
+                    return <WrappedComponent {...props} />;
+                }
+                // Jeśli użytkownik jest zalogowany, przekierowujemy bez pokazywania loadera
+                return null;
+            }
+            // Podczas inicjalizacji pokazujemy loader tylko przy pierwszym montowaniu
+            return isFirstMount ? <Loader /> : <WrappedComponent {...props} />;
         }
 
+        // Standardowa logika dla chronionych stron
         if (isFirstMount && (!areStoresInitialized || !hasAccess)) {
             return <Loader/>;
         }
 
-        console.log(userData?.roles)
         if (!areStoresInitialized) {
             return (
                 <>

@@ -1,72 +1,87 @@
 'use client'
 
-import {useState, useEffect} from 'react'
+import {useState, useEffect, useCallback} from 'react'
 import {Input} from "@/components/ui/input"
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs"
 import useCourseStore from "@/lib/stores/courseStore"
 import useProfileStore from "@/lib/stores/profileStore"
 import {CourseGrid} from "@/components/Course/CoursesGrid"
-import {useUserStore} from "@/lib/stores/userStore";
+import {useUserStore} from "@/lib/stores/userStore"
+import {useAuthStore} from "@/lib/stores/authStore"
 
-type CourseType = 'shop' | 'owned' | 'created';
+type CourseType = 'shop' | 'owned' | 'created'
 
 const TAB_CONFIG: Array<{
-    value: CourseType;
-    label: string;
-    requiredRole?: 'USER' | 'TEACHER';
+    value: CourseType
+    label: string
+    requiredRole?: 'USER' | 'TEACHER'
 }> = [
     {value: 'created', label: 'Created Courses', requiredRole: 'TEACHER'},
     {value: 'owned', label: 'Owned Courses', requiredRole: 'USER'},
     {value: 'shop', label: 'Courses Shop'}
-];
+]
 
 export default function Page() {
     const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState<CourseType>('shop')
+    const [isLoading, setIsLoading] = useState(false)
+
     const {
         courses,
-        isLoading,
         error,
         fetchShopCourses,
         fetchOwnedCourses,
-        fetchCreatedCourses
+        fetchCreatedCourses,
+        setCourses
     } = useCourseStore()
-    const { userData } = useUserStore()
+    const {userData} = useUserStore()
     const {profiles} = useProfileStore()
+    const {isInitialized: isAuthInitialized} = useAuthStore()
 
-    const canFetchCourses = (type: CourseType) => {
-        const config = TAB_CONFIG.find(tab => tab.value === type);
-        if (!config?.requiredRole) return true;
-        return userData?.roles.includes(config.requiredRole);
-    };
+    const hasAccessToTab = useCallback((type: CourseType) => {
+        const config = TAB_CONFIG.find(tab => tab.value === type)
+        if (!config?.requiredRole) return true
+        return userData?.roles?.includes(config.requiredRole)
+    }, [userData?.roles])
+
+    const fetchTabData = useCallback(async (tab: CourseType) => {
+        setCourses([])
+
+        if (!hasAccessToTab(tab)) {
+            return
+        }
+
+        setIsLoading(true)
+        try {
+            switch(tab) {
+                case 'shop':
+                    await fetchShopCourses()
+                    break
+                case 'owned':
+                    await fetchOwnedCourses()
+                    break
+                case 'created':
+                    await fetchCreatedCourses()
+                    break
+            }
+        } catch (error) {
+            console.error('Error fetching courses:', error)
+        } finally {
+            setIsLoading(false)
+        }
+    }, [hasAccessToTab, fetchShopCourses, fetchOwnedCourses, fetchCreatedCourses, setCourses])
 
     useEffect(() => {
-        const fetchData = async () => {
-            if (!canFetchCourses(activeTab)) return;
-
-            try {
-                switch(activeTab) {
-                    case 'shop':
-                        await fetchShopCourses();
-                        break;
-                    case 'owned':
-                        await fetchOwnedCourses();
-                        break;
-                    case 'created':
-                        await fetchCreatedCourses();
-                        break;
-                }
-            } catch (error) {
-                console.error('Error fetching courses:', error);
-            }
-        };
-
-        fetchData();
-    }, [activeTab, fetchShopCourses, fetchOwnedCourses, fetchCreatedCourses, userData]);
+        if (isAuthInitialized) {
+            fetchTabData(activeTab)
+        }
+    }, [activeTab, isAuthInitialized, fetchTabData])
 
     const handleTabChange = (value: CourseType) => {
-        setActiveTab(value);
-    };
+        if (!isLoading) {
+            setActiveTab(value)
+        }
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">
@@ -79,11 +94,18 @@ export default function Page() {
                     className="w-full"
                 />
             </div>
-            <Tabs defaultValue="shop" className="w-full"
-                  onValueChange={(value) => handleTabChange(value as CourseType)}>
+            <Tabs
+                defaultValue="shop"
+                className="w-full"
+                onValueChange={(value) => handleTabChange(value as CourseType)}
+            >
                 <TabsList className="grid w-full grid-cols-3">
                     {TAB_CONFIG.map(tab => (
-                        <TabsTrigger key={tab.value} value={tab.value}>
+                        <TabsTrigger
+                            key={tab.value}
+                            value={tab.value}
+                            disabled={isLoading}
+                        >
                             {tab.label}
                         </TabsTrigger>
                     ))}
@@ -95,7 +117,7 @@ export default function Page() {
                             userData={userData}
                             courses={courses}
                             profiles={profiles}
-                            isLoading={isLoading && canFetchCourses(tab.value)}
+                            isLoading={isLoading && hasAccessToTab(tab.value)}
                             error={error}
                         />
                     </TabsContent>

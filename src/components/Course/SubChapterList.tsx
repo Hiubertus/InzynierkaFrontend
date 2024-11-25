@@ -1,37 +1,34 @@
-import { SubChapterData } from "@/models/front_models/CourseData";
-import React from "react";
-import { Checkbox } from "@/components/ui/checkbox";
+import { SubChapterData } from "@/models/front_models/CourseData"
+import { FC, useMemo } from "react"
 
 interface SubChapterListProps {
-    subchapters: SubChapterData[];
-    handleSubchapterSelect: (subChapter: SubChapterData) => void;
-    handleCompletionChange: (subChapterId: number, completed: boolean) => void;
+    subchapters: SubChapterData[]
+    handleSubchapterSelect?: (subchapter: SubChapterData) => void
 }
 
-export const SubChapterList: React.FC<SubChapterListProps> = ({
-                                                                  subchapters,
-                                                                  handleSubchapterSelect,
-                                                                  handleCompletionChange
-                                                              }) => (
-    <div className="pl-4 space-y-2">
-        {subchapters.map((subchapter) => (
-            <div
-                key={subchapter.id}
-                className="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded"
-            >
-                <Checkbox
-                    checked={subchapter.completed}
-                    onCheckedChange={(checked) => handleCompletionChange(subchapter.id, checked as boolean)}
-                    className="mr-2"
-                />
+export const SubChapterList: FC<SubChapterListProps> = ({
+                                                            subchapters,
+                                                            handleSubchapterSelect,
+                                                        }) => {
+    const sortedSubchapters = useMemo(
+        () => [...subchapters].sort((a, b) => a.order - b.order),
+        [subchapters]
+    )
+
+    return (
+        <div className="pl-4 space-y-2">
+            {sortedSubchapters.map((subchapter) => (
                 <div
-                    className="flex-1 flex items-center space-x-2"
-                    onClick={() => handleSubchapterSelect(subchapter)}
+                    key={subchapter.id}
+                    className={`flex items-center space-x-2 p-1 rounded ${handleSubchapterSelect ? 'cursor-pointer hover:bg-gray-100' : ''}`}
+                    onClick={handleSubchapterSelect ? () => handleSubchapterSelect(subchapter) : undefined}
                 >
-                    <span className="text-sm text-gray-600">{`${subchapter.order}.`}</span>
-                    <span>{subchapter.name}</span>
+                    <div className="flex-1 flex items-center space-x-2">
+                        <span className="text-sm text-gray-600">{`${subchapter.order}.`}</span>
+                        <span>{subchapter.name}</span>
+                    </div>
                 </div>
-            </div>
-        ))}
-    </div>
-);
+            ))}
+        </div>
+    )
+}

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getRefreshToken } from "@/lib/session/auth/getRefreshToken";
-import axios from 'axios';
+import { getAccessToken } from "@/lib/session/auth/getAccessToken";
 
 export async function POST() {
     try {
@@ -13,21 +13,13 @@ export async function POST() {
             );
         }
 
-        const response = await axios.post(
-            `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/access-token`,
-            { token },
-            {
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        const response = await getAccessToken(token);
 
         return NextResponse.json({
             accessToken: response.data.accessToken
         });
-    } catch (error) {
-        console.error('Error in refresh API route:', error);
+    } catch {
+        console.error('Error in refresh API route:');
         return NextResponse.json(
             { error: 'Failed to refresh token' },
             { status: 401 }

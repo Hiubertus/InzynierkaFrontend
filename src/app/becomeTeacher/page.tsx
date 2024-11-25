@@ -75,7 +75,7 @@ function Page() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+        <div className="flex flex-col items-center justify-center min-h-screen">
             <div className="text-center space-y-6 p-8 rounded-lg bg-white shadow-lg max-w-md w-full">
                 <FaChalkboardTeacher className="w-16 h-16 mx-auto text-blue-500" />
                 <h1 className="text-3xl font-bold tracking-tight">Become a Teacher</h1>

@@ -1,11 +1,11 @@
 "use client"
 
-import {UserProfile} from "@/components";
+import {UserProfileEdit} from "@/components";
 import {withProtectedAuth,
 } from "@/lib/session/withAuth";
 
 function Page() {
-    return (<UserProfile/>)
+    return (<UserProfileEdit/>)
 }
 
 export default withProtectedAuth(Page)

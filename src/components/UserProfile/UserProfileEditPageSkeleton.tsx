@@ -1,9 +1,9 @@
-import React from 'react';
+import {FC} from 'react';
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 
-export const UserProfilePageSkeleton: React.FC = () => {
+export const UserProfileEditPageSkeleton: FC = () => {
     return (
         <div className="container mx-auto p-4">
             <Card className="w-full max-w-3xl mx-auto">

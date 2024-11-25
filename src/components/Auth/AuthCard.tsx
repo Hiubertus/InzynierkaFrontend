@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import {FC, memo, ReactNode} from 'react';
 import {
     Card,
     CardContent,
@@ -6,11 +6,11 @@ import {
 } from "@/components/ui/card"
 
 interface AuthCardProps {
-    children?: React.ReactNode;
-    footerContent?: React.ReactNode;
+    children?: ReactNode;
+    footerContent?: ReactNode;
 }
 
-export const AuthCard: React.FC<AuthCardProps> = memo(({ children, footerContent }) => (
+export const AuthCard: FC<AuthCardProps> = memo(({ children, footerContent }) => (
     <Card className="w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl mx-auto">
         <CardContent className="space-y-4 md:space-y-6">
             {children}

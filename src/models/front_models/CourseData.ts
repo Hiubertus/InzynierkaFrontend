@@ -13,6 +13,7 @@ export interface CourseData {
     ownerId: number;
     description: string;
     chapters: ChapterData[];
+    relationshipType: 'AVAILABLE' | 'OWNER' | 'PURCHASED' | null
 }
 
 export interface ChapterData {
@@ -28,7 +29,6 @@ export interface SubChapterData {
     id: number;
     order: number;
     name: string;
-    completed: boolean;
     content: (cText | cMedia | cQuiz)[];
 }
 

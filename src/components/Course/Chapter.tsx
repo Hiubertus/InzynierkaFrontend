@@ -1,12 +1,14 @@
-import {Star} from "lucide-react";
-import React from "react";
+import { Star } from "lucide-react";
+import { FC } from "react";
 
 interface ChapterProps {
     order: number;
     name: string;
     review: number;
+    reviewNumber: number;
 }
-export const Chapter: React.FC<ChapterProps> = ({ order, name, review }) => (
+
+export const Chapter: FC<ChapterProps> = ({ order, name, review, reviewNumber }) => (
     <div className="flex flex-col w-full">
         <div className="flex justify-between items-center w-full">
             <span>{`${order}. ${name}`}</span>
@@ -20,7 +22,7 @@ export const Chapter: React.FC<ChapterProps> = ({ order, name, review }) => (
                         className={i < review ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}
                     />
                 ))}
-                <span className="ml-1 text-sm text-gray-500">({review})</span>
+                <span className="ml-1 text-sm text-gray-500">{review.toFixed(1)} ({reviewNumber})</span>
             </div>
         </div>
     </div>

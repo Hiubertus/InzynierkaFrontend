@@ -8,10 +8,10 @@ interface CreateCourseResponse {
     courseId?: number;
 }
 
-export async function createCourse(
+export const createCourse = async (
     data: FormData,
     accessToken: string
-): Promise<CreateCourseResponse> {
+): Promise<CreateCourseResponse> => {
     try {
        await axios.post(
             `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/course/create`,

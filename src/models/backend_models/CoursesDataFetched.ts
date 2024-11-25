@@ -20,9 +20,7 @@ export interface CreatedCoursesDataFetched {
     currentPage: number,
     totalPages: number,
     totalItems: number,
-    courses: [{
-        courseData: CourseInfo
-    }]
+    userCourses: CourseInfo[]
 }
 
 export interface CourseInfo {

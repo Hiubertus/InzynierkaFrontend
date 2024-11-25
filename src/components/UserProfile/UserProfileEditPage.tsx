@@ -26,7 +26,7 @@ type Props = {
 
 }
 
-export const UserProfilePage = ({accessToken,  userData  ,updateUserField}: Props) => {
+export const UserProfileEditPage = ({accessToken,  userData  ,updateUserField}: Props) => {
     const [pendingChanges, setPendingChanges] = useState<PendingChanges>({});
     const [isHoveringAvatar, setIsHoveringAvatar] = useState(false);
     const [isSaving, setIsSaving] = useState(false);

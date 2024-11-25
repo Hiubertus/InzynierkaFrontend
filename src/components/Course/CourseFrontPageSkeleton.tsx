@@ -34,7 +34,7 @@ export const CourseFrontPageSkeleton = () => {
                 <CardContent>
                     <div className="flex flex-wrap gap-2 mb-4">
                         {[1, 2, 3, 4].map((i) => (
-                            <Skeleton key={i} className="h-6 w-20" /> /* Tags */
+                            <Skeleton key={i} className="h-6 w-20" />
                         ))}
                     </div>
 
@@ -45,27 +45,27 @@ export const CourseFrontPageSkeleton = () => {
                     </div>
 
                     <div className="flex items-center mb-4">
-                        <Skeleton className="h-5 w-5 mr-2" /> {/* Clock Icon */}
-                        <Skeleton className="h-5 w-40" /> {/* Duration Text */}
+                        <Skeleton className="h-5 w-5 mr-2" />
+                        <Skeleton className="h-5 w-40" />
                     </div>
 
                     <Card>
                         <CardHeader>
-                            <Skeleton className="h-6 w-40" /> {/* Instructor Title */}
+                            <Skeleton className="h-6 w-40" />
                         </CardHeader>
                         <CardContent className="flex items-center">
-                            <Skeleton className="h-12 w-12 rounded-full mr-4" /> {/* Avatar */}
+                            <Skeleton className="h-12 w-12 rounded-full mr-4" />
                             <div>
-                                <Skeleton className="h-5 w-32 mb-2" /> {/* Instructor Name */}
-                                <Skeleton className="h-4 w-24" /> {/* Course Creator text */}
+                                <Skeleton className="h-5 w-32 mb-2" />
+                                <Skeleton className="h-4 w-24" />
                             </div>
                         </CardContent>
                     </Card>
                 </CardContent>
 
                 <CardFooter className="flex justify-between mt-4">
-                    <Skeleton className="h-10 w-40" /> {/* View Profile Button */}
-                    <Skeleton className="h-10 w-32" /> {/* Enroll Button */}
+                    <Skeleton className="h-10 w-40" />
+                    <Skeleton className="h-10 w-32" />
                 </CardFooter>
             </Card>
         </div>

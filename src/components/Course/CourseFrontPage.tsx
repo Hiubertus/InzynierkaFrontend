@@ -1,13 +1,20 @@
 'use client'
 
-import {Calendar, Clock, DollarSign, Star, Tag, User} from 'lucide-react'
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar"
+import {Calendar, Clock, Pencil, Star, Tag, User} from 'lucide-react'
+import {Avatar} from "@/components/ui/avatar"
 import {Badge} from "@/components/ui/badge"
 import {Button} from "@/components/ui/button"
 import {Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle} from "@/components/ui/card"
-import {CourseData} from "@/models/front_models/CourseData";
-import {ProfileData} from "@/models/front_models/ProfileData";
-import {MediaContent} from "@/components/Course/MediaContent";
+import {CourseData} from "@/models/front_models/CourseData"
+import {ProfileData} from "@/models/front_models/ProfileData"
+import {MediaContent} from "@/components/Course/MediaContent"
+import {PointsComponent} from "@/components/PointsComponent/PointsComponent"
+import {AvatarComponent} from "@/components/AvatarComponent/AvatarComponent";
+import {useRouter} from "next/navigation";
+import useCourseStore from "@/lib/stores/courseStore";
+import {useToast} from "@/hooks/use-toast";
+import {ToastAction} from "@/components/ui/toast";
+
 
 interface CoursePageProps {
     course: CourseData
@@ -15,7 +22,81 @@ interface CoursePageProps {
 }
 
 export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
+    const { buyCourseAction } = useCourseStore()
+    const router = useRouter()
+    const { toast } = useToast()
 
+    const handlePurchase = async () => {
+        try {
+            await buyCourseAction(course.id)
+            toast({
+                title: "Success",
+                description: "Course purchased successfully",
+            })
+
+        } catch (error) {
+            if (error instanceof Error) {
+                if (error.message.includes('log in')) {
+                    toast({
+                        variant: "destructive",
+                        title: "Authentication Required",
+                        description: "Please log in to purchase this course",
+                        action: (
+                            <ToastAction altText="Login" onClick={() => router.push('/auth')}>
+                                Login
+                            </ToastAction>
+                        )
+                    })
+                } else if (error.message.includes('funds')) {
+                    toast({
+                        variant: "destructive",
+                        title: "Insufficient Funds",
+                        description: "You don't have enough points to purchase this course"
+                    })
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: error.message
+                    })
+                }
+            }
+        }
+    }
+
+    const renderActionButton = () => {
+        switch (course.relationshipType) {
+            case 'AVAILABLE':
+                return (
+                    <Button onClick={handlePurchase}>
+                        Purchase Course
+                    </Button>
+                )
+            case 'OWNER':
+                return (
+                    <Button
+                        variant="secondary"
+                        onClick={() => router.push(`/courses/course/${course.id}/edit`)}
+                    >
+                        <Pencil className="mr-2 h-4 w-4"/>
+                        Edit Course
+                    </Button>
+                )
+            case 'PURCHASED':
+                return (
+                    <Button
+                        variant="default"
+                        onClick={() => router.push(`/courses/course/${course.id}/content`)}
+                    >
+                        Enter Course
+                    </Button>
+                )
+            case null:
+                return null
+            default:
+                return null
+        }
+    }
     return (
         <div className="container mx-auto px-4 py-8">
             <Card className="overflow-hidden">
@@ -41,10 +122,7 @@ export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
                             </CardDescription>
                         </div>
                         <div className="text-right">
-                            <div className="text-2xl font-bold flex items-center">
-                                <DollarSign className="h-6 w-6"/>
-                                {course.price.toFixed(2)}
-                            </div>
+                            <PointsComponent points={course.price}/>
                             <div className="flex items-center mt-2">
                                 <Star className="h-4 w-4 text-yellow-400 mr-1"/>
                                 <span>{course.review.toFixed(1)}</span>
@@ -73,10 +151,7 @@ export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
                         </CardHeader>
                         <CardContent className="flex items-center">
                             <Avatar className="h-12 w-12 mr-4">
-                                {owner.picture
-                                    ? (<AvatarImage src={URL.createObjectURL(owner.picture)} alt={owner.fullName}/>)
-                                    : (<AvatarFallback>{owner.fullName.split(' ').map(n => n[0]).join('')}</AvatarFallback>)
-                                }
+                                <AvatarComponent userProfile={owner}/>
                             </Avatar>
                             <div>
                                 <div className="font-semibold">{owner.fullName}</div>
@@ -89,9 +164,10 @@ export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
                     <Button variant="outline">
                         <User className="mr-2 h-4 w-4"/> View Instructor Profile
                     </Button>
-                    <Button>Enroll Now</Button>
+                    {renderActionButton()}
                 </CardFooter>
             </Card>
+
         </div>
     )
 }

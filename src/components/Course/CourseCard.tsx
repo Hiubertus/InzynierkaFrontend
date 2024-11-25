@@ -1,14 +1,15 @@
-import { Calendar, DollarSign, Star } from 'lucide-react'
+import { Calendar, Star } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import {CourseData} from "@/models/front_models/CourseData";
 import {ProfileData} from "@/models/front_models/ProfileData";
 import Link from "next/link";
+import {PointsComponent} from "@/components/PointsComponent/PointsComponent";
 
 export const CourseCard = ({ course, userProfile }: {course: CourseData, userProfile: ProfileData}) => {
     return (
-        <Link href={`/courses/course/${course.id}`} className="block transition-transform hover:scale-[1.02]">
+        <Link href={`/courses/course/${course.id}/frontpage`} className="block transition-transform hover:scale-[1.02]">
             <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-4">
                     <CardTitle className="text-lg">{course.name}</CardTitle>
@@ -43,10 +44,7 @@ export const CourseCard = ({ course, userProfile }: {course: CourseData, userPro
                             <span className="text-sm font-medium">{course.review.toFixed(1)}</span>
                             <span className="text-xs text-muted-foreground ml-1">({course.reviewNumber})</span>
                         </div>
-                        <div className="text-lg font-bold flex items-center">
-                            <DollarSign className="h-4 w-4" />
-                            {course.price.toFixed(2)}
-                        </div>
+                        <PointsComponent points={course.price}/>
                     </div>
                 </CardContent>
             </Card>

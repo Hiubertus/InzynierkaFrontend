@@ -1,6 +1,6 @@
 "use client"
 
-import React, { memo, useState } from 'react';
+import {FC, memo, useState} from 'react';
 import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -9,7 +9,7 @@ import { AuthCard } from './AuthCard';
 import { FormFieldInput } from './FormFieldInput';
 import {registerSchema, RegisterFormValues} from './schemas';
 
-export const RegisterForm: React.FC = memo(() => {
+export const RegisterForm: FC = memo(() => {
     const [backendError, setBackendError] = useState<string | null>(null);
     const [isSuccess, setIsSuccess] = useState(false);
     const form = useForm<RegisterFormValues>({

@@ -8,11 +8,17 @@ import { NavLinks } from './NavLinks';
 import { CartButton } from './CartButton';
 import { AuthSection } from './AuthSection';
 import { ROUTES } from "@/components/Navbar/routes";
+import useProfileStore from "@/lib/stores/profileStore";
+import useCourseStore from "@/lib/stores/courseStore";
 
 export const Navbar = () => {
     const { accessToken, setAccessToken, clearAuth, setInitialized: setAuthInitialized  } = useAuthStore();
     const { userData, clearUserData, setInitialized: setUserInitialized  } = useUserStore();
+    const { profiles} = useProfileStore();
     const router = useRouter();
+    const { resetData: resetCourseData } = useCourseStore()
+
+    const profileData = profiles.find(profile => profile.id === userData?.id);
 
     const handleLogout = async () => {
         try {
@@ -21,7 +27,7 @@ export const Navbar = () => {
                 setAuthInitialized(false);
                 setUserInitialized(false);
 
-                router.push(ROUTES.HOME);
+                resetCourseData();
                 setAccessToken(null);
                 clearUserData();
                 clearAuth();
@@ -31,6 +37,10 @@ export const Navbar = () => {
             }
         } catch (error) {
             console.error('Error during logout:', error);
+        } finally {
+            setAuthInitialized(true);
+            setUserInitialized(true);
+            router.push(ROUTES.HOME);
         }
     };
 
@@ -43,6 +53,7 @@ export const Navbar = () => {
                     <div className="flex items-center space-x-4">
                         <CartButton />
                         <AuthSection
+                            profileData={profileData}
                             isAuthenticated={!!accessToken}
                             userData={userData}
                             onLogout={handleLogout}

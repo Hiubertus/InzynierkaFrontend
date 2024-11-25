@@ -1,10 +1,12 @@
 "use client"
 
-import {ReactNode, useCallback, useEffect} from 'react';
+import {ReactNode, useCallback, useEffect, useRef} from 'react';
 import {useAuthStore} from '@/lib/stores/authStore';
 import {Roles, useUserStore} from '@/lib/stores/userStore';
 import {toast} from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
+import useProfileStore from "@/lib/stores/profileStore";
+import {convertPictureToFile} from "@/lib/utils/conversionFunction";
 
 type StoreProviderProps = {
     initialAccessToken: string | null;
@@ -31,6 +33,8 @@ export function StoreProvider({
                               }: StoreProviderProps) {
     const { setAccessToken, clearAuth, setInitialized: setAuthInitialized  } = useAuthStore();
     const { setUserData, clearUserData, setInitialized: setUserInitialized  } = useUserStore();
+    const { profiles, setProfiles} = useProfileStore();
+    const isInitialized = useRef(false);
 
     useEffect(() => {
         function handleStorageChange(e: StorageEvent) {
@@ -46,15 +50,43 @@ export function StoreProvider({
     }, [setAuthInitialized, setUserInitialized]);
 
     useEffect(() => {
-        if (initialAccessToken) {
-            setAccessToken(initialAccessToken);
-        }
-        if (initialUserData) {
-            setUserData(initialUserData);
-        }
-        setAuthInitialized(true);
-        setUserInitialized(true);
-    }, [initialAccessToken, initialUserData, setAccessToken, setAuthInitialized, setUserData, setUserInitialized]);
+        if (isInitialized.current) return;
+
+        const initializeStores = () => {
+            if (initialAccessToken) {
+                setAccessToken(initialAccessToken);
+            }
+
+            if (initialUserData) {
+                setUserData(initialUserData);
+                const userProfile = {
+                    id: initialUserData.id,
+                    fullName: initialUserData.fullName,
+                    picture: convertPictureToFile(initialUserData.pictureBase64, initialUserData.mimeType),
+                    description: initialUserData.description,
+                    badges: initialUserData.badges,
+                    badgesVisible: initialUserData.badgesVisible,
+                    createdAt: new Date()
+                };
+
+                // Update or add user profile while preserving other profiles
+                const existingProfileIndex = profiles.findIndex(p => p.id === initialUserData.id);
+                if (existingProfileIndex !== -1) {
+                    const updatedProfiles = [...profiles];
+                    updatedProfiles[existingProfileIndex] = userProfile;
+                    setProfiles(updatedProfiles);
+                } else {
+                    setProfiles([...profiles, userProfile]);
+                }
+            }
+
+            setAuthInitialized(true);
+            setUserInitialized(true);
+            isInitialized.current = true;
+        };
+
+        initializeStores();
+    }, [initialAccessToken, initialUserData, setAccessToken, setAuthInitialized, setUserInitialized, setUserData, setProfiles, profiles]);
 
     const handleVerificationRequest = useCallback(async () => {
         try {

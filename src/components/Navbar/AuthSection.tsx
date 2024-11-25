@@ -1,22 +1,24 @@
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { ROUTES } from "@/components/Navbar/routes";
-import { UserPoints } from './UserPoints';
-import { UserAvatar } from './UserAvatar';
 import { UserData } from "@/lib/stores/userStore";
+import {PointsComponent} from "@/components/PointsComponent/PointsComponent";
+import {AvatarComponent} from "@/components/AvatarComponent/AvatarComponent";
+import {ProfileData} from "@/models/front_models/ProfileData";
 
 interface AuthSectionProps {
     isAuthenticated: boolean;
     userData: UserData | null;
     onLogout: () => Promise<void>;
+    profileData: ProfileData | undefined;
 }
 
-export const AuthSection = ({ isAuthenticated, userData, onLogout }: AuthSectionProps) => {
-    if (isAuthenticated && userData) {
+export const AuthSection = ({ isAuthenticated, userData, onLogout, profileData }: AuthSectionProps) => {
+    if (isAuthenticated && userData && profileData) {
         return (
             <div className="flex items-center gap-4">
-                <UserPoints points={userData.points} />
-                <UserAvatar picture={userData.picture} fullName={userData.fullName} />
+                <PointsComponent points={userData.points} />
+                <AvatarComponent userProfile={profileData}/>
                 <Button
                     variant="outline"
                     className="ml-4"

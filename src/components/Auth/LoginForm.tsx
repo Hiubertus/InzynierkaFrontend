@@ -1,6 +1,6 @@
 "use client"
 
-import React, { memo, useState } from 'react';
+import {FC, memo, useState} from 'react';
 import { Button } from "@/components/ui/button"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,13 +12,18 @@ import { login } from "@/lib/session/auth/login";
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUserStore } from '@/lib/stores/userStore';
-import {ROUTES} from "@/components/Navbar/routes";
+import { ROUTES } from "@/components/Navbar/routes";
+import useProfileStore from "@/lib/stores/profileStore";
+import {convertPictureToFile} from "@/lib/utils/conversionFunction";
+import useCourseStore from "@/lib/stores/courseStore";
 
-export const LoginForm: React.FC = memo(() => {
+export const LoginForm: FC = memo(() => {
     const router = useRouter();
     const { setAccessToken, setInitialized: setAuthInitialized } = useAuthStore();
     const { setUserData, setInitialized: setUserInitialized } = useUserStore();
+    const { setProfiles, profiles } = useProfileStore();
     const [backendError, setBackendError] = useState<string | null>(null);
+    const { resetData: resetCourseData } = useCourseStore()
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(loginSchema),
@@ -35,17 +40,45 @@ export const LoginForm: React.FC = memo(() => {
             if (result.success && result.accessToken && result.userData) {
                 setAuthInitialized(false);
                 setUserInitialized(false);
-                router.push(ROUTES.HOME);
+
+                const userProfile = {
+                    id: result.userData.id,
+                    fullName: result.userData.fullName,
+                    picture: convertPictureToFile(result.userData.pictureBase64, result.userData.mimeType),
+                    description: result.userData.description,
+                    badges: result.userData.badges,
+                    badgesVisible: result.userData.badgesVisible,
+                    createdAt: new Date(),
+                };
+
+                const existingProfileIndex = profiles.findIndex(profile => profile.id === userProfile.id);
+
+                if (existingProfileIndex !== -1) {
+                    const updatedProfiles = [...profiles];
+                    updatedProfiles[existingProfileIndex] = userProfile;
+                    setProfiles(updatedProfiles);
+                } else {
+                    setProfiles([...profiles, userProfile]);
+                }
+
+                resetCourseData();
                 setAccessToken(result.accessToken);
                 setUserData(result.userData);
+                setAuthInitialized(true);
+                setUserInitialized(true);
+                router.push(ROUTES.HOME);
+
             } else if (result.error) {
                 setBackendError(result.error);
             }
         } catch (error) {
             setBackendError('An unexpected error occurred');
             console.error('Login error:', error);
+        } finally {
+
         }
     }
+
 
     return (
         <AuthCard
