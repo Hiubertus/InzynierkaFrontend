@@ -2,7 +2,6 @@ import React, { useId } from 'react';
 import {
     DndContext,
     DragEndEvent,
-    KeyboardSensor,
     PointerSensor,
     closestCenter,
     useSensor,
@@ -10,7 +9,6 @@ import {
 } from '@dnd-kit/core';
 import {
     SortableContext,
-    sortableKeyboardCoordinates,
     useSortable,
     verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
@@ -84,9 +82,6 @@ export function DraggableList<T>({
                 tolerance: 5, // Dodajemy małą tolerancję na ruch podczas przytrzymania
             },
         }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
     );
 
     const contextId = useId();

@@ -46,7 +46,7 @@ export const LoginForm: FC = memo(() => {
                     fullName: result.userData.fullName,
                     picture: convertPictureToFile(result.userData.pictureBase64, result.userData.mimeType),
                     description: result.userData.description,
-                    badges: result.userData.badges,
+                    badges: result.userData.badges || [],
                     badgesVisible: result.userData.badgesVisible,
                     createdAt: new Date(),
                 };

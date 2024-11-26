@@ -4,7 +4,7 @@ import {Input} from "@/components/ui/input";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {Button} from "@/components/ui/button";
 import {Plus} from "lucide-react";
-import React from "react";
+import React, {useEffect} from "react";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
 import {SubChapterCreator} from "@/components/CourseCreator/SubChapterCreator";
@@ -33,6 +33,10 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
         name: `chapters.${chapterIndex}.subchapters`
     });
 
+    useEffect(() => {
+        form.setValue(`chapters.${chapterIndex}.name`, chapter.name);
+    }, [chapterIndex, form, chapter.name]);
+
     return (
         <Card className="mb-4 shadow-md border-l-4 border-l-blue-300">
             <CardHeader className="flex flex-col bg-blue-100 overflow-hidden">
@@ -54,7 +58,6 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                                             <Input
                                                 {...field}
                                                 placeholder={`Chapter ${chapterIndex + 1} Name`}
-                                                value={chapter.name}
                                                 onChange={(e) => {
                                                     field.onChange(e);
                                                 }}

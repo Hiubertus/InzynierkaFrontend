@@ -3,7 +3,7 @@ import {FormControl, FormField, FormItem, FormMessage} from "@/components/ui/for
 import {Input} from "@/components/ui/input";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {ContentButtons} from "@/components/CourseCreator/ContentButtons";
-import React from "react";
+import React, {useEffect} from "react";
 import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {ContentCreator} from "@/components/CourseCreator/ContentCreator";
@@ -35,6 +35,10 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content`
     });
 
+    useEffect(() => {
+        form.setValue(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.name`, subChapter.name);
+    }, [chapterIndex, form, subChapter.name, subChapterIndex]);
+    
     return (
         <Card className="border-l-2 border-l-indigo-300">
             <CardHeader className="flex flex-col bg-indigo-100 overflow-hidden">
@@ -56,7 +60,6 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                                             <Input
                                                 {...field}
                                                 placeholder={`Subchapter ${subChapterIndex + 1} Name`}
-                                                value={subChapter.name}
                                                 onChange={(e) => {
                                                     field.onChange(e);
                                                 }}

@@ -64,7 +64,7 @@ export function StoreProvider({
                     fullName: initialUserData.fullName,
                     picture: convertPictureToFile(initialUserData.pictureBase64, initialUserData.mimeType),
                     description: initialUserData.description,
-                    badges: initialUserData.badges,
+                    badges: initialUserData.badges || [],
                     badgesVisible: initialUserData.badgesVisible,
                     createdAt: new Date()
                 };

@@ -1,8 +1,8 @@
 "use client"
 
+import CourseCreator from "@/components/CourseCreator/CourseCreator";
+
 export default function Home() {
 
-    return (<div>
-        Oto strona główna, narazie pusta
-    </div>)
+    return <CourseCreator/>
 }

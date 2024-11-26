@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import {ChapterData, CourseData} from '@/models/front_models/CourseData'
+import {Answer, ChapterData, cMedia, CourseData, cQuiz, cText, QuizForm} from '@/models/front_models/CourseData'
 import useProfileStore from "@/lib/stores/profileStore";
 import { ProfileData } from "@/models/front_models/ProfileData";
 import {fetchShopCoursesCards} from "@/lib/course/fetchShopCoursesCards";
@@ -106,7 +106,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                         fullName: ownerData.fullName,
                         picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
                         description: ownerData.description,
-                        badges: ownerData.badges,
+                        badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
                         createdAt: new Date(ownerData.createdAt),
                     };
@@ -187,7 +187,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                         fullName: ownerData.fullName,
                         picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
                         description: ownerData.description,
-                        badges: ownerData.badges,
+                        badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
                         createdAt: new Date(ownerData.createdAt),
                     };
@@ -303,7 +303,6 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             const response = await getCourseFrontData(courseId, accessToken);
             const { courseData, ownerData } = response.courseDetails;
 
-            console.log(response)
             const profileStore = useProfileStore.getState();
             const currentProfiles = profileStore.profiles;
 
@@ -448,8 +447,56 @@ const useCourseStore = create<CourseStore>((set, get) => ({
 
         set({ isLoading: true })
         try {
+            const response = await getCourseContents(subchapterId, authStore.accessToken)
+            const rawContents = response.subchapter.content
+            const processedContents = rawContents.map((content: (cText | cMedia | cQuiz)) => {
+                switch (content.type) {
+                    case 'text':
+                        return {
+                            id: content.id,
+                            type: 'text',
+                            text: content.text,
+                            order: content.order,
+                            fontSize: content.fontSize,
+                            bolder: content.bolder,
+                            italics: content.italics,
+                            underline: content.underline,
+                            textColor: content.textColor
+                        } as cText
 
-            const contentData = await getCourseContents(subchapterId, authStore.accessToken)
+                    case 'image':
+                    case 'video':
+                        return {
+                            id: content.id,
+                            type: content.type,
+                            order: content.order,
+                            file:  convertPictureToFile(content.file.data, content.file.mimeType),
+                            mimeType: content.file.mimeType
+                        } as cMedia
+
+                    case 'quiz':
+                        return {
+                            id: content.id,
+                            type: 'quiz',
+                            order: content.order,
+                            quizContent: content.quizContent.map((quiz: QuizForm) => ({
+                                id: quiz.id,
+                                question: quiz.question,
+                                order: quiz.order,
+                                singleAnswer: quiz.singleAnswer,
+                                answers: quiz.answers.map((answer: Answer) => ({
+                                    id: answer.id,
+                                    order: answer.order,
+                                    answer: answer.answer,
+                                    isCorrect: answer.isCorrect
+                                }))
+                            }))
+                        } as cQuiz
+
+                    default:
+                        throw new Error(`Unknown content type`)
+                }
+            })
 
             const courses = get().courses.map(course => ({
                 ...course,
@@ -459,7 +506,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                         if (subchapter.id === subchapterId) {
                             return {
                                 ...subchapter,
-                                content: contentData.content
+                                content: processedContents
                             }
                         }
                         return subchapter
