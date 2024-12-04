@@ -1,6 +1,6 @@
 'use client'
 
-import {Calendar, Clock, Pencil, Star, Tag, User} from 'lucide-react'
+import {Calendar, Clock, Pencil, Tag, User} from 'lucide-react'
 import {Avatar} from "@/components/ui/avatar"
 import {Badge} from "@/components/ui/badge"
 import {Button} from "@/components/ui/button"
@@ -14,6 +14,8 @@ import {useRouter} from "next/navigation";
 import useCourseStore from "@/lib/stores/courseStore";
 import {useToast} from "@/hooks/use-toast";
 import {ToastAction} from "@/components/ui/toast";
+import {StarRating} from "@/components/StarRating/StarRating";
+import {ROUTES} from "@/components/Navbar/routes";
 
 
 interface CoursePageProps {
@@ -76,7 +78,7 @@ export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
                 return (
                     <Button
                         variant="secondary"
-                        onClick={() => router.push(`/courses/course/${course.id}/edit`)}
+                        onClick={() => router.push(`${ROUTES.COURSES}/course/${course.id}/edit`)}
                     >
                         <Pencil className="mr-2 h-4 w-4"/>
                         Edit Course
@@ -86,7 +88,7 @@ export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
                 return (
                     <Button
                         variant="default"
-                        onClick={() => router.push(`/courses/course/${course.id}/content`)}
+                        onClick={() => router.push(`${ROUTES.COURSES}/course/${course.id}/content`)}
                     >
                         Enter Course
                     </Button>
@@ -123,11 +125,7 @@ export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
                         </div>
                         <div className="text-right">
                             <PointsComponent points={course.price}/>
-                            <div className="flex items-center mt-2">
-                                <Star className="h-4 w-4 text-yellow-400 mr-1"/>
-                                <span>{course.review.toFixed(1)}</span>
-                                <span className="text-muted-foreground ml-1">({course.reviewNumber} reviews)</span>
-                            </div>
+                            <StarRating rating={course.review} ratingNumber={course.reviewNumber} />
                         </div>
                     </div>
                 </CardHeader>

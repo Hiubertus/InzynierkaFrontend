@@ -64,8 +64,8 @@ export const formSchema = z.object({
         'image/jpeg', 'image/png', 'image/gif',
         'video/mp4', 'video/webm'
     ]),
-    price: z.number().positive(),
-    duration: z.number().positive(),
+    price: z.number().min(0, { message: "Price cannot be negative" }),
+    duration: z.number().min(0, { message: "Duration cannot be negative" }),
     description: z.string().min(1, {message: "Course description is required"}),
     tags: z
         .array(z.string().min(1, { message: "Each tag must have at least one character" }))
@@ -105,6 +105,7 @@ export const formSchema = z.object({
                             isCorrect: z.boolean(),
                         }))
                             .min(2, {message: "At least two answers are required"})
+                            .max(8, {message: "Maximum 8 answers are allowed"})
                             .refine(
                                 (answers) => answers.some(answer => answer.isCorrect),
                                 {message: "At least one answer must be marked as correct"}

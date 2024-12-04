@@ -44,15 +44,50 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
     });
 
     const singleAnswer = form.watch(
-        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer`
+        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer` as const
     );
 
+    // Watch for any changes in answers' isCorrect values
+    const answersValues = form.watch(
+        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const
+    );
+
+    // Sprawdź, czy którakolwiek odpowiedź jest zaznaczona
+    const hasAnyCorrectAnswer = answersValues?.some(answer => answer.isCorrect);
+
+    // Resetuj wszystkie odpowiedzi przy zmianie typu pytania
     useEffect(() => {
-        const currentAnswers = form.getValues(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers`);
-        currentAnswers.forEach((_, index) => {
-            form.setValue(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect`, false);
-        });
-    }, [chapterIndex, contentIndex, form, questionIndex, singleAnswer, subChapterIndex]);
+        const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
+        const currentAnswers = form.getValues(answersFieldName);
+
+        if (currentAnswers) {
+            currentAnswers.forEach((_, index) => {
+                form.setValue(
+                    `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect` as const,
+                    false
+                );
+            });
+        }
+    }, [singleAnswer, chapterIndex, subChapterIndex, contentIndex, questionIndex, form]);
+
+    // Efekt dla walidacji
+    useEffect(() => {
+        const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
+
+        // Jeśli jest poprawna odpowiedź, wyczyść błąd
+        if (hasAnyCorrectAnswer) {
+            form.clearErrors(answersFieldName);
+        } else {
+            // Ustaw błąd tylko jeśli formularz był już submitowany
+            if (form.formState.isSubmitted) {
+                form.setError(answersFieldName, {
+                    type: 'custom',
+                    message: 'You must select at least one correct answer!'
+                });
+            }
+        }
+    }, [hasAnyCorrectAnswer, form, chapterIndex, subChapterIndex, contentIndex, questionIndex]);
+
 
     return (
         <Card className="border-l-2 border-l-purple-300">
@@ -154,19 +189,41 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                     itemClassName="hover:shadow-md"
                     activationDelay={250}
                 />
-                <Button
-                    onClick={() => {
-                        appendAnswer({
-                            isCorrect: false,
-                            answer: `Answer ${answers.length + 1}`
-                        });
-                    }}
-                    className="mt-2"
-                    type="button"
-                >
-                    <Plus size={16} className="mr-1"/>
-                    Add Answer
-                </Button>
+
+                <div className="mt-2 space-y-2">
+                    <Button
+                        onClick={() => {
+                            if (answers.length >= 8) {
+                                const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
+                                form.setError(answersFieldName, {
+                                    type: 'manual',
+                                    message: 'Maximum 8 answers are allowed'
+                                });
+                                return;
+                            }
+                            appendAnswer({
+                                isCorrect: false,
+                                answer: `Answer ${answers.length + 1}`
+                            });
+                        }}
+                        type="button"
+                        disabled={answers.length >= 8}
+                    >
+                        <Plus size={16} className="mr-1"/>
+                        Add Answer
+                    </Button>
+
+                    {/* Error message container */}
+                    <FormField
+                        control={form.control}
+                        name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const}
+                        render={({fieldState}) => (
+                            <div className="text-sm font-medium text-destructive">
+                                {fieldState.error?.message}
+                            </div>
+                        )}
+                    />
+                </div>
             </CardContent>
         </Card>
     );

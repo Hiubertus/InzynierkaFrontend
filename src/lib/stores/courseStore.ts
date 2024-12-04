@@ -34,9 +34,9 @@ interface CourseStore {
     error: string | null;
 
     fetchSingleCourse: (courseId: number, accessToken: string | null) => Promise<void>;
-    fetchShopCourses: () => Promise<void>;
-    fetchOwnedCourses: () => Promise<void>;
-    fetchCreatedCourses: () => Promise<void>;
+    fetchShopCourses: (page?: number, pageSize?: number, userId?: number) => Promise<void>;
+    fetchOwnedCourses: (page?: number, pageSize?: number) => Promise<void>;
+    fetchCreatedCourses: (userId?: number, page?: number, pageSize?: number) => Promise<void>;
     setLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
     setCourses: (courses: CourseData[]) => void;
@@ -45,7 +45,8 @@ interface CourseStore {
 
     fetchSubchaptersForChapter: (chapterId: number) => Promise<void>
     fetchContentForSubchapter: (subchapterId: number) => Promise<void>
-
+    fetchProfileCourses: (courseId: number, page?: number, pageSize?: number ) => Promise<void>
+    resetPage: () => void;
 }
 
 const useCourseStore = create<CourseStore>((set, get) => ({
@@ -62,6 +63,10 @@ const useCourseStore = create<CourseStore>((set, get) => ({
     isLoading: false,
     error: null,
 
+    resetPage: () => {
+        set({ currentPage: 0 });
+    },
+
     resetData: () => {
         set({
             courses: [],
@@ -76,218 +81,176 @@ const useCourseStore = create<CourseStore>((set, get) => ({
         });
     },
 
-    fetchShopCourses: async () => {
+    fetchProfileCourses: async (userId: number, page = 0, pageSize = 9) => {
         set({ isLoading: true, error: null, courses: [] });
         try {
-            const authStore = useAuthStore.getState();
-            const allData: ShopCoursesDataFetched = await fetchShopCoursesCards(authStore.accessToken);
-            const profileStore = useProfileStore.getState();
-            const currentProfiles = profileStore.profiles;
-            const currentCourses = get().shopCourses;
+            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(userId, page, pageSize);
 
             if (!allData.courses?.length) {
-                set({isLoading: false, totalItems: 0, totalPages: 0, currentPage: 0})
-                return
+                set({
+                    isLoading: false,
+                    totalItems: allData.totalItems,
+                    totalPages: allData.totalPages,
+                    currentPage: allData.currentPage,
+                    courses: []
+                });
+                return;
             }
 
-            const newCourses: CourseData[] = [];
-
-            allData.courses.forEach((data) => {
-                const ownerData = data.ownerData;
-                const courseData = data.courseData;
-
-                const profileExists = currentProfiles.some(
-                    profile => profile.id === ownerData.id
-                );
-
-                if (!profileExists) {
-                    const newProfile: ProfileData = {
-                        id: ownerData.id,
-                        fullName: ownerData.fullName,
-                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
-                        description: ownerData.description,
-                        badges: ownerData.badges || [],
-                        badgesVisible: ownerData.badgesVisible,
-                        createdAt: new Date(ownerData.createdAt),
-                    };
-                    profileStore.addProfile(newProfile);
-                }
-
-                const courseExists = currentCourses.some(
-                    existingCourse => existingCourse.id === courseData.id
-                );
-
-                if (!courseExists) {
-                    const newCourse: CourseData = {
-                        id: courseData.id,
-                        name: courseData.name,
-                        banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
-                        mimeType: courseData.banner.mimeType,
-                        price: courseData.price,
-                        review: courseData.review,
-                        duration: courseData.duration,
-                        createdAt: new Date(courseData.createdAt),
-                        updatedAt: new Date(courseData.updatedAt),
-                        tags: courseData.tags,
-                        reviewNumber: courseData.reviewNumber,
-                        ownerId: courseData.ownerId,
-                        description: courseData.description,
-                        relationshipType: null,
-                        chapters: []
-                    };
-                    newCourses.push(newCourse);
-                }
+            const coursesFromResponse: CourseData[] = allData.courses.map(courseData => {
+                return {
+                    id: courseData.id,
+                    name: courseData.name,
+                    banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
+                    mimeType: courseData.banner.mimeType,
+                    price: courseData.price,
+                    review: courseData.review,
+                    duration: courseData.duration,
+                    createdAt: new Date(courseData.createdAt),
+                    updatedAt: new Date(courseData.updatedAt),
+                    tags: courseData.tags,
+                    reviewNumber: courseData.reviewNumber,
+                    ownerId: courseData.ownerId,
+                    description: courseData.description,
+                    relationshipType: courseData.relationshipType,
+                    chapters: []
+                };
             });
 
-            const updatedCourses = [...currentCourses, ...newCourses];
+            const currentOwnedCourses = [...get().ownedCourses];
+            const currentShopCourses = [...get().shopCourses];
+            const currentCreatedCourses = [...get().createdCourses];
 
-            set({
-                // totalItems: allData.totalItems,
-                // totalPages: allData.totalPages,
-                // currentPage: allData.currentPage,
-                shopCourses: updatedCourses,
-                courses: updatedCourses
-            });
-
-        } catch(error) {
-            set({ error: null });
-            console.error(error)
-        } finally {
-            set({ isLoading: false });
-        }
-    },
-
-    fetchOwnedCourses: async () => {
-        set({ isLoading: true, error: null, courses: [] });
-        try {
-            const authStore = useAuthStore.getState();
-            const allData: OwnedCoursesDataFetched = await fetchOwnedCoursesCards(authStore.accessToken!);
-            const profileStore = useProfileStore.getState();
-            const currentProfiles = profileStore.profiles;
-            const currentCourses = get().ownedCourses;
-
-            if (!allData.courses?.length) {
-                set({isLoading: false, totalItems: 0, totalPages: 0, currentPage: 0})
-                return
-            }
-
-            const newCourses: CourseData[] = [];
-
-            allData.courses.forEach((data) => {
-                const ownerData = data.ownerData;
-                const courseData = data.courseData;
-
-                const profileExists = currentProfiles.some(
-                    profile => profile.id === ownerData.id
-                );
-
-                if (!profileExists) {
-                    const newProfile: ProfileData = {
-                        id: ownerData.id,
-                        fullName: ownerData.fullName,
-                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
-                        description: ownerData.description,
-                        badges: ownerData.badges || [],
-                        badgesVisible: ownerData.badgesVisible,
-                        createdAt: new Date(ownerData.createdAt),
-                    };
-                    profileStore.addProfile(newProfile);
-                }
-
-                const courseExists = currentCourses.some(
-                    existingCourse => existingCourse.id === courseData.id
-                );
-
-                if (!courseExists) {
-                    const newCourse: CourseData = {
-                        id: courseData.id,
-                        name: courseData.name,
-                        banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
-                        mimeType: courseData.banner.mimeType,
-                        price: courseData.price,
-                        review: courseData.review,
-                        duration: courseData.duration,
-                        createdAt: new Date(courseData.createdAt),
-                        updatedAt: new Date(courseData.updatedAt),
-                        tags: courseData.tags,
-                        reviewNumber: courseData.reviewNumber,
-                        ownerId: courseData.ownerId,
-                        description: courseData.description,
-                        relationshipType: null,
-                        chapters: []
-                    };
-                    newCourses.push(newCourse);
+            coursesFromResponse.forEach(course => {
+                switch (course.relationshipType) {
+                    case 'PURCHASED': {
+                        const existingIndex = currentOwnedCourses.findIndex(c => c.id === course.id);
+                        if (existingIndex === -1) {
+                            currentOwnedCourses.push(course);
+                        } else {
+                            // Zachowaj rozdziały jeśli istnieją
+                            if (currentOwnedCourses[existingIndex].chapters.length > 0) {
+                                course.chapters = currentOwnedCourses[existingIndex].chapters;
+                            }
+                            currentOwnedCourses[existingIndex] = course;
+                        }
+                        break;
+                    }
+                    case 'OWNER': {
+                        const existingIndex = currentCreatedCourses.findIndex(c => c.id === course.id);
+                        if (existingIndex === -1) {
+                            currentCreatedCourses.push(course);
+                        } else {
+                            if (currentCreatedCourses[existingIndex].chapters.length > 0) {
+                                course.chapters = currentCreatedCourses[existingIndex].chapters;
+                            }
+                            currentCreatedCourses[existingIndex] = course;
+                        }
+                        break;
+                    }
+                    case 'AVAILABLE': {
+                        const existingIndex = currentShopCourses.findIndex(c => c.id === course.id);
+                        if (existingIndex === -1) {
+                            currentShopCourses.push(course);
+                        } else {
+                            if (currentShopCourses[existingIndex].chapters.length > 0) {
+                                course.chapters = currentShopCourses[existingIndex].chapters;
+                            }
+                            currentShopCourses[existingIndex] = course;
+                        }
+                        break;
+                    }
                 }
             });
-
-            const updatedCourses = [...currentCourses, ...newCourses];
-
-            set({
-                // totalItems: allData.totalItems,
-                // totalPages: allData.totalPages,
-                // currentPage: allData.currentPage,
-                ownedCourses: updatedCourses,
-                courses: updatedCourses
-            });
-
-        } catch(error) {
-            set({ error: null });
-            console.error(error)
-        } finally {
-            set({ isLoading: false });
-        }
-    },
-
-    fetchCreatedCourses: async () => {
-        set({ isLoading: true, error: null, courses: [] });
-        try {
-            const userStore = useUserStore.getState();
-            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(userStore.userData!.id);
-            const currentCourses = get().createdCourses;
-
-            if (!allData.userCourses?.length) {
-                set({isLoading: false, totalItems: 0, totalPages: 0, currentPage: 0})
-                return
-            }
-
-            const newCourses: CourseData[] = [];
-
-            allData.userCourses.forEach((courseData) => {
-
-                const courseExists = currentCourses.some(
-                    existingCourse => existingCourse.id === courseData.id
-                );
-
-                if (!courseExists) {
-                    const newCourse: CourseData = {
-                        id: courseData.id,
-                        name: courseData.name,
-                        banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
-                        mimeType: courseData.banner.mimeType,
-                        price: courseData.price,
-                        review: courseData.review,
-                        duration: courseData.duration,
-                        createdAt: new Date(courseData.createdAt),
-                        updatedAt: new Date(courseData.updatedAt),
-                        tags: courseData.tags,
-                        reviewNumber: courseData.reviewNumber,
-                        ownerId: courseData.ownerId,
-                        description: courseData.description,
-                        relationshipType: null,
-                        chapters: []
-                    };
-                    newCourses.push(newCourse);
-                }
-            });
-
-            const updatedCourses = [...currentCourses, ...newCourses];
 
             set({
                 totalItems: allData.totalItems,
                 totalPages: allData.totalPages,
                 currentPage: allData.currentPage,
-                createdCourses: updatedCourses,
-                courses: updatedCourses
+                ownedCourses: currentOwnedCourses,
+                shopCourses: currentShopCourses,
+                createdCourses: currentCreatedCourses,
+                courses: coursesFromResponse
+            });
+
+        } catch(error) {
+            set({ error: null });
+            console.error(error);
+        } finally {
+            set({ isLoading: false });
+        }
+    },
+
+    fetchShopCourses: async (page?: number, pageSize?: number) => {
+        set({ isLoading: true, error: null, courses: [] });
+        try {
+            const authStore = useAuthStore.getState();
+            const allData: ShopCoursesDataFetched = await fetchShopCoursesCards(authStore.accessToken, page, pageSize);
+            const profileStore = useProfileStore.getState();
+            const currentProfiles = profileStore.profiles;
+            const currentCourses = get().shopCourses;
+
+            if (!allData.courses?.length) {
+                set({
+                    isLoading: false,
+                    totalItems: allData.totalItems,
+                    totalPages: allData.totalPages,
+                    currentPage: allData.currentPage,
+                    courses: []
+                })
+                return
+            }
+
+            const coursesFromResponse: CourseData[] = allData.courses.map(data => {
+                const ownerData = data.ownerData;
+                const courseData = data.courseData;
+
+                if (!currentProfiles.some(profile => profile.id === ownerData.id)) {
+                    profileStore.addProfile({
+                        id: ownerData.id,
+                        fullName: ownerData.fullName,
+                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        description: ownerData.description,
+                        badges: ownerData.badges || [],
+                        badgesVisible: ownerData.badgesVisible,
+                        createdAt: new Date(ownerData.createdAt),
+                        roles: ownerData.roles
+                    });
+                }
+
+                return {
+                    id: courseData.id,
+                    name: courseData.name,
+                    banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
+                    mimeType: courseData.banner.mimeType,
+                    price: courseData.price,
+                    review: courseData.review,
+                    duration: courseData.duration,
+                    createdAt: new Date(courseData.createdAt),
+                    updatedAt: new Date(courseData.updatedAt),
+                    tags: courseData.tags,
+                    reviewNumber: courseData.reviewNumber,
+                    ownerId: courseData.ownerId,
+                    description: courseData.description,
+                    relationshipType: null,
+                    chapters: []
+                };
+            });
+
+            const updatedShopCourses = [...currentCourses];
+            coursesFromResponse.forEach(newCourse => {
+                const existingIndex = updatedShopCourses.findIndex(c => c.id === newCourse.id);
+                if (existingIndex === -1) {
+                    updatedShopCourses.push(newCourse);
+                }
+            });
+
+            set({
+                totalItems: allData.totalItems,
+                totalPages: allData.totalPages,
+                currentPage: allData.currentPage,
+                shopCourses: updatedShopCourses,
+                courses: coursesFromResponse
             });
 
         } catch(error) {
@@ -297,32 +260,172 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             set({ isLoading: false });
         }
     },
+
+    fetchOwnedCourses: async (page = 0, pageSize = 9) => {
+        set({ isLoading: true, error: null });
+        try {
+            const authStore = useAuthStore.getState();
+            const allData: OwnedCoursesDataFetched = await fetchOwnedCoursesCards(authStore.accessToken!, page, pageSize);
+            const profileStore = useProfileStore.getState();
+            const currentProfiles = profileStore.profiles;
+            const currentCourses = get().ownedCourses;
+
+            if (!allData.courses?.length) {
+                set({
+                    isLoading: false,
+                    totalItems: allData.totalItems,
+                    totalPages: allData.totalPages,
+                    currentPage: allData.currentPage,
+                    courses: []
+                })
+                return
+            }
+
+            const coursesFromResponse = allData.courses.map(data => {
+                const ownerData = data.ownerData;
+                const courseData = data.courseData;
+
+                if (!currentProfiles.some(profile => profile.id === ownerData.id)) {
+                    const newProfile: ProfileData = {
+                        id: ownerData.id,
+                        fullName: ownerData.fullName,
+                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        description: ownerData.description,
+                        badges: ownerData.badges || [],
+                        badgesVisible: ownerData.badgesVisible,
+                        createdAt: new Date(ownerData.createdAt),
+                        roles: ownerData.roles
+                    };
+                    profileStore.addProfile(newProfile);
+                }
+
+                return {
+                    id: courseData.id,
+                    name: courseData.name,
+                    banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
+                    mimeType: courseData.banner.mimeType,
+                    price: courseData.price,
+                    review: courseData.review,
+                    duration: courseData.duration,
+                    createdAt: new Date(courseData.createdAt),
+                    updatedAt: new Date(courseData.updatedAt),
+                    tags: courseData.tags,
+                    reviewNumber: courseData.reviewNumber,
+                    ownerId: courseData.ownerId,
+                    description: courseData.description,
+                    relationshipType: null,
+                    chapters: []
+                };
+            });
+
+            const updatedOwnedCourses = [...currentCourses];
+            coursesFromResponse.forEach(newCourse => {
+                const existingIndex = updatedOwnedCourses.findIndex(c => c.id === newCourse.id);
+                if (existingIndex === -1) {
+                    updatedOwnedCourses.push(newCourse);
+                }
+            });
+
+            set({
+                totalItems: allData.totalItems,
+                totalPages: allData.totalPages,
+                currentPage: allData.currentPage,
+                ownedCourses: updatedOwnedCourses,
+                courses: coursesFromResponse
+            });
+
+        } catch(error) {
+            set({ error: null });
+            console.error(error)
+        } finally {
+            set({ isLoading: false });
+        }
+    },
+
+    fetchCreatedCourses: async (userId?: number, page = 0, pageSize = 9) => {
+        set({ isLoading: true, error: null });
+        try {
+            const userStore = useUserStore.getState();
+            const targetUserId = userId || userStore.userData!.id;
+            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(targetUserId, page, pageSize);
+            const currentCourses = get().createdCourses;
+
+            if (!allData.courses?.length) {
+                set({
+                    isLoading: false,
+                    totalItems: allData.totalItems,
+                    totalPages: allData.totalPages,
+                    currentPage: allData.currentPage,
+                    courses: []
+                })
+                return
+            }
+
+            const coursesFromResponse = allData.courses.map(courseData => ({
+                id: courseData.id,
+                name: courseData.name,
+                banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
+                mimeType: courseData.banner.mimeType,
+                price: courseData.price,
+                review: courseData.review,
+                duration: courseData.duration,
+                createdAt: new Date(courseData.createdAt),
+                updatedAt: new Date(courseData.updatedAt),
+                tags: courseData.tags,
+                reviewNumber: courseData.reviewNumber,
+                ownerId: courseData.ownerId,
+                description: courseData.description,
+                relationshipType: null,
+                chapters: []
+            }));
+
+            const updatedCreatedCourses = [...currentCourses];
+            coursesFromResponse.forEach(newCourse => {
+                const existingIndex = updatedCreatedCourses.findIndex(c => c.id === newCourse.id);
+                if (existingIndex === -1) {
+                    updatedCreatedCourses.push(newCourse);
+                }
+            });
+
+            set({
+                totalItems: allData.totalItems,
+                totalPages: allData.totalPages,
+                currentPage: allData.currentPage,
+                createdCourses: updatedCreatedCourses,
+                courses: coursesFromResponse
+            });
+
+        } catch(error) {
+            set({ error: null });
+            console.error(error)
+        } finally {
+            set({ isLoading: false });
+        }
+    },
+
+
     fetchSingleCourse: async (courseId: number, accessToken: string | null) => {
         set({ isLoading: true, error: null });
         try {
             const response = await getCourseFrontData(courseId, accessToken);
             const { courseData, ownerData } = response.courseDetails;
 
+            // Dodaj profil jeśli nie istnieje
             const profileStore = useProfileStore.getState();
-            const currentProfiles = profileStore.profiles;
-
-            const profileExists = currentProfiles.some(
-                profile => profile.id === ownerData.id
-            );
-
-            if (!profileExists) {
-                const newProfile: ProfileData = {
+            if (!profileStore.profiles.some(profile => profile.id === ownerData.id)) {
+                profileStore.addProfile({
                     id: ownerData.id,
                     fullName: ownerData.fullName,
                     picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
                     description: ownerData.description,
-                    badges: ownerData.badges,
+                    badges: ownerData.badges || [],
                     badgesVisible: ownerData.badgesVisible,
                     createdAt: new Date(ownerData.createdAt),
-                };
-                profileStore.addProfile(newProfile);
+                    roles: ownerData.roles
+                });
             }
 
+            // Przygotuj nowy kurs
             const newCourse: CourseData = {
                 id: courseData.id,
                 name: courseData.name,
@@ -349,14 +452,51 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             };
 
 
-            const currentCourses = get().courses;
-            const courseIndex = currentCourses.findIndex(c => c.id === newCourse.id);
+            let coursesList: CourseData[];
+            let coursesKey: 'shopCourses' | 'ownedCourses' | 'createdCourses';
 
-            if (courseIndex === -1) {
+            switch(courseData.relationshipType) {
+                case 'PURCHASED':
+                    coursesList = get().ownedCourses;
+                    coursesKey = 'ownedCourses';
+                    break;
+                case 'CREATED':
+                    coursesList = get().createdCourses;
+                    coursesKey = 'createdCourses';
+                    break;
+                case 'AVAIABLE':
+                    coursesList = get().shopCourses;
+                    coursesKey = 'createdCourses';
+                    break;
+                default:
+                    coursesList = get().shopCourses;
+                    coursesKey = 'shopCourses';
+            }
+
+            const existingCourseIndex = coursesList.findIndex(c => c.id === newCourse.id);
+            if (existingCourseIndex !== -1) {
+
+                const existingCourse = coursesList[existingCourseIndex];
+                if (existingCourse.chapters.some(chapter => chapter.subchapters.length > 0)) {
+                    newCourse.chapters = existingCourse.chapters;
+                }
+
+                const updatedCourses = [...coursesList];
+                updatedCourses[existingCourseIndex] = newCourse;
+                set({ [coursesKey]: updatedCourses });
+            } else {
+
+                set({ [coursesKey]: [...coursesList, newCourse] });
+            }
+
+            const currentCourses = get().courses;
+            const mainCourseIndex = currentCourses.findIndex(c => c.id === newCourse.id);
+
+            if (mainCourseIndex === -1) {
                 set({ courses: [...currentCourses, newCourse] });
             } else {
                 const updatedCourses = [...currentCourses];
-                updatedCourses[courseIndex] = newCourse;
+                updatedCourses[mainCourseIndex] = newCourse;
                 set({ courses: updatedCourses });
             }
 
@@ -369,6 +509,8 @@ const useCourseStore = create<CourseStore>((set, get) => ({
     },
     buyCourseAction: async (courseId: number) => {
         const authStore = useAuthStore.getState();
+        const userStore = useUserStore.getState();
+
         if (!authStore.accessToken) {
             throw new Error('Please log in to purchase this course');
         }
@@ -381,11 +523,14 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             await get().fetchSingleCourse(courseId, authStore.accessToken);
 
             const course = get().courses.find(c => c.id === courseId);
-            if (course) {
+            if (course && userStore.userData) {
+
                 set({
                     shopCourses: get().shopCourses.filter(c => c.id !== courseId),
                     ownedCourses: [...get().ownedCourses, course]
                 });
+
+                userStore.updateUserField('points', userStore.userData.points - course.price);
             }
 
         } catch (error) {
@@ -407,22 +552,25 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             const response = await getCourseSubchapters(chapterId, authStore.accessToken)
             const chapterData = response.chapter
 
-            const updatedCourses = get().courses.map(course => ({
+            const updatedOwnedCourses = get().ownedCourses.map(course => ({
                 ...course,
                 chapters: course.chapters.map(chapter => {
                     if (chapter.id === chapterId) {
                         return {
                             ...chapter,
-                            subchapters: chapterData.subchapters || [] // Używamy właściwej ścieżki
+                            subchapters: chapterData.subchapters || []
                         }
                     }
                     return chapter
                 })
             }))
 
-            set({ courses: updatedCourses })
+            set({
+                ownedCourses: updatedOwnedCourses,
+                courses: updatedOwnedCourses
+            })
 
-            const courseWithChapter = updatedCourses.find(c =>
+            const courseWithChapter = updatedOwnedCourses.find(c =>
                 c.chapters.some(ch => ch.id === chapterId)
             )
             const chapter = courseWithChapter?.chapters.find(ch =>
@@ -498,7 +646,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                 }
             })
 
-            const courses = get().courses.map(course => ({
+            const updatedOwnedCourses = get().ownedCourses.map(course => ({
                 ...course,
                 chapters: course.chapters.map(chapter => ({
                     ...chapter,
@@ -514,7 +662,10 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                 }))
             }))
 
-            set({ courses })
+            set({
+                ownedCourses: updatedOwnedCourses,
+                courses: updatedOwnedCourses
+            })
         } catch (error) {
             console.error('Error loading content:', error)
             set({ error: 'Failed to load content' })

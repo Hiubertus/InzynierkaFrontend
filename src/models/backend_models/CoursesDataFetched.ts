@@ -1,3 +1,5 @@
+import {Roles} from "@/lib/stores/userStore";
+
 export interface OwnedCoursesDataFetched {
     currentPage: number,
     totalPages: number,
@@ -20,7 +22,7 @@ export interface CreatedCoursesDataFetched {
     currentPage: number,
     totalPages: number,
     totalItems: number,
-    userCourses: CourseInfo[]
+    courses: CourseInfo[]
 }
 
 export interface CourseInfo {
@@ -39,6 +41,7 @@ export interface CourseInfo {
     reviewNumber: number,
     ownerId: number,
     description: string,
+    relationshipType: 'OWNER' | 'PURCHASED' | 'AVAILABLE',
 }
 
 export interface OwnerInfo {
@@ -52,4 +55,5 @@ export interface OwnerInfo {
     badges: string[],
     badgesVisible: boolean,
     createdAt: string,
+    roles: Roles[]
 }

@@ -8,6 +8,11 @@ import useProfileStore from "@/lib/stores/profileStore"
 import {CourseGrid} from "@/components/Course/CoursesGrid"
 import {useUserStore} from "@/lib/stores/userStore"
 import {useAuthStore} from "@/lib/stores/authStore"
+import {Plus} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import PaginationControls from "@/components/Pagination/Pagination";
+import {ROUTES} from "@/components/Navbar/routes";
+import {useRouter} from "next/navigation";
 
 type CourseType = 'shop' | 'owned' | 'created'
 
@@ -32,11 +37,15 @@ export default function Page() {
         fetchShopCourses,
         fetchOwnedCourses,
         fetchCreatedCourses,
-        setCourses
+        setCourses,
+        currentPage,
+        totalPages,
+        resetPage
     } = useCourseStore()
     const {userData} = useUserStore()
     const {profiles} = useProfileStore()
     const {isInitialized: isAuthInitialized} = useAuthStore()
+    const router = useRouter();
 
     const hasAccessToTab = useCallback((type: CourseType) => {
         const config = TAB_CONFIG.find(tab => tab.value === type)
@@ -73,12 +82,14 @@ export default function Page() {
 
     useEffect(() => {
         if (isAuthInitialized) {
+            resetPage();
             fetchTabData(activeTab)
         }
     }, [activeTab, isAuthInitialized, fetchTabData])
 
     const handleTabChange = (value: CourseType) => {
         if (!isLoading) {
+            resetPage();
             setActiveTab(value)
         }
     }
@@ -112,6 +123,27 @@ export default function Page() {
                 </TabsList>
                 {TAB_CONFIG.map(tab => (
                     <TabsContent key={tab.value} value={tab.value}>
+                        {courses.length > 0 && (
+                            <div className="mt-6 flex justify-center">
+                                <PaginationControls
+                                    currentPage={currentPage + 1}
+                                    totalPages={totalPages}
+                                    onPageChange={(page) => {
+                                        switch(activeTab) {
+                                            case 'shop':
+                                                fetchShopCourses(page - 1);
+                                                break;
+                                            case 'owned':
+                                                fetchOwnedCourses(page - 1);
+                                                break;
+                                            case 'created':
+                                                fetchCreatedCourses(undefined, page - 1);
+                                                break;
+                                        }
+                                    }}
+                                />
+                            </div>
+                        )}
                         <CourseGrid
                             gridType={tab.value}
                             userData={userData}
@@ -120,6 +152,19 @@ export default function Page() {
                             isLoading={isLoading && hasAccessToTab(tab.value)}
                             error={error}
                         />
+                        {tab.value === 'created' && userData?.roles.includes('TEACHER') && (
+                            <div className="flex items-center justify-center mt-6">
+                                <Button
+                                    variant="default"
+                                    className="flex items-center gap-2"
+                                    onClick={() => router.push(`${ROUTES.COURSES}/creator`)}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Create Course
+                                </Button>
+                            </div>
+                        )}
+
                     </TabsContent>
                 ))}
             </Tabs>

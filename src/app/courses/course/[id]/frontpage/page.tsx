@@ -22,9 +22,20 @@ export default function CoursePage({ params }: CoursePageProps) {
     const [ isDataFetched, setIsDataFetched] = useState(false)
     const { fetchSingleCourse, isLoading } = useCourseStore()
 
-    const course = useCourseStore(state =>
-        state.courses.find(course => course.id === Number(params.id))
-    )
+    const course = useCourseStore(state => {
+        const courseId = Number(params.id);
+
+        const ownedCourse = state.ownedCourses.find(course => course.id === courseId);
+        if (ownedCourse) return ownedCourse;
+
+        const createdCourse = state.createdCourses.find(course => course.id === courseId);
+        if (createdCourse) return createdCourse;
+
+        const shopCourse = state.shopCourses.find(course => course.id === courseId);
+        if (shopCourse) return shopCourse;
+        
+        return state.courses.find(course => course.id === courseId);
+    });
 
     const owner = useProfileStore(state =>
         course ? state.profiles.find(profile => profile.id === course.ownerId) : null
@@ -32,7 +43,6 @@ export default function CoursePage({ params }: CoursePageProps) {
 
     useEffect(() => {
         if (!isDataFetched && isCourseInitialized) {
-
             fetchSingleCourse(Number(params.id), accessToken)
             setIsDataFetched(true)
         }

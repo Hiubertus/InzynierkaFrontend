@@ -66,6 +66,7 @@ export function StoreProvider({
                     description: initialUserData.description,
                     badges: initialUserData.badges || [],
                     badgesVisible: initialUserData.badgesVisible,
+                    roles: initialUserData.roles,
                     createdAt: new Date()
                 };
 

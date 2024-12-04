@@ -43,6 +43,8 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
         }
     };
 
+    const inputName = `question-${chapterIndex}-${subChapterIndex}-${contentIndex}-${questionIndex}-answers`;
+
     return (
         <div className="flex py-4 rounded-lg overflow-hidden">
             <OrderButtons
@@ -73,7 +75,7 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
                                                             handleSingleAnswerChange(e.target.checked);
                                                         }}
                                                         className="mr-2"
-                                                        name={`question-${questionIndex}-answers`}
+                                                        name={inputName}
                                                     />
                                                 </FormControl>
                                             </FormItem>

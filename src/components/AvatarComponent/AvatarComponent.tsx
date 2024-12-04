@@ -1,6 +1,5 @@
 "use client"
 
-import Link from "next/link";
 import { ROUTES } from "@/components/Navbar/routes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -11,37 +10,60 @@ import {
 } from "@/components/ui/tooltip"
 import { AvatarTooltip } from "@/components/AvatarComponent/AvatarTooltip";
 import { ProfileData } from "@/models/front_models/ProfileData";
+import Link from "next/link";
 
 interface Props {
     userProfile: ProfileData;
+    isLink?: boolean;
+    onClick?: () => void;
 }
 
-export const AvatarComponent = ({ userProfile }: Props) => {
-    const profileRoute = ROUTES.PROFILE.replace('{id}', userProfile.id.toString());
+export const AvatarComponent = ({ userProfile, isLink = true, onClick }: Props) => {
+    const AvatarContent = (
+        <Avatar className="cursor-pointer static">
+            {userProfile.picture ? (
+                <AvatarImage
+                    src={URL.createObjectURL(userProfile.picture)}
+                    alt={`Profile picture of ${userProfile.fullName}`}
+                />
+            ) : (
+                <AvatarFallback>
+                    {userProfile.fullName.split(' ').map(n => n[0]).join('')}
+                </AvatarFallback>
+            )}
+        </Avatar>
+    );
 
-    return (
+    const TooltipWrapper = ({ children }: { children: React.ReactNode }) => (
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <Link href={profileRoute}>
-                        <Avatar className="cursor-pointer">
-                            {userProfile.picture ? (
-                                <AvatarImage
-                                    src={URL.createObjectURL(userProfile.picture)}
-                                    alt={`Profile picture of ${userProfile.fullName}`}
-                                />
-                            ) : (
-                                <AvatarFallback>
-                                    {userProfile.fullName.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                            )}
-                        </Avatar>
-                    </Link>
+                    {children}
                 </TooltipTrigger>
                 <TooltipContent side="bottom" align="start" className="p-0">
                     <AvatarTooltip userProfile={userProfile} />
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
+    );
+
+    if (!isLink) {
+        return (
+            <TooltipWrapper>
+                <div onClick={onClick}>
+                    {AvatarContent}
+                </div>
+            </TooltipWrapper>
+        );
+    }
+
+    const profileRoute = ROUTES.PROFILE.replace('{id}', userProfile.id.toString());
+
+    return (
+        <TooltipWrapper>
+            <Link href={profileRoute}>
+                {AvatarContent}
+            </Link>
+        </TooltipWrapper>
     );
 };

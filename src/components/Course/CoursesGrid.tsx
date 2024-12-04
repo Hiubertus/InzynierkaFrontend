@@ -9,7 +9,7 @@ interface CourseGridProps {
     profiles: ProfileData[];
     isLoading?: boolean;
     error: string | null;
-    gridType: 'shop' | 'owned' | 'created';
+    gridType: 'shop' | 'owned' | 'created' | 'teacherCourses';
     userData: UserData | null;
 }
 
@@ -18,7 +18,7 @@ interface EmptyStateConfig {
     unauthenticated: string;
 }
 
-const EMPTY_STATES: Record<'shop' | 'owned' | 'created', EmptyStateConfig> = {
+const EMPTY_STATES: Record<'shop' | 'owned' | 'created' | 'teacherCourses', EmptyStateConfig> = {
     shop: {
         authenticated: "No courses were found",
         unauthenticated: "No courses were found"
@@ -30,15 +30,20 @@ const EMPTY_STATES: Record<'shop' | 'owned' | 'created', EmptyStateConfig> = {
     created: {
         authenticated: "Create courses to see them",
         unauthenticated: "Become a teacher to create courses"
+    },
+    teacherCourses: {
+        authenticated: "This teacher doesn't have any courses",
+        unauthenticated: "This teacher doesn't have any courses"
     }
 };
 
-type RoleReturn =  'USER' | 'TEACHER' | null
+type RoleReturn = 'USER' | 'TEACHER' | null
 
-const getRoleForType = (type: 'shop' | 'owned' | 'created'): RoleReturn  => {
+const getRoleForType = (type: 'shop' | 'owned' | 'created' | 'teacherCourses'): RoleReturn => {
     switch (type) {
         case 'owned': return 'USER';
         case 'created': return 'TEACHER';
+        case 'teacherCourses': return null;
         default: return null;
     }
 };

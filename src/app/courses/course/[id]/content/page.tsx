@@ -41,7 +41,20 @@ function Page() {
         initializePage()
     }, [id, courses, fetchSingleCourse, accessToken, router, toast, isAuthInitialized, isDataFetched])
 
-    const course = courses.find(c => c.id === Number(id))
+    const course = useCourseStore(state => {
+        const courseId = Number(id);
+
+        const ownedCourse = state.ownedCourses.find(course => course.id === courseId);
+        if (ownedCourse) return ownedCourse;
+
+        const createdCourse = state.createdCourses.find(course => course.id === courseId);
+        if (createdCourse) return createdCourse;
+
+        const shopCourse = state.shopCourses.find(course => course.id === courseId);
+        if (shopCourse) return shopCourse;
+
+        return state.courses.find(course => course.id === courseId);
+    });
 
     useEffect(() => {
         if (course && course.relationshipType !== 'PURCHASED') {

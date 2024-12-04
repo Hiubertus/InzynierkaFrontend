@@ -48,6 +48,7 @@ export const LoginForm: FC = memo(() => {
                     description: result.userData.description,
                     badges: result.userData.badges || [],
                     badgesVisible: result.userData.badgesVisible,
+                    roles: result.userData.roles,
                     createdAt: new Date(),
                 };
 

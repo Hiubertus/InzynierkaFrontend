@@ -1,3 +1,5 @@
+import {Roles} from "@/lib/stores/userStore";
+
 export interface ProfileData {
     id: number;
     fullName: string;
@@ -6,4 +8,8 @@ export interface ProfileData {
     badges: string[];
     badgesVisible: boolean;
     createdAt: Date;
+    roles: Roles[]
+    review?: number;
+    reviewNumber?: number;
+    teacherProfileCreatedAt?: Date;
 }
