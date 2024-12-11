@@ -58,8 +58,6 @@ export const ChapterAccordion: FC<ChapterAccordionProps> = ({
                         <Chapter
                             order={chapter.order}
                             name={chapter.name}
-                            review={chapter.review}
-                            reviewNumber={chapter.reviewNumber}
                         />
                     </AccordionTrigger>
                     <AccordionContent>

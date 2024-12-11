@@ -8,9 +8,9 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { AvatarTooltip } from "@/components/AvatarComponent/AvatarTooltip";
 import { ProfileData } from "@/models/front_models/ProfileData";
 import Link from "next/link";
+import {UserProfileSmall} from "@/components/UserProfile/UserProfileSmall";
 
 interface Props {
     userProfile: ProfileData;
@@ -19,6 +19,7 @@ interface Props {
 }
 
 export const AvatarComponent = ({ userProfile, isLink = true, onClick }: Props) => {
+
     const AvatarContent = (
         <Avatar className="cursor-pointer static">
             {userProfile.picture ? (
@@ -41,7 +42,7 @@ export const AvatarComponent = ({ userProfile, isLink = true, onClick }: Props) 
                     {children}
                 </TooltipTrigger>
                 <TooltipContent side="bottom" align="start" className="p-0">
-                    <AvatarTooltip userProfile={userProfile} />
+                    <UserProfileSmall userProfile={userProfile} className="w-[350px]" />
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>

@@ -9,7 +9,8 @@ import { useAuthStore } from "@/lib/stores/authStore"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 import {ChapterAccordionSkeleton} from "@/components/Course/ChapterAccordionSkeleton";
 import {ChapterAccordion} from "@/components/Course/ChapterAccordion";
-import {CommentSkeleton} from "@/components/Comment/CommentSkeleton";
+import {ReviewSkeleton} from "@/components/Review/ReviewSkeleton";
+import {ReviewList} from "@/components/Review/ReviewList";
 
 interface CoursePageProps {
     params: {
@@ -66,7 +67,7 @@ export default function CoursePage({ params }: CoursePageProps) {
                             <CardTitle>Course Reviews</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <CommentSkeleton />
+                            <ReviewSkeleton />
                         </CardContent>
                     </Card>
                 </div>
@@ -99,7 +100,7 @@ export default function CoursePage({ params }: CoursePageProps) {
                         <CardTitle>Course Reviews</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <CommentSkeleton />
+                        <ReviewList courseId={course.id} relationshipType={course.relationshipType} isReadyForReviews={!isLoading && !!course}/>
                     </CardContent>
                 </Card>
             </div>

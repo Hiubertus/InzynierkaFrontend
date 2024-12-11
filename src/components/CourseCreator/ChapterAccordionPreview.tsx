@@ -32,8 +32,6 @@ export const ChapterAccordionPreview: FC<ChapterAccordionProps> = ({ chapters, h
                                 <Chapter
                                     order={chapter.order}
                                     name={chapter.name}
-                                    review={chapter.review}
-                                    reviewNumber={chapter.reviewNumber}
                                 />
                             </AccordionTrigger>
                             <AccordionContent>
@@ -51,8 +49,6 @@ export const ChapterAccordionPreview: FC<ChapterAccordionProps> = ({ chapters, h
                         <Chapter
                             order={chapter.order}
                             name={chapter.name}
-                            review={chapter.review}
-                            reviewNumber={chapter.reviewNumber}
                         />
                     </div>
                 );

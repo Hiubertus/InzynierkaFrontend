@@ -17,6 +17,7 @@ import {getCourseFrontData} from "@/lib/course/getCourseFrontData";
 import {buyCourse} from "@/lib/course/buyCourse";
 import {getCourseSubchapters} from "@/lib/course/getCourseSubchapters";
 import {getCourseContents} from "@/lib/course/getCourseContents";
+import {getBestCourses} from "@/lib/course/getBestCourses";
 
 
 interface CourseStore {
@@ -47,6 +48,8 @@ interface CourseStore {
     fetchContentForSubchapter: (subchapterId: number) => Promise<void>
     fetchProfileCourses: (courseId: number, page?: number, pageSize?: number ) => Promise<void>
     resetPage: () => void;
+
+    fetchBestCourses: () => Promise<void>
 }
 
 const useCourseStore = create<CourseStore>((set, get) => ({
@@ -79,6 +82,84 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             isLoading: false,
             error: null
         });
+    },
+
+    fetchBestCourses: async () => {
+        set({ isLoading: true, error: null, courses: [] });
+        try {
+            const authStore = useAuthStore.getState();
+            const response = await getBestCourses(authStore.accessToken);
+
+            const currentShopCourses = get().shopCourses;
+            const currentOwnedCourses = get().ownedCourses;
+            const currentCreatedCourses = get().createdCourses;
+            const profileStore = useProfileStore.getState();
+            const currentProfiles = profileStore.profiles;
+
+            const coursesFromResponse = response.courses.map(data => {
+                const ownerData = data.ownerData;
+                if (!currentProfiles.some(profile => profile.id === ownerData.id)) {
+                    profileStore.addProfile({
+                        id: ownerData.id,
+                        fullName: ownerData.fullName,
+                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        description: ownerData.description,
+                        badges: ownerData.badges || [],
+                        badgesVisible: ownerData.badgesVisible,
+                        createdAt: new Date(ownerData.createdAt),
+                        roles: ownerData.roles
+                    });
+                }
+
+                const courseData = data.courseData;
+                return {
+                    id: courseData.id,
+                    name: courseData.name,
+                    banner: convertPictureToFile(courseData.banner.data, courseData.banner.mimeType),
+                    mimeType: courseData.banner.mimeType,
+                    price: courseData.price,
+                    review: courseData.review,
+                    duration: courseData.duration,
+                    createdAt: new Date(courseData.createdAt),
+                    updatedAt: new Date(courseData.updatedAt),
+                    tags: courseData.tags,
+                    reviewNumber: courseData.reviewNumber,
+                    ownerId: courseData.ownerId,
+                    description: courseData.description,
+                    relationshipType: courseData.relationshipType,
+                    chapters: []
+                };
+            });
+
+            coursesFromResponse.forEach(course => {
+                switch(course.relationshipType) {
+                    case 'PURCHASED': {
+                        if (!currentOwnedCourses.some(c => c.id === course.id)) {
+                            set({ ownedCourses: [...currentOwnedCourses, course] });
+                        }
+                        break;
+                    }
+                    case 'OWNER': {
+                        if (!currentCreatedCourses.some(c => c.id === course.id)) {
+                            set({ createdCourses: [...currentCreatedCourses, course] });
+                        }
+                        break;
+                    }
+                    default: {
+                        if (!currentShopCourses.some(c => c.id === course.id)) {
+                            set({ shopCourses: [...currentShopCourses, course] });
+                        }
+                    }
+                }
+            });
+
+            set({ courses: coursesFromResponse });
+        } catch (error) {
+            set({ error: error instanceof Error ? error.message : 'Failed to fetch best courses' });
+            console.error(error);
+        } finally {
+            set({ isLoading: false });
+        }
     },
 
     fetchProfileCourses: async (userId: number, page = 0, pageSize = 9) => {
@@ -445,8 +526,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                     id: chapter.id,
                     order: chapter.order,
                     name: chapter.name,
-                    review: chapter.review,
-                    reviewNumber: chapter.reviewNumber,
+
                     subchapters: []
                 })) || []
             };

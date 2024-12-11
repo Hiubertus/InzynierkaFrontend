@@ -5,38 +5,50 @@ interface StarRatingProps {
     rating: number;
     ratingNumber: number;
     className?: string;
+    onRatingChange?: (rating: number) => void; // opcjonalny callback
 }
 
-export const StarRating: React.FC<StarRatingProps> = ({ rating, ratingNumber, className = "" }) => {
+export const StarRating: React.FC<StarRatingProps> = ({ rating, ratingNumber, className = "", onRatingChange }) => {
     const normalizedRating = Math.min(5, Math.max(0, rating));
     const roundedRating = Math.round(normalizedRating * 2) / 2;
 
-    const renderStar = (position: number) => {
-        if (roundedRating >= position + 1) {
-            return (
-                <Star
-                    key={position}
-                    className="text-yellow-400 fill-yellow-400"
-                    size={20}
-                />
-            );
-        } else if (roundedRating >= position + 0.5) {
-            return (
-                <StarHalf
-                    key={position}
-                    className="text-yellow-400 fill-yellow-400"
-                    size={20}
-                />
-            );
-        } else {
-            return (
-                <Star
-                    key={position}
-                    className="text-gray-300"
-                    size={20}
-                />
-            );
+    const handleClick = (position: number) => {
+        if (onRatingChange) {
+            onRatingChange(position + 1);
         }
+    };
+
+    const renderStar = (position: number) => {
+        const starContent = roundedRating >= position + 1 ? (
+            <Star
+                className="text-yellow-400 fill-yellow-400"
+                size={20}
+            />
+        ) : roundedRating >= position + 0.5 ? (
+            <StarHalf
+                className="text-yellow-400 fill-yellow-400"
+                size={20}
+            />
+        ) : (
+            <Star
+                className="text-gray-300"
+                size={20}
+            />
+        );
+
+        return onRatingChange ? (
+            <button
+                key={position}
+                onClick={() => handleClick(position)}
+                className="focus:outline-none hover:scale-110 transition-transform"
+            >
+                {starContent}
+            </button>
+        ) : (
+            <span key={position}>
+            {starContent}
+        </span>
+        );
     };
 
     return (

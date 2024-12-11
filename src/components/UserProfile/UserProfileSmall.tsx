@@ -4,18 +4,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Trophy } from "lucide-react"
-import {ProfileData} from "@/models/front_models/ProfileData";
-import {getRoleDisplay} from "@/lib/utils/roleDisplay";
-import {formatDate} from "@/lib/utils/formatDate";
-
+import { ProfileData } from "@/models/front_models/ProfileData";
+import { getRoleDisplay } from "@/lib/utils/roleDisplay";
+import { formatDate } from "@/lib/utils/formatDate";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { ROUTES } from "@/components/Navbar/routes";
 
 interface Props {
     userProfile: ProfileData;
+    className?: string;
+    isClickable?: boolean;
 }
 
-export const AvatarTooltip = ({ userProfile }: Props) => {
-    return (
-        <Card className="w-[350px]">
+export const UserProfileSmall = ({ userProfile, className, isClickable = false }: Props) => {
+    const CardComponent = (
+        <Card className={cn(
+            "w-[350px]",
+            isClickable && "cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]",
+            className
+        )}>
             <CardHeader className="flex flex-row items-center gap-4">
                 <Avatar className="h-16 w-16">
                     {userProfile.picture ? (
@@ -65,4 +73,15 @@ export const AvatarTooltip = ({ userProfile }: Props) => {
             </CardContent>
         </Card>
     );
+
+    if (isClickable) {
+        const profileRoute = ROUTES.PROFILE.replace('{id}', userProfile.id.toString());
+        return (
+            <Link href={profileRoute} className="block">
+                {CardComponent}
+            </Link>
+        );
+    }
+
+    return CardComponent;
 };

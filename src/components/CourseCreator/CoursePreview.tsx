@@ -1,12 +1,16 @@
 import React from 'react';
-import { Course } from "@/components/Course/Course";
 import { CourseForm } from "@/components/CourseCreator/formSchema";
 import {cMedia, CourseData, cQuiz, cText} from "@/models/front_models/CourseData";
 import { CourseFrontPage }from "@/components/Course/CourseFrontPage";
-import {ProfileData} from "@/models/front_models/ProfileData";
 import {CourseContentPreview} from "@/components/CourseCreator/CourseContentPreview";
+import {useUserStore} from "@/lib/stores/userStore";
+import useProfileStore from "@/lib/stores/profileStore";
 
 export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 'page' | 'content' }) => {
+    const { userData} = useUserStore()
+    const { profiles } = useProfileStore()
+    const userProfile = profiles.find(profile => profile.id === userData!.id);
+
     const convertFormToCourseData = (form: CourseForm): CourseData => {
         return {
             id: 0,
@@ -27,7 +31,6 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
                 id: chapterIndex + 1,
                 order: chapterIndex + 1,
                 name: chapter.name,
-                review: 0,
                 subchapters: chapter.subchapters.map((subchapter, subchapterIndex) => ({
                     id: subchapterIndex + 1,
                     order: subchapterIndex + 1,
@@ -92,17 +95,6 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
 
     const courseData = convertFormToCourseData(formData);
 
-
-    const mockOwner: ProfileData = {
-        id: 1,
-        fullName: "Hubert Ozarowski",
-        description: "test",
-        badges: [],
-        picture: null,
-        badgesVisible: false,
-        createdAt: new Date(),
-    };
-
     return (
         <div>
             {type === "content" ? (
@@ -110,7 +102,7 @@ export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 
             ) : (
                 <CourseFrontPage
                     course={courseData}
-                    owner={mockOwner}
+                    owner={userProfile!}
                 />
             )}
         </div>

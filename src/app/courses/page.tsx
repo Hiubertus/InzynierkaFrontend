@@ -1,7 +1,6 @@
 'use client'
 
 import {useState, useEffect, useCallback} from 'react'
-import {Input} from "@/components/ui/input"
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs"
 import useCourseStore from "@/lib/stores/courseStore"
 import useProfileStore from "@/lib/stores/profileStore"
@@ -27,7 +26,7 @@ const TAB_CONFIG: Array<{
 ]
 
 export default function Page() {
-    const [searchTerm, setSearchTerm] = useState("")
+    // const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState<CourseType>('shop')
     const [isLoading, setIsLoading] = useState(false)
 
@@ -85,7 +84,7 @@ export default function Page() {
             resetPage();
             fetchTabData(activeTab)
         }
-    }, [activeTab, isAuthInitialized, fetchTabData])
+    }, [activeTab, isAuthInitialized, fetchTabData, resetPage])
 
     const handleTabChange = (value: CourseType) => {
         if (!isLoading) {
@@ -96,15 +95,15 @@ export default function Page() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <div className="mb-6">
-                <Input
-                    type="text"
-                    placeholder="Search for courses..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                />
-            </div>
+            {/*<div className="mb-6">*/}
+            {/*    <Input*/}
+            {/*        type="text"*/}
+            {/*        placeholder="Search for courses..."*/}
+            {/*        value={searchTerm}*/}
+            {/*        onChange={(e) => setSearchTerm(e.target.value)}*/}
+            {/*        className="w-full"*/}
+            {/*    />*/}
+            {/*</div>*/}
             <Tabs
                 defaultValue="shop"
                 className="w-full"

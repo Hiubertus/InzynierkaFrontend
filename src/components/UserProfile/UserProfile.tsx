@@ -6,7 +6,7 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Trophy, Pencil, Plus} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {CommentSkeleton} from "@/components/Comment/CommentSkeleton";
+import {ReviewSkeleton} from "@/components/Review/ReviewSkeleton";
 import {CourseGrid} from "@/components/Course/CoursesGrid";
 import {StarRating} from "@/components/StarRating/StarRating";
 import useProfileStore from "@/lib/stores/profileStore";
@@ -248,7 +248,7 @@ export const UserProfile = () => {
                         <TabsContent value="reviews">
                             <div className="grid gap-4">
                                 {[1, 2, 3].map((i) => (
-                                    <CommentSkeleton key={i}/>
+                                    <ReviewSkeleton key={i}/>
                                 ))}
                             </div>
                         </TabsContent>

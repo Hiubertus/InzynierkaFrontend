@@ -1,7 +1,7 @@
 import {Skeleton} from "@/components/ui/skeleton";
 import {Card, CardContent} from "@/components/ui/card";
 
-export const CommentSkeleton = () => {
+export const ReviewSkeleton = () => {
     return (
         <Card className="w-full">
             <CardContent className="p-6">

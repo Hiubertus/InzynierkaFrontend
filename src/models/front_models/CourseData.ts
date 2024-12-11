@@ -20,8 +20,6 @@ export interface ChapterData {
     id: number;
     order: number;
     name: string;
-    review: number;
-    reviewNumber: number;
     subchapters: SubChapterData[];
 }
 

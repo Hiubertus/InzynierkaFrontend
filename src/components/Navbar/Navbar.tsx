@@ -22,7 +22,7 @@ export const Navbar = () => {
 
     const handleLogout = async () => {
         try {
-            const result = await logout();
+            const result = await logout(accessToken);
             if (result.success) {
                 setAuthInitialized(false);
                 setUserInitialized(false);
