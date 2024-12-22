@@ -1,15 +1,16 @@
 import { create } from 'zustand';
 import { Review } from "@/models/front_models/Review";
-import useProfileStore from './profileStore'
+import { useProfileStore } from './profileStore'
 import {getCoursesReviews} from "@/lib/review/getCourseReviews";
 import {getOwnCourseReview} from "@/lib/review/getOwnCourseReview";
 import {addCourseReview} from "@/lib/review/addCourseReview";
 import {useUserStore} from "@/lib/stores/userStore";
 import {useAuthStore} from "@/lib/stores/authStore";
 import {convertPictureToFile} from "@/lib/utils/conversionFunction";
-import useCourseStore from "@/lib/stores/courseStore";
+import { useCourseStore }from "@/lib/stores/courseStore";
 import {editReview} from "@/lib/review/editReview";
 import {deleteReview} from "@/lib/review/deleteReview";
+import {ReviewDataGet} from "@/models/backend_models/ReviewDataGet";
 
 interface ReviewState {
     reviews: Review[];
@@ -21,8 +22,8 @@ interface ReviewState {
 
     fetchCourseReviews: (id: number, page?: number, size?: number) => Promise<Review[]>;
     addCourseReview: (id: number, rating: number, content: string) => Promise<void>;
-    setSortDirection: (direction: 'asc' | 'desc') => void;
-    setSortBy: (sort: 'date' | 'rating') => void;
+    setSortDirection: (direction: 'asc' | 'desc', courseId: number) => Promise<void>;
+    setSortBy: (sort: 'date' | 'rating', courseId: number) => Promise<void>;
     editReview: (reviewId: number, rating: number, content: string) => Promise<void>;
     deleteReview: (reviewId: number) => Promise<void>;
 }
@@ -52,7 +53,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
                 authStore.accessToken
             );
 
-            const processedReviews = response.reviews.map((review: Review) => {
+            const processedReviews = response.reviews.map((review: ReviewDataGet) => {
                 const processedProfile = {
                     id: review.userProfile.id,
                     fullName: review.userProfile.fullName,
@@ -61,7 +62,10 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
                     badges: review.userProfile.badges || [],
                     badgesVisible: review.userProfile.badgesVisible,
                     createdAt: new Date(review.userProfile.createdAt),
-                    roles: review.userProfile.roles
+                    roles: review.userProfile.roles,
+                    review: review.userProfile.review ? review.userProfile.review : null,
+                    reviewNumber: review.userProfile.reviewNumber ? review.userProfile.reviewNumber : null,
+                    teacherProfileCreatedAt: review.userProfile.teacherProfileCreatedAt ? review.userProfile.teacherProfileCreatedAt : null
                 };
 
                 if (!currentProfiles.some(profile => profile.id === ownerData.userData?.id)) {
@@ -137,10 +141,15 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         }
     },
 
+    setSortDirection: async (direction: 'asc' | 'desc', courseId: number) => {
+        set({ sortDir: direction, currentPage: 0 });
+        await get().fetchCourseReviews(courseId, 0);
+    },
 
-    setSortDirection: (direction: 'asc' | 'desc') => set({ sortDir: direction }),
-
-    setSortBy: (sort: 'date' | 'rating') => set({ sortBy: sort }),
+    setSortBy: async (sort: 'date' | 'rating', courseId: number) => {
+        set({ sortBy: sort, currentPage: 0 });
+        await get().fetchCourseReviews(courseId, 0);
+    },
 
     editReview: async (reviewId: number, rating: number, content: string) => {
         try {
@@ -190,5 +199,4 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
             throw error;
         }
     }
-
 }));

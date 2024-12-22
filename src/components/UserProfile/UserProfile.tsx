@@ -9,8 +9,8 @@ import {Button} from "@/components/ui/button";
 import {ReviewSkeleton} from "@/components/Review/ReviewSkeleton";
 import {CourseGrid} from "@/components/Course/CoursesGrid";
 import {StarRating} from "@/components/StarRating/StarRating";
-import useProfileStore from "@/lib/stores/profileStore";
-import useCourseStore from "@/lib/stores/courseStore";
+import { useProfileStore } from "@/lib/stores/profileStore";
+import { useCourseStore } from "@/lib/stores/courseStore";
 import {useRouter, useParams} from 'next/navigation';
 import {ROUTES} from "@/components/Navbar/routes";
 import {useUserStore} from "@/lib/stores/userStore";
@@ -105,7 +105,7 @@ export const UserProfile = () => {
                                     Member since {formatDate(userProfile.createdAt)}
                                 </span>
                             </div>
-                            {userProfile.review !== undefined && userProfile.reviewNumber !== undefined && (
+                            {userProfile.review !== null && userProfile.reviewNumber !== null && (
                                 <StarRating
                                     rating={userProfile.review}
                                     ratingNumber={userProfile.reviewNumber}

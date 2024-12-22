@@ -2,8 +2,8 @@
 
 import {useState, useEffect, useCallback} from 'react'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs"
-import useCourseStore from "@/lib/stores/courseStore"
-import useProfileStore from "@/lib/stores/profileStore"
+import { useCourseStore } from "@/lib/stores/courseStore"
+import { useProfileStore } from "@/lib/stores/profileStore"
 import {CourseGrid} from "@/components/Course/CoursesGrid"
 import {useUserStore} from "@/lib/stores/userStore"
 import {useAuthStore} from "@/lib/stores/authStore"

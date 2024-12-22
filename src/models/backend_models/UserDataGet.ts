@@ -1,11 +1,5 @@
 import {Roles} from "@/lib/stores/userStore";
 
-export interface UserDataLogin {
-    accessToken: string;
-    refreshToken: string;
-    userData: UserDataGet
-}
-
 export interface UserDataGet {
     id: number;
     email: string;
@@ -19,4 +13,5 @@ export interface UserDataGet {
     badges: string[];
     badgesVisible: boolean;
     roles: Roles[];
+    createdAt: Date;
 }

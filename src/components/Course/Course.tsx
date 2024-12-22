@@ -6,7 +6,7 @@ import { TextContent } from "@/components/Course/TextConent"
 import { MediaContent } from "@/components/Course/MediaContent"
 import { ChapterAccordionSkeleton } from "@/components/Course/ChapterAccordionSkeleton"
 import { CourseContentSkeleton} from "@/components/Course/CourseContentSkeleton";
-import useCourseStore from "@/lib/stores/courseStore"
+import { useCourseStore } from "@/lib/stores/courseStore"
 
 type ContentType = cText | cMedia | cQuiz
 

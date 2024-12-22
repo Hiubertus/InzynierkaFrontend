@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import { ProfileData } from '@/models/front_models/ProfileData'
-import {convertPictureToFile} from "@/lib/utils/conversionFunction";
-import {fetchUserProfile} from "@/lib/session/userData/fetchUserProfile";
-import {getBestTeachers} from "@/lib/session/userData/getBestTeachers";
-import {useAuthStore} from "@/lib/stores/authStore";
+import { convertPictureToFile } from "@/lib/utils/conversionFunction";
+import { fetchUserProfile } from "@/lib/session/userData/fetchUserProfile";
+import { getBestTeachers } from "@/lib/session/userData/getBestTeachers";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { UserDataGet } from "@/models/backend_models/UserDataGet";
 
 interface ProfileStore {
     profiles: ProfileData[];
+    bestTeacherIds: number[]; // Nowe pole dla ID najlepszych nauczycieli
     isLoading: boolean;
     error: string | null;
 
@@ -17,10 +19,12 @@ interface ProfileStore {
 
     fetchProfile: (userId: number) => Promise<void>;
     fetchBestTeachers: () => Promise<void>;
+    getBestTeacherProfiles: () => ProfileData[]; // Nowa metoda pomocnicza
 }
 
-const useProfileStore = create<ProfileStore>((set, get) => ({
+export const useProfileStore = create<ProfileStore>((set, get) => ({
     profiles: [],
+    bestTeacherIds: [], // Inicjalizacja nowego pola
     isLoading: false,
     error: null,
 
@@ -29,10 +33,14 @@ const useProfileStore = create<ProfileStore>((set, get) => ({
         try {
             const authStore = useAuthStore.getState();
             const response = await getBestTeachers(authStore.accessToken);
-            const currentProfiles = get().profiles;
 
-            response.profiles.forEach(profile => {
-                if (!currentProfiles.some(p => p.id === profile.id)) {
+            // Zakładamy, że response.teachers to tablica { id: number, ranking: number }
+            const teacherIds = response.teachers.map((teacher: UserDataGet) => teacher.id);
+            set({ bestTeacherIds: teacherIds });
+
+            // Pobierz profile dla każdego ID, jeśli jeszcze nie istnieją
+            for (const profile of response.teachers) {
+                if (!get().profiles.some(p => p.id === profile.id)) {
                     get().addProfile({
                         id: profile.id,
                         fullName: profile.fullName,
@@ -41,10 +49,13 @@ const useProfileStore = create<ProfileStore>((set, get) => ({
                         badges: profile.badges || [],
                         badgesVisible: profile.badgesVisible,
                         createdAt: new Date(profile.createdAt),
-                        roles: profile.roles
+                        roles: profile.roles,
+                        review: profile.review ? profile.review : null,
+                        reviewNumber: profile.reviewNumber ? profile.reviewNumber : null,
+                        teacherProfileCreatedAt: profile.teacherProfileCreatedAt ? profile.teacherProfileCreatedAt : null
                     });
                 }
-            });
+            }
         } catch (error) {
             set({ error: error instanceof Error ? error.message : 'Failed to fetch best teachers' });
             console.error(error);
@@ -53,15 +64,19 @@ const useProfileStore = create<ProfileStore>((set, get) => ({
         }
     },
 
-    fetchProfile: async (userId: number) => {
-        const existingProfile = get().profiles.find(profile => profile.id === userId);
-        if (existingProfile) return;
+    getBestTeacherProfiles: () => {
+        const state = get();
+        return state.bestTeacherIds
+            .map(id => state.profiles.find(profile => profile.id === id))
+            .filter((profile): profile is ProfileData => profile !== undefined);
+    },
 
+    fetchProfile: async (userId: number) => {
         set({ isLoading: true, error: null });
         try {
             const profileData = await fetchUserProfile(userId);
-            const profile = profileData.profile
-            get().addProfile({
+            const profile = profileData.profile;
+            const newProfileData = {
                 id: profile.id,
                 fullName: profile.fullName,
                 picture: convertPictureToFile(profile.picture.data, profile.picture.mimeType),
@@ -69,8 +84,17 @@ const useProfileStore = create<ProfileStore>((set, get) => ({
                 badges: profile.badges || [],
                 badgesVisible: profile.badgesVisible,
                 createdAt: new Date(profile.createdAt),
-                roles: profile.roles
-            });
+                roles: profile.roles,
+                review: profile.review ? profile.review : null,
+                reviewNumber: profile.reviewNumber ? profile.reviewNumber : null,
+                teacherProfileCreatedAt: profile.teacherProfileCreatedAt ? profile.teacherProfileCreatedAt : null
+            };
+
+            set((state) => ({
+                profiles: state.profiles.some(p => p.id === userId)
+                    ? state.profiles.map(p => p.id === userId ? newProfileData : p)
+                    : [...state.profiles, newProfileData]
+            }));
         } catch (error) {
             set({ error: error instanceof Error ? error.message : 'Failed to fetch profile' });
             console.error(error);
@@ -85,6 +109,4 @@ const useProfileStore = create<ProfileStore>((set, get) => ({
     })),
     setLoading: (isLoading) => set({ isLoading }),
     setError: (error) => set({ error }),
-}))
-
-export default useProfileStore
+}));

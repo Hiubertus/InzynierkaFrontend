@@ -1,4 +1,5 @@
 import {Roles} from "@/lib/stores/userStore";
+import {QuizForm} from "@/models/front_models/CourseData";
 
 export interface OwnedCoursesDataFetched {
     currentPage: number,
@@ -6,7 +7,7 @@ export interface OwnedCoursesDataFetched {
     totalItems: number,
     courses: [{
         courseData: CourseInfo,
-        ownerData: OwnerInfo,
+        ownerData: UserProfileGet,
         }]
 }
 export interface ShopCoursesDataFetched {
@@ -14,7 +15,7 @@ export interface ShopCoursesDataFetched {
     totalPages: number,
     totalItems: number,
     courses: [{
-        ownerData: OwnerInfo,
+        ownerData: UserProfileGet,
         courseData: CourseInfo
     }]
 }
@@ -43,8 +44,25 @@ export interface CourseInfo {
     description: string,
     relationshipType: 'OWNER' | 'PURCHASED' | 'AVAILABLE',
 }
+export interface ContentInfo {
+    id: number;
+    subchapterId: number;
+    type: 'text' | 'image' | 'video' | 'quiz';
+    text: string;
+    order: number ;
+    fontSize: "small" | "medium" | "large";
+    bolder: boolean ;
+    italics: boolean ;
+    underline: boolean ;
+    textColor: string;
+    file:  {
+        data: string;
+        mimeType: string;
+    },
+    "quizContent": QuizForm[]
+}
 
-export interface OwnerInfo {
+export interface UserProfileGet {
     id: number,
     fullName: string,
     picture: {
@@ -56,4 +74,7 @@ export interface OwnerInfo {
     badgesVisible: boolean,
     createdAt: string,
     roles: Roles[]
+    review?: number;
+    reviewNumber?: number;
+    teacherProfileCreatedAt?: Date;
 }

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { CourseFrontPage } from "@/components/Course/CourseFrontPage"
-import useCourseStore from '@/lib/stores/courseStore'
-import useProfileStore from '@/lib/stores/profileStore'
+import { useCourseStore } from '@/lib/stores/courseStore'
+import { useProfileStore } from '@/lib/stores/profileStore'
 import { CourseFrontPageSkeleton } from "@/components/Course/CourseFrontPageSkeleton"
 import { useAuthStore } from "@/lib/stores/authStore"
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";

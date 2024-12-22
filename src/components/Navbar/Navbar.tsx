@@ -8,8 +8,8 @@ import { NavLinks } from './NavLinks';
 import { CartButton } from './CartButton';
 import { AuthSection } from './AuthSection';
 import { ROUTES } from "@/components/Navbar/routes";
-import useProfileStore from "@/lib/stores/profileStore";
-import useCourseStore from "@/lib/stores/courseStore";
+import { useProfileStore } from "@/lib/stores/profileStore";
+import { useCourseStore } from "@/lib/stores/courseStore";
 
 export const Navbar = () => {
     const { accessToken, setAccessToken, clearAuth, setInitialized: setAuthInitialized  } = useAuthStore();

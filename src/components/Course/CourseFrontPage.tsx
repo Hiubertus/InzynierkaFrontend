@@ -11,7 +11,7 @@ import {MediaContent} from "@/components/Course/MediaContent"
 import {PointsComponent} from "@/components/PointsComponent/PointsComponent"
 import {AvatarComponent} from "@/components/AvatarComponent/AvatarComponent";
 import {useRouter} from "next/navigation";
-import useCourseStore from "@/lib/stores/courseStore";
+import { useCourseStore } from "@/lib/stores/courseStore";
 import {useToast} from "@/hooks/use-toast";
 import {ToastAction} from "@/components/ui/toast";
 import {StarRating} from "@/components/StarRating/StarRating";

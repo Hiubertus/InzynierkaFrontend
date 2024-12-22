@@ -13,15 +13,14 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useUserStore } from '@/lib/stores/userStore';
 import { ROUTES } from "@/components/Navbar/routes";
-import useProfileStore from "@/lib/stores/profileStore";
-import {convertPictureToFile} from "@/lib/utils/conversionFunction";
-import useCourseStore from "@/lib/stores/courseStore";
+import { useProfileStore } from "@/lib/stores/profileStore";
+import { useCourseStore } from "@/lib/stores/courseStore";
 
 export const LoginForm: FC = memo(() => {
     const router = useRouter();
     const { setAccessToken, setInitialized: setAuthInitialized } = useAuthStore();
     const { setUserData, setInitialized: setUserInitialized } = useUserStore();
-    const { setProfiles, profiles } = useProfileStore();
+    const { fetchProfile } = useProfileStore();
     const [backendError, setBackendError] = useState<string | null>(null);
     const { resetData: resetCourseData } = useCourseStore()
 
@@ -41,26 +40,7 @@ export const LoginForm: FC = memo(() => {
                 setAuthInitialized(false);
                 setUserInitialized(false);
 
-                const userProfile = {
-                    id: result.userData.id,
-                    fullName: result.userData.fullName,
-                    picture: convertPictureToFile(result.userData.pictureBase64, result.userData.mimeType),
-                    description: result.userData.description,
-                    badges: result.userData.badges || [],
-                    badgesVisible: result.userData.badgesVisible,
-                    roles: result.userData.roles,
-                    createdAt: new Date(),
-                };
-
-                const existingProfileIndex = profiles.findIndex(profile => profile.id === userProfile.id);
-
-                if (existingProfileIndex !== -1) {
-                    const updatedProfiles = [...profiles];
-                    updatedProfiles[existingProfileIndex] = userProfile;
-                    setProfiles(updatedProfiles);
-                } else {
-                    setProfiles([...profiles, userProfile]);
-                }
+                fetchProfile(result.userData.id)
 
                 resetCourseData();
                 setAccessToken(result.accessToken);

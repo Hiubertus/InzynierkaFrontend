@@ -67,14 +67,12 @@ export const ReviewList = ({
         }
     }, [courseId, accessToken, userData, isReadyForReviews]);
 
-    const handleSortChange = async (newSortBy: 'date' | 'rating') => {
-        setSortBy(newSortBy);
-        await loadReviews(0);
+    const handleSortDirectionChange = (direction: 'asc' | 'desc') => {
+        setSortDirection(direction, courseId);
     };
 
-    const handleDirectionChange = async () => {
-        setSortDirection(sortDir === 'asc' ? 'desc' : 'asc');
-        await loadReviews(0);
+    const handleSortByChange = (sort: 'date' | 'rating') => {
+        setSortBy(sort, courseId);
     };
 
     const handlePageChange = (page: number) => {
@@ -86,7 +84,7 @@ export const ReviewList = ({
             <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleSortChange(sortBy === 'date' ? 'rating' : 'date')}
+                onClick={() => handleSortByChange(sortBy === 'date' ? 'rating' : 'date')}
             >
                 {sortBy === 'date' ? (
                     <CalendarDays className="h-4 w-4" />
@@ -97,7 +95,7 @@ export const ReviewList = ({
             <Button
                 variant="outline"
                 size="sm"
-                onClick={handleDirectionChange}
+                onClick={() => handleSortDirectionChange(sortDir === 'asc' ? 'desc' : 'asc')}
             >
                 <ArrowUpDown className="h-4 w-4" />
             </Button>

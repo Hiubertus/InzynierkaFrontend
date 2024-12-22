@@ -1,6 +1,6 @@
 import { create } from 'zustand'
-import {Answer, ChapterData, cMedia, CourseData, cQuiz, cText, QuizForm} from '@/models/front_models/CourseData'
-import useProfileStore from "@/lib/stores/profileStore";
+import {Answer, ChapterData, cMedia, CourseData, cQuiz, cText} from '@/models/front_models/CourseData'
+import { useProfileStore } from "@/lib/stores/profileStore";
 import { ProfileData } from "@/models/front_models/ProfileData";
 import {fetchShopCoursesCards} from "@/lib/course/fetchShopCoursesCards";
 import {convertPictureToFile} from "@/lib/utils/conversionFunction";
@@ -9,8 +9,9 @@ import {fetchCreatedCoursesCards} from "@/lib/course/fetchCreatedCoursesCards";
 import {useAuthStore} from "@/lib/stores/authStore";
 import {fetchOwnedCoursesCards} from "@/lib/course/fetchOwnedCoursesCards";
 import {
+    ContentInfo, CourseInfo,
     CreatedCoursesDataFetched,
-    OwnedCoursesDataFetched,
+    OwnedCoursesDataFetched, UserProfileGet,
     ShopCoursesDataFetched
 } from "@/models/backend_models/CoursesDataFetched";
 import {getCourseFrontData} from "@/lib/course/getCourseFrontData";
@@ -52,7 +53,7 @@ interface CourseStore {
     fetchBestCourses: () => Promise<void>
 }
 
-const useCourseStore = create<CourseStore>((set, get) => ({
+export const useCourseStore = create<CourseStore>((set, get) => ({
     courses: [],
 
     shopCourses: [],
@@ -96,7 +97,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             const profileStore = useProfileStore.getState();
             const currentProfiles = profileStore.profiles;
 
-            const coursesFromResponse = response.courses.map(data => {
+            const coursesFromResponse = response.courses.map((data: { courseData: CourseInfo, ownerData: UserProfileGet }) => {
                 const ownerData = data.ownerData;
                 if (!currentProfiles.some(profile => profile.id === ownerData.id)) {
                     profileStore.addProfile({
@@ -107,7 +108,10 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                         badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
                         createdAt: new Date(ownerData.createdAt),
-                        roles: ownerData.roles
+                        roles: ownerData.roles,
+                        review: ownerData.review ? ownerData.review : null,
+                        reviewNumber: ownerData.reviewNumber ? ownerData.reviewNumber : null,
+                        teacherProfileCreatedAt: ownerData.teacherProfileCreatedAt ? ownerData.teacherProfileCreatedAt : null
                     });
                 }
 
@@ -131,7 +135,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                 };
             });
 
-            coursesFromResponse.forEach(course => {
+            coursesFromResponse.forEach((course: CourseData) => {
                 switch(course.relationshipType) {
                     case 'PURCHASED': {
                         if (!currentOwnedCourses.some(c => c.id === course.id)) {
@@ -295,7 +299,10 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                         badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
                         createdAt: new Date(ownerData.createdAt),
-                        roles: ownerData.roles
+                        roles: ownerData.roles,
+                        review: ownerData.review ? ownerData.review : null,
+                        reviewNumber: ownerData.reviewNumber ? ownerData.reviewNumber : null,
+                        teacherProfileCreatedAt: ownerData.teacherProfileCreatedAt ? ownerData.teacherProfileCreatedAt : null
                     });
                 }
 
@@ -375,7 +382,10 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                         badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
                         createdAt: new Date(ownerData.createdAt),
-                        roles: ownerData.roles
+                        roles: ownerData.roles,
+                        review: ownerData.review ? ownerData.review : null,
+                        reviewNumber: ownerData.reviewNumber ? ownerData.reviewNumber : null,
+                        teacherProfileCreatedAt: ownerData.teacherProfileCreatedAt ? ownerData.teacherProfileCreatedAt : null
                     };
                     profileStore.addProfile(newProfile);
                 }
@@ -491,7 +501,6 @@ const useCourseStore = create<CourseStore>((set, get) => ({
             const response = await getCourseFrontData(courseId, accessToken);
             const { courseData, ownerData } = response.courseDetails;
 
-            // Dodaj profil jeśli nie istnieje
             const profileStore = useProfileStore.getState();
             if (!profileStore.profiles.some(profile => profile.id === ownerData.id)) {
                 profileStore.addProfile({
@@ -502,11 +511,13 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                     badges: ownerData.badges || [],
                     badgesVisible: ownerData.badgesVisible,
                     createdAt: new Date(ownerData.createdAt),
-                    roles: ownerData.roles
+                    roles: ownerData.roles,
+                    review: ownerData.review ? ownerData.review : null,
+                    reviewNumber: ownerData.reviewNumber ? ownerData.reviewNumber : null,
+                    teacherProfileCreatedAt: ownerData.teacherProfileCreatedAt ? ownerData.teacherProfileCreatedAt : null
                 });
             }
 
-            // Przygotuj nowy kurs
             const newCourse: CourseData = {
                 id: courseData.id,
                 name: courseData.name,
@@ -677,7 +688,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
         try {
             const response = await getCourseContents(subchapterId, authStore.accessToken)
             const rawContents = response.subchapter.content
-            const processedContents = rawContents.map((content: (cText | cMedia | cQuiz)) => {
+            const processedContents = rawContents.map((content: ContentInfo) => {
                 switch (content.type) {
                     case 'text':
                         return {
@@ -707,7 +718,7 @@ const useCourseStore = create<CourseStore>((set, get) => ({
                             id: content.id,
                             type: 'quiz',
                             order: content.order,
-                            quizContent: content.quizContent.map((quiz: QuizForm) => ({
+                            quizContent: content.quizContent.map(quiz => ({
                                 id: quiz.id,
                                 question: quiz.question,
                                 order: quiz.order,
@@ -758,7 +769,5 @@ const useCourseStore = create<CourseStore>((set, get) => ({
     setError: (error) => set({ error }),
     setCourses: (courses) => set({ courses }),
 }));
-
-export default useCourseStore
 
 

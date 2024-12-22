@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import useCourseStore from "@/lib/stores/courseStore"
+import { useCourseStore } from "@/lib/stores/courseStore"
 import { withProtectedAuth } from "@/lib/session/withAuth"
 import { Course } from '@/components/Course/Course'
 import { useToast } from "@/hooks/use-toast"

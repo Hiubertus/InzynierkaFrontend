@@ -9,7 +9,7 @@ export interface ProfileData {
     badgesVisible: boolean;
     createdAt: Date;
     roles: Roles[]
-    review?: number;
-    reviewNumber?: number;
-    teacherProfileCreatedAt?: Date;
+    review: number | null;
+    reviewNumber: number | null;
+    teacherProfileCreatedAt: Date | null;
 }

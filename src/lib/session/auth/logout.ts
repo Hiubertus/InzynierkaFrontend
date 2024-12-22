@@ -10,7 +10,7 @@ export const logout = async (accessToken: string | null) => {
 
         await axios.post(
             `${process.env.NEXT_PUBLIC_BACKEND_ADDRESS}/user/logout`,
-            { refreshToken },
+            { refreshToken: refreshToken?.value },
             {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`

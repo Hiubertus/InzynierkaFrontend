@@ -4,7 +4,7 @@ import {cMedia, CourseData, cQuiz, cText} from "@/models/front_models/CourseData
 import { CourseFrontPage }from "@/components/Course/CourseFrontPage";
 import {CourseContentPreview} from "@/components/CourseCreator/CourseContentPreview";
 import {useUserStore} from "@/lib/stores/userStore";
-import useProfileStore from "@/lib/stores/profileStore";
+import { useProfileStore } from "@/lib/stores/profileStore";
 
 export const CoursePreview = ({ formData, type }: { formData: CourseForm, type: 'page' | 'content' }) => {
     const { userData} = useUserStore()
