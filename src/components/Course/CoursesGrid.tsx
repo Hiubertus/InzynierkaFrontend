@@ -1,8 +1,11 @@
+import React from 'react';
 import { CourseCard } from "@/components/Course/CourseCard";
 import { CourseCardSkeleton } from "@/components/Course/CourseCardSkeleton";
 import { CourseData } from "@/models/front_models/CourseData";
 import { ProfileData } from "@/models/front_models/ProfileData";
 import { UserData } from "@/lib/stores/userStore";
+import { useCourseStore } from "@/lib/stores/courseStore";
+import { SearchComponent } from "./SearchComponent";
 
 interface CourseGridProps {
     courses: CourseData[];
@@ -11,6 +14,7 @@ interface CourseGridProps {
     error: string | null;
     gridType: 'shop' | 'owned' | 'created' | 'teacherCourses';
     userData: UserData | null;
+    showSearch?: boolean;
 }
 
 interface EmptyStateConfig {
@@ -37,7 +41,7 @@ const EMPTY_STATES: Record<'shop' | 'owned' | 'created' | 'teacherCourses', Empt
     }
 };
 
-type RoleReturn = 'USER' | 'TEACHER' | null
+type RoleReturn = 'USER' | 'TEACHER' | null;
 
 const getRoleForType = (type: 'shop' | 'owned' | 'created' | 'teacherCourses'): RoleReturn => {
     switch (type) {
@@ -54,8 +58,27 @@ export const CourseGrid = ({
                                isLoading,
                                error,
                                gridType,
-                               userData
+                               userData,
+                               showSearch = true,
                            }: CourseGridProps) => {
+    const fetchShopCourses = useCourseStore(state => state.fetchShopCourses);
+    const fetchOwnedCourses = useCourseStore(state => state.fetchOwnedCourses);
+    const fetchCreatedCourses = useCourseStore(state => state.fetchCreatedCourses);
+
+    const handleSearch = (search: string, tag: string | undefined) => {
+        switch (gridType) {
+            case 'shop':
+                fetchShopCourses(0, 9, search, tag);
+                break;
+            case 'owned':
+                fetchOwnedCourses(0, 9, search, tag);
+                break;
+            case 'created':
+                fetchCreatedCourses(undefined, 0, 9, search, tag);
+                break;
+        }
+    };
+
     if (isLoading) {
         return (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -87,17 +110,24 @@ export const CourseGrid = ({
     }
 
     return (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {courses.map(course => {
-                const ownerProfile = profiles.find(profile => profile.id === course.ownerId);
-                return (
-                    <CourseCard
-                        key={course.id}
-                        course={course}
-                        userProfile={ownerProfile!}
-                    />
-                );
-            })}
-        </div>
+        <>
+            {showSearch && (
+                <SearchComponent
+                    onSearch={handleSearch}
+                />
+            )}
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {courses.map(course => {
+                    const ownerProfile = profiles.find(profile => profile.id === course.ownerId);
+                    return (
+                        <CourseCard
+                            key={course.id}
+                            course={course}
+                            userProfile={ownerProfile!}
+                        />
+                    );
+                })}
+            </div>
+        </>
     );
 };

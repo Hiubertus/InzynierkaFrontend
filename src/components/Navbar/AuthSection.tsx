@@ -14,6 +14,7 @@ interface AuthSectionProps {
 }
 
 export const AuthSection = ({ isAuthenticated, userData, onLogout, profileData }: AuthSectionProps) => {
+
     if (isAuthenticated && userData && profileData) {
         return (
             <div className="flex items-center gap-4">

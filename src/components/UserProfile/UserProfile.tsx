@@ -6,7 +6,6 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {Trophy, Pencil, Plus} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {ReviewSkeleton} from "@/components/Review/ReviewSkeleton";
 import {CourseGrid} from "@/components/Course/CoursesGrid";
 import {StarRating} from "@/components/StarRating/StarRating";
 import { useProfileStore } from "@/lib/stores/profileStore";
@@ -19,6 +18,7 @@ import {getRoleDisplay} from "@/lib/utils/roleDisplay";
 import {useEffect} from "react";
 import PaginationControls from "@/components/Pagination/Pagination";
 import {UserProfileSkeleton} from "@/components/UserProfile/UserProfileSkeleton";
+import {ReviewList} from "@/components/Review/ReviewList";
 
 export const UserProfile = () => {
     const router = useRouter();
@@ -246,11 +246,12 @@ export const UserProfile = () => {
                         </TabsContent>
 
                         <TabsContent value="reviews">
-                            <div className="grid gap-4">
-                                {[1, 2, 3].map((i) => (
-                                    <ReviewSkeleton key={i}/>
-                                ))}
-                            </div>
+                            <ReviewList
+                                contentId={profileId}
+                                type="teacher"
+                                ownerId={profileId}
+                                isReadyForReviews={!isProfileLoading}
+                            />
                         </TabsContent>
                     </>
                 )}

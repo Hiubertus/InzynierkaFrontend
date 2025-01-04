@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import { Review } from './Review';
 import { useReviewStore } from '@/lib/stores/reviewStore';
 import { ReviewSkeleton } from './ReviewSkeleton';
@@ -9,21 +9,29 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useUserStore } from "@/lib/stores/userStore";
 import { ArrowUpDown, CalendarDays, Star } from "lucide-react";
 import PaginationControls from "@/components/Pagination/Pagination";
+import {useProfileStore} from "@/lib/stores/profileStore";
+import {useCourseStore} from "@/lib/stores/courseStore";
+import { canAddReviewToTeacher } from '@/lib/review/canAddReviewToTeacher';
 
 interface ReviewListProps {
-    courseId: number;
-    relationshipType: 'PURCHASED' | 'OWNER' | 'AVAILABLE' | null;
-    isReadyForReviews: boolean;
+    contentId: number;
+    type: 'course' | 'teacher';
+    ownerId?: number;
+    relationshipType?: 'PURCHASED' | 'OWNER' | 'AVAILABLE' | null;
+    isReadyForReviews?: boolean;
 }
 
 export const ReviewList = ({
-                               courseId,
+                               contentId,
+                               type,
+                               ownerId,
                                relationshipType,
-                               isReadyForReviews
+                               isReadyForReviews = true
                            }: ReviewListProps) => {
     const [isLoading, setIsLoading] = useState(true);
     const [isInitialized, setIsInitialized] = useState(false);
     const [isAddReviewOpen, setIsAddReviewOpen] = useState(false);
+    const [canReviewTeacher, setCanReviewTeacher] = useState<boolean | null>(null);
     const { accessToken } = useAuthStore();
     const { userData } = useUserStore();
     const {
@@ -32,47 +40,89 @@ export const ReviewList = ({
         currentPage,
         sortDir,
         sortBy,
-        fetchCourseReviews,
+        fetchReviews,
         setSortDirection,
         setSortBy
     } = useReviewStore();
+    const { fetchSingleCourse } = useCourseStore();
+    const { fetchProfile } = useProfileStore();
 
-    // Znajdź własną recenzję wśród wszystkich recenzji
     const ownReview = userData ? reviews.find(review =>
         review.userProfile.id === userData.id
     ) : null;
 
-    const loadReviews = async (page?: number) => {
+    const canAddReview = useCallback(async () => {
+        if (!userData || !accessToken) return false;
+
+        if (type === 'course') {
+            if (relationshipType === 'OWNER') return false;
+            return relationshipType === 'PURCHASED';
+        }
+
+        if (type === 'teacher') {
+            if (userData.id === ownerId) return false;
+            try {
+                const canReview = await canAddReviewToTeacher(contentId, accessToken);
+                console.log(canReview)
+                setCanReviewTeacher(canReview);
+                return canReview;
+            } catch (error) {
+                console.error('Error checking if can review teacher:', error);
+                return false;
+            }
+        }
+
+        return false;
+    }, [userData, accessToken, type, relationshipType, ownerId, contentId]);
+
+    useEffect(() => {
+        if (type === 'teacher' && userData && accessToken) {
+            canAddReview();
+        }
+    }, [type, userData, accessToken, canAddReview]);
+
+    const loadReviews = useCallback(async (page?: number) => {
         if (!isReadyForReviews) return;
 
         setIsLoading(true);
         try {
-            await fetchCourseReviews(courseId, page);
+            await fetchReviews(type, contentId, page);
             setIsInitialized(true);
         } catch (error) {
             console.error('Failed to load reviews:', error);
         } finally {
             setIsLoading(false);
         }
+    }, [contentId, fetchReviews, isReadyForReviews, type]);
+
+    const handleReviewChange = async () => {
+        // Odświeżamy recenzje
+        await loadReviews(currentPage);
+
+        if (type === 'course') {
+            await fetchSingleCourse(contentId, accessToken);
+        } else if (type === 'teacher') {
+            await fetchProfile(contentId);
+        }
     };
 
     useEffect(() => {
         setIsInitialized(false);
         setIsLoading(true);
-    }, [courseId]);
+    }, [contentId]);
 
     useEffect(() => {
         if (isReadyForReviews && !isInitialized) {
             loadReviews();
         }
-    }, [courseId, accessToken, userData, isReadyForReviews]);
+    }, [contentId, accessToken, userData, isReadyForReviews, isInitialized, loadReviews]);
 
     const handleSortDirectionChange = (direction: 'asc' | 'desc') => {
-        setSortDirection(direction, courseId);
+        setSortDirection(direction, contentId, type);
     };
 
     const handleSortByChange = (sort: 'date' | 'rating') => {
-        setSortBy(sort, courseId);
+        setSortBy(sort, contentId, type);
     };
 
     const handlePageChange = (page: number) => {
@@ -102,65 +152,69 @@ export const ReviewList = ({
         </div>
     );
 
-    const renderReviewCreator = () => {
-        if (!userData) {
+    const renderAddReviewSection = () => {
+        if (!userData || !accessToken) {
             return (
                 <Card className="mb-4 bg-muted">
                     <CardContent className="p-6 text-center">
-                        <p>Zaloguj się, aby móc dodać recenzję</p>
+                        <p>Log in to add a review</p>
                     </CardContent>
                 </Card>
             );
         }
 
-        if (relationshipType === 'OWNER') {
+
+        if (type === 'teacher' && !canReviewTeacher) {
+            return (
+                <Card className="mb-4 bg-muted">
+                    <CardContent className="p-6 text-center">
+                        <p>You need to purchase a course from this teacher to leave a review</p>
+                    </CardContent>
+                </Card>
+            );
+        }
+
+        if (!canAddReview() || relationshipType === 'OWNER') {
             return null;
         }
 
-        if (relationshipType !== 'PURCHASED') {
+        if (ownReview) {
             return (
-                <Card className="mb-4 bg-muted">
-                    <CardContent className="p-6 text-center">
-                        <p>Kup kurs, aby móc dodać recenzję</p>
-                    </CardContent>
-                </Card>
-            );
-        }
-
-        if (!ownReview) {
-            return (
-                <Card className="mb-4">
-                    <CardContent className="p-6">
-                        <h3 className="text-lg font-semibold mb-4">Dodaj swoją recenzję</h3>
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsAddReviewOpen(true)}
-                            className="w-full"
-                        >
-                            Napisz recenzję
-                        </Button>
-                        <AddReviewDialog
-                            courseId={courseId}
-                            open={isAddReviewOpen}
-                            onOpenChange={setIsAddReviewOpen}
-                            onSuccess={() => loadReviews(currentPage)}
-                        />
-                    </CardContent>
-                </Card>
+                <div className="mb-4">
+                    <h3 className="text-lg font-semibold mb-2">Your review</h3>
+                    <Review
+                        key={ownReview.id}
+                        id={ownReview.id}
+                        profile={ownReview.userProfile}
+                        rating={ownReview.rating}
+                        content={ownReview.content}
+                        lastModified={new Date(ownReview.lastModified)}
+                        onReviewChange={handleReviewChange}
+                    />
+                </div>
             );
         }
 
         return (
-            <div className="mb-4">
-                <h3 className="text-lg font-semibold mb-2">Twoja recenzja</h3>
-                <Review
-                    profile={ownReview.userProfile}
-                    rating={ownReview.rating}
-                    content={ownReview.content}
-                    lastModified={new Date(ownReview.lastModified)}
-                    id={ownReview.id}
-                />
-            </div>
+            <Card className="mb-4">
+                <CardContent className="p-6">
+                    <h3 className="text-lg font-semibold mb-4">Add your review</h3>
+                    <Button
+                        variant="outline"
+                        onClick={() => setIsAddReviewOpen(true)}
+                        className="w-full"
+                    >
+                        Write a review
+                    </Button>
+                    <AddReviewDialog
+                        contentId={contentId}
+                        type={type}
+                        open={isAddReviewOpen}
+                        onOpenChange={setIsAddReviewOpen}
+                        onSuccess={handleReviewChange}
+                    />
+                </CardContent>
+            </Card>
         );
     };
 
@@ -176,11 +230,13 @@ export const ReviewList = ({
 
     return (
         <div className="space-y-4">
-            {renderReviewCreator()}
+            {renderAddReviewSection()}
+
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold">Wszystkie recenzje</h3>
+                <h3 className="text-lg font-semibold">All reviews</h3>
                 {renderSortButtons()}
             </div>
+
             <div className="space-y-4">
                 {isLoading ? (
                     <div className="space-y-4">
@@ -191,7 +247,9 @@ export const ReviewList = ({
                 ) : reviews.length > 0 ? (
                     <>
                         {reviews
-                            .filter(review => review.userProfile.id !== userData?.id)
+                            .filter(review => {
+                                return userData ? review.userProfile.id !== userData.id : true;
+                            })
                             .map((review) => (
                                 <Review
                                     key={review.id}
@@ -213,7 +271,7 @@ export const ReviewList = ({
                 ) : (
                     <Card>
                         <CardContent className="p-6 text-center text-muted-foreground">
-                            Brak recenzji dla tego kursu
+                            No reviews yet
                         </CardContent>
                     </Card>
                 )}

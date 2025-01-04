@@ -19,6 +19,7 @@ import {buyCourse} from "@/lib/course/buyCourse";
 import {getCourseSubchapters} from "@/lib/course/getCourseSubchapters";
 import {getCourseContents} from "@/lib/course/getCourseContents";
 import {getBestCourses} from "@/lib/course/getBestCourses";
+import {getTags} from "@/lib/course/getTags";
 
 
 interface CourseStore {
@@ -32,13 +33,17 @@ interface CourseStore {
     createdCourses: CourseData[],
     ownedCourses: CourseData[],
 
+    availableTags: string[];
+
     isLoading: boolean;
     error: string | null;
 
+    fetchTags: () => Promise<void>;
+
     fetchSingleCourse: (courseId: number, accessToken: string | null) => Promise<void>;
-    fetchShopCourses: (page?: number, pageSize?: number, userId?: number) => Promise<void>;
-    fetchOwnedCourses: (page?: number, pageSize?: number) => Promise<void>;
-    fetchCreatedCourses: (userId?: number, page?: number, pageSize?: number) => Promise<void>;
+    fetchShopCourses: (page?: number, pageSize?: number, search?: string, tag?: string) => Promise<void>;
+    fetchOwnedCourses: (page?: number, pageSize?: number, search?: string, tag?: string) => Promise<void>;
+    fetchCreatedCourses: (userId?: number, page?: number, pageSize?: number, search?: string, tag?: string) => Promise<void>;
     setLoading: (isLoading: boolean) => void;
     setError: (error: string | null) => void;
     setCourses: (courses: CourseData[]) => void;
@@ -47,7 +52,7 @@ interface CourseStore {
 
     fetchSubchaptersForChapter: (chapterId: number) => Promise<void>
     fetchContentForSubchapter: (subchapterId: number) => Promise<void>
-    fetchProfileCourses: (courseId: number, page?: number, pageSize?: number ) => Promise<void>
+    fetchProfileCourses: (profileId: number, page?: number, pageSize?: number, search?: string, tag?: string) => Promise<void>
     resetPage: () => void;
 
     fetchBestCourses: () => Promise<void>
@@ -60,12 +65,24 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
     createdCourses: [],
     ownedCourses: [],
 
+    availableTags: [],
+
     totalItems: 0,
     totalPages: 0,
     currentPage: 0,
 
     isLoading: false,
     error: null,
+
+    fetchTags: async () => {
+        try {
+            const tags: string[] = await getTags();
+            set({ availableTags: tags });
+        } catch (error) {
+            console.error('Error fetching tags:', error);
+            set({ availableTags: [] });
+        }
+    },
 
     resetPage: () => {
         set({ currentPage: 0 });
@@ -103,7 +120,7 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
                     profileStore.addProfile({
                         id: ownerData.id,
                         fullName: ownerData.fullName,
-                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        picture: ownerData.picture ? convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType) : null,
                         description: ownerData.description,
                         badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
@@ -166,10 +183,10 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
         }
     },
 
-    fetchProfileCourses: async (userId: number, page = 0, pageSize = 9) => {
+    fetchProfileCourses: async (userId: number, page = 0, pageSize = 9, search?: string, tag?: string) => {
         set({ isLoading: true, error: null, courses: [] });
         try {
-            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(userId, page, pageSize);
+            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(userId, page, pageSize, search, tag);
 
             if (!allData.courses?.length) {
                 set({
@@ -266,11 +283,11 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
         }
     },
 
-    fetchShopCourses: async (page?: number, pageSize?: number) => {
+    fetchShopCourses: async (page?: number, pageSize?: number, search?: string, tag?: string) => {
         set({ isLoading: true, error: null, courses: [] });
         try {
             const authStore = useAuthStore.getState();
-            const allData: ShopCoursesDataFetched = await fetchShopCoursesCards(authStore.accessToken, page, pageSize);
+            const allData: ShopCoursesDataFetched = await fetchShopCoursesCards(authStore.accessToken, page, pageSize, search, tag);
             const profileStore = useProfileStore.getState();
             const currentProfiles = profileStore.profiles;
             const currentCourses = get().shopCourses;
@@ -294,7 +311,7 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
                     profileStore.addProfile({
                         id: ownerData.id,
                         fullName: ownerData.fullName,
-                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        picture: ownerData.picture ? convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType) : null,
                         description: ownerData.description,
                         badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
@@ -349,11 +366,11 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
         }
     },
 
-    fetchOwnedCourses: async (page = 0, pageSize = 9) => {
+    fetchOwnedCourses: async (page = 0, pageSize = 9, search?: string, tag?: string) => {
         set({ isLoading: true, error: null });
         try {
             const authStore = useAuthStore.getState();
-            const allData: OwnedCoursesDataFetched = await fetchOwnedCoursesCards(authStore.accessToken!, page, pageSize);
+            const allData: OwnedCoursesDataFetched = await fetchOwnedCoursesCards(authStore.accessToken!, page, pageSize, search, tag);
             const profileStore = useProfileStore.getState();
             const currentProfiles = profileStore.profiles;
             const currentCourses = get().ownedCourses;
@@ -377,7 +394,7 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
                     const newProfile: ProfileData = {
                         id: ownerData.id,
                         fullName: ownerData.fullName,
-                        picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                        picture: ownerData.picture ? convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType) : null,
                         description: ownerData.description,
                         badges: ownerData.badges || [],
                         badgesVisible: ownerData.badgesVisible,
@@ -433,12 +450,12 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
         }
     },
 
-    fetchCreatedCourses: async (userId?: number, page = 0, pageSize = 9) => {
+    fetchCreatedCourses: async (userId?: number, page = 0, pageSize = 9, search?: string, tag?: string) => {
         set({ isLoading: true, error: null });
         try {
             const userStore = useUserStore.getState();
             const targetUserId = userId || userStore.userData!.id;
-            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(targetUserId, page, pageSize);
+            const allData: CreatedCoursesDataFetched = await fetchCreatedCoursesCards(targetUserId, page, pageSize, search, tag);
             const currentCourses = get().createdCourses;
 
             if (!allData.courses?.length) {
@@ -506,7 +523,7 @@ export const useCourseStore = create<CourseStore>((set, get) => ({
                 profileStore.addProfile({
                     id: ownerData.id,
                     fullName: ownerData.fullName,
-                    picture: convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType),
+                    picture: ownerData.picture ? convertPictureToFile(ownerData.picture.data, ownerData.picture.mimeType) : null,
                     description: ownerData.description,
                     badges: ownerData.badges || [],
                     badgesVisible: ownerData.badgesVisible,

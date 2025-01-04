@@ -95,15 +95,6 @@ export default function Page() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            {/*<div className="mb-6">*/}
-            {/*    <Input*/}
-            {/*        type="text"*/}
-            {/*        placeholder="Search for courses..."*/}
-            {/*        value={searchTerm}*/}
-            {/*        onChange={(e) => setSearchTerm(e.target.value)}*/}
-            {/*        className="w-full"*/}
-            {/*    />*/}
-            {/*</div>*/}
             <Tabs
                 defaultValue="shop"
                 className="w-full"

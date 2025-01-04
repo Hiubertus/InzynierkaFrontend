@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import {useEffect, useState} from 'react'
 import {
     Dialog,
     DialogContent,
@@ -10,31 +10,62 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useAuthStore } from '@/lib/stores/authStore'
 import { Star } from 'lucide-react'
+import { canAddReviewToTeacher } from '@/lib/review/canAddReviewToTeacher';
 
 interface AddReviewDialogProps {
-    courseId: number;
+    contentId: number;
+    type: 'course' | 'teacher';
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onSuccess?: () => void;
 }
 
-export const AddReviewDialog = ({ courseId, open, onOpenChange, onSuccess }: AddReviewDialogProps) => {
+export const AddReviewDialog = ({
+                                    contentId,
+                                    type,
+                                    open,
+                                    onOpenChange,
+                                    onSuccess
+                                }: AddReviewDialogProps) => {
     const [rating, setRating] = useState(0);
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [canReview, setCanReview] = useState<boolean>(true);
     const { accessToken } = useAuthStore();
-    const { addCourseReview } = useReviewStore();
+    const { addReview } = useReviewStore();
+
+    useEffect(() => {
+        const checkCanReview = async () => {
+            if (type === 'teacher' && accessToken) {
+                try {
+                    const canReviewResult = await canAddReviewToTeacher(contentId, accessToken);
+                    setCanReview(canReviewResult);
+                    if (!canReviewResult) {
+                        onOpenChange(false);
+                    }
+                } catch (error) {
+                    console.error('Error checking if can review teacher:', error);
+                    setCanReview(false);
+                    onOpenChange(false);
+                }
+            }
+        };
+
+        checkCanReview();
+    }, [type, contentId, accessToken, onOpenChange]);
 
     const handleSubmit = async () => {
-        if (rating === 0 || !content.trim() || !accessToken) return;
+        if (rating === 0 || !content.trim() || !accessToken || !canReview) return;
 
         setIsSubmitting(true);
         try {
-            await addCourseReview(courseId, rating, content);
+            await addReview(type, contentId, rating, content);
             onOpenChange(false);
             setRating(0);
             setContent('');
             onSuccess?.();
+        } catch (error) {
+            console.error('Error adding review:', error);
         } finally {
             setIsSubmitting(false);
         }
@@ -44,7 +75,9 @@ export const AddReviewDialog = ({ courseId, open, onOpenChange, onSuccess }: Add
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Add Review</DialogTitle>
+                    <DialogTitle>
+                        {type === 'course' ? 'Add Course Review' : 'Add Teacher Review'}
+                    </DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="flex justify-center space-x-1">

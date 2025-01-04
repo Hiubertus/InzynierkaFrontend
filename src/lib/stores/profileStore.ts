@@ -34,17 +34,15 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
             const authStore = useAuthStore.getState();
             const response = await getBestTeachers(authStore.accessToken);
 
-            // Zakładamy, że response.teachers to tablica { id: number, ranking: number }
             const teacherIds = response.teachers.map((teacher: UserDataGet) => teacher.id);
             set({ bestTeacherIds: teacherIds });
 
-            // Pobierz profile dla każdego ID, jeśli jeszcze nie istnieją
             for (const profile of response.teachers) {
                 if (!get().profiles.some(p => p.id === profile.id)) {
                     get().addProfile({
                         id: profile.id,
                         fullName: profile.fullName,
-                        picture: convertPictureToFile(profile.picture.data, profile.picture.mimeType),
+                        picture: profile.picture ? convertPictureToFile(profile.picture.data, profile.picture.mimeType) : null,
                         description: profile.description,
                         badges: profile.badges || [],
                         badgesVisible: profile.badgesVisible,
@@ -79,7 +77,7 @@ export const useProfileStore = create<ProfileStore>((set, get) => ({
             const newProfileData = {
                 id: profile.id,
                 fullName: profile.fullName,
-                picture: convertPictureToFile(profile.picture.data, profile.picture.mimeType),
+                picture: profile.picture ? convertPictureToFile(profile.picture.data, profile.picture.mimeType) : null,
                 description: profile.description,
                 badges: profile.badges || [],
                 badgesVisible: profile.badgesVisible,

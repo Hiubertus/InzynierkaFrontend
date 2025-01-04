@@ -32,6 +32,7 @@ interface ReviewProps {
     rating: number;
     content: string;
     lastModified: Date;
+    onReviewChange?: () => void;
 }
 
 export const Review = ({
@@ -40,6 +41,7 @@ export const Review = ({
                            rating,
                            content,
                            lastModified,
+                           onReviewChange,
                        }: ReviewProps) => {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
@@ -56,6 +58,7 @@ export const Review = ({
         try {
             await editReview(id, editedRating, editedContent);
             setIsEditOpen(false);
+            onReviewChange?.();
         } catch (error) {
             console.error('Failed to edit review:', error);
         } finally {
@@ -67,6 +70,7 @@ export const Review = ({
         try {
             await deleteReview(id);
             setIsDeleteOpen(false);
+            onReviewChange?.();
         } catch (error) {
             console.error('Failed to delete review:', error);
         }

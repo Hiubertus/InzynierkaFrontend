@@ -17,21 +17,54 @@ interface ChapterCreatorProps {
     chapterIndex: number;
     removeChapter: (index: number) => void;
     form: UseFormReturn<CourseForm>;
-    swap: (from: number, to: number) => void; // Add this prop
+    swap: (from: number, to: number) => void;
+    courseId?: number
 }
 
 export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
+                                                                  courseId,
                                                                   chapter,
                                                                   chapterIndex,
                                                                   chaptersLength,
                                                                   removeChapter,
                                                                   form,
-                                                                  swap
+                                                                  swap,
                                                               }) => {
     const {fields: subChapters, append: appendSubChapter, remove: removeSubChapter, swap: swapSubChapter, move: moveSubChapter} = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters`
     });
+
+    const handleAddSubChapter = () => {
+        if (!courseId) {
+            appendSubChapter({
+                name: `SubChapter ${subChapters.length + 1}`,
+                content: []
+            });
+        } else {
+            appendSubChapter({
+                id: null,
+                name: `SubChapter ${subChapters.length + 1}`,
+                deleted: false,
+                content: []
+            });
+        }
+    };
+    const handleRemoveSubChapter = (index: number) => {
+        const subChapter = subChapters[index];
+
+        if (!courseId || subChapter.id === null) {
+            // Jeśli tworzymy nowy kurs lub subchapter nie ma id, usuwamy normalnie
+            removeSubChapter(index);
+        } else {
+            // Jeśli edytujemy i subchapter ma id, ustawiamy deleted: true
+            form.setValue(`chapters.${chapterIndex}.subchapters.${index}.deleted`, true);
+        }
+    };
+    const visibleSubChapters = subChapters.filter(subChapter =>
+        !courseId ||
+        !subChapter.deleted
+    );
 
     useEffect(() => {
         form.setValue(`chapters.${chapterIndex}.name`, chapter.name);
@@ -81,15 +114,13 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
             </CardHeader>
             <CardContent className="space-y-4 bg-indigo-200">
                 <DraggableList
-                    items={subChapters}
+                    items={visibleSubChapters} // używamy przefiltrowanej listy
                     onReorder={(newOrder) => {
-
-                        const movedItemId = newOrder.find((item, index) => item.id !== subChapters[index]?.id)?.id;
+                        const movedItemId = newOrder.find((item, index) =>
+                            item.id !== visibleSubChapters[index]?.id)?.id;
                         if (movedItemId) {
-
                             const oldIndex = subChapters.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
-
                             moveSubChapter(oldIndex, newIndex);
                         }
                     }}
@@ -98,12 +129,13 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                         <SubChapterCreator
                             key={subChapter.id}
                             subChapter={subChapter}
-                            subChaptersLength={subChapters.length}
+                            subChaptersLength={visibleSubChapters.length}
                             chapterIndex={chapterIndex}
                             subChapterIndex={index}
-                            removeSubChapter={removeSubChapter}
+                            removeSubChapter={handleRemoveSubChapter}
                             form={form}
                             swap={swapSubChapter}
+                            courseId={courseId}
                         />
                     )}
                     className="space-y-4"
@@ -111,10 +143,7 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                     activationDelay={250}
                 />
                 <Button
-                    onClick={() => appendSubChapter({
-                        name: `SubChapter ${subChapters.length + 1}`,
-                        content: []
-                    })}
+                    onClick={handleAddSubChapter}
                     variant="outline"
                     className="w-full mt-4 flex items-center justify-center"
                     type="button"

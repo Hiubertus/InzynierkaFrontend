@@ -1,16 +1,19 @@
 import { create } from 'zustand';
 import { Review } from "@/models/front_models/Review";
 import { useProfileStore } from './profileStore'
-import {getCoursesReviews} from "@/lib/review/getCourseReviews";
-import {getOwnCourseReview} from "@/lib/review/getOwnCourseReview";
-import {addCourseReview} from "@/lib/review/addCourseReview";
-import {useUserStore} from "@/lib/stores/userStore";
-import {useAuthStore} from "@/lib/stores/authStore";
-import {convertPictureToFile} from "@/lib/utils/conversionFunction";
-import { useCourseStore }from "@/lib/stores/courseStore";
-import {editReview} from "@/lib/review/editReview";
-import {deleteReview} from "@/lib/review/deleteReview";
-import {ReviewDataGet} from "@/models/backend_models/ReviewDataGet";
+import { getCoursesReviews } from "@/lib/review/getCourseReviews";
+import { getOwnCourseReview } from "@/lib/review/getOwnCourseReview";
+import { addCourseReview } from "@/lib/review/addCourseReview";
+import { getTeacherReviews } from "@/lib/review/getTeacherReview";
+import { getOwnTeacherReview } from "@/lib/review/getOwnTeacherReview";
+import { addTeacherReview } from "@/lib/review/addTeacherReview";
+import { useUserStore } from "@/lib/stores/userStore";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { convertPictureToFile } from "@/lib/utils/conversionFunction";
+import { useCourseStore } from "@/lib/stores/courseStore";
+import { editReview } from "@/lib/review/editReview";
+import { deleteReview } from "@/lib/review/deleteReview";
+import { ReviewDataGet } from "@/models/backend_models/ReviewDataGet";
 
 interface ReviewState {
     reviews: Review[];
@@ -20,10 +23,10 @@ interface ReviewState {
     sortDir: 'asc' | 'desc';
     sortBy: 'date' | 'rating';
 
-    fetchCourseReviews: (id: number, page?: number, size?: number) => Promise<Review[]>;
-    addCourseReview: (id: number, rating: number, content: string) => Promise<void>;
-    setSortDirection: (direction: 'asc' | 'desc', courseId: number) => Promise<void>;
-    setSortBy: (sort: 'date' | 'rating', courseId: number) => Promise<void>;
+    fetchReviews: (type: 'course' | 'teacher', id: number, page?: number, size?: number) => Promise<Review[]>;
+    addReview: (type: 'course' | 'teacher', id: number, rating: number, content: string) => Promise<void>;
+    setSortDirection: (direction: 'asc' | 'desc', id: number, type: 'course' | 'teacher') => Promise<void>;
+    setSortBy: (sort: 'date' | 'rating', id: number, type: 'course' | 'teacher') => Promise<void>;
     editReview: (reviewId: number, rating: number, content: string) => Promise<void>;
     deleteReview: (reviewId: number) => Promise<void>;
 }
@@ -36,28 +39,22 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     sortDir: 'desc',
     sortBy: 'date',
 
-    fetchCourseReviews: async (id: number, page?: number, size?: number) => {
+    fetchReviews: async (type: 'course' | 'teacher', id: number, page?: number, size?: number) => {
         try {
-            const authStore = useAuthStore.getState()
+            const authStore = useAuthStore.getState();
             const profileStore = useProfileStore.getState();
-            const currentProfiles = profileStore.profiles
-            const ownerData = useUserStore.getState()
-            const courseStore = useCourseStore.getState();
+            const currentProfiles = profileStore.profiles;
+            const ownerData = useUserStore.getState();
 
-            const response = await getCoursesReviews(
-                id,
-                page ?? get().currentPage,
-                size || 3,
-                get().sortDir,
-                get().sortBy,
-                authStore.accessToken
-            );
+            const response = type === 'course'
+                ? await getCoursesReviews(id, page ?? get().currentPage, size || 3, get().sortDir, get().sortBy, authStore.accessToken)
+                : await getTeacherReviews(id, page ?? get().currentPage, size || 3, get().sortDir, get().sortBy, authStore.accessToken);
 
             const processedReviews = response.reviews.map((review: ReviewDataGet) => {
                 const processedProfile = {
                     id: review.userProfile.id,
                     fullName: review.userProfile.fullName,
-                    picture: convertPictureToFile(review.userProfile.picture.data, review.userProfile.picture.mimeType),
+                    picture: review.userProfile.picture ? convertPictureToFile(review.userProfile.picture.data, review.userProfile.picture.mimeType) : null,
                     description: review.userProfile.description,
                     badges: review.userProfile.badges || [],
                     badgesVisible: review.userProfile.badgesVisible,
@@ -65,7 +62,9 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
                     roles: review.userProfile.roles,
                     review: review.userProfile.review ? review.userProfile.review : null,
                     reviewNumber: review.userProfile.reviewNumber ? review.userProfile.reviewNumber : null,
-                    teacherProfileCreatedAt: review.userProfile.teacherProfileCreatedAt ? review.userProfile.teacherProfileCreatedAt : null
+                    teacherProfileCreatedAt: review.userProfile.teacherProfileCreatedAt
+                        ? new Date(review.userProfile.teacherProfileCreatedAt)
+                        : null
                 };
 
                 if (!currentProfiles.some(profile => profile.id === ownerData.userData?.id)) {
@@ -75,7 +74,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
                 return {
                     ...review,
                     userProfile: processedProfile,
-                    type: 'course' as const,
+                    type: type,
                     contentId: id
                 };
             });
@@ -84,13 +83,13 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
                 (review: Review) => review.userProfile.id === ownerData.userData?.id
             ) : false;
 
-            const course = courseStore.ownedCourses.find(course => course.id === id);
-            if (authStore.accessToken &&
-                course?.relationshipType === 'PURCHASED' &&
-                !hasOwnReview) {
+            if (authStore.accessToken && !hasOwnReview) {
                 try {
-                    const ownReviewResponse = await getOwnCourseReview(id, authStore.accessToken);
-                    const ownReview = ownReviewResponse.review
+                    const ownReviewResponse = type === 'course'
+                        ? await getOwnCourseReview(id, authStore.accessToken)
+                        : await getOwnTeacherReview(id, authStore.accessToken);
+
+                    const ownReview = ownReviewResponse.review;
                     if (ownReviewResponse) {
                         const currentUserProfile = currentProfiles.find(
                             profile => profile.id === ownerData.userData?.id
@@ -99,7 +98,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
                             processedReviews.unshift({
                                 ...ownReview,
                                 userProfile: currentUserProfile,
-                                type: 'course' as const,
+                                type: type,
                                 contentId: id
                             });
                         }
@@ -123,32 +122,40 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
         }
     },
 
-    addCourseReview: async (id: number, rating: number, content: string) => {
+    addReview: async (type: 'course' | 'teacher', id: number, rating: number, content: string) => {
         try {
             const authStore = useAuthStore.getState();
-            const courseStore = useCourseStore.getState();
-            const course = courseStore.ownedCourses.find(course => course.id === id);
 
-            if (!authStore.accessToken || course?.relationshipType !== 'PURCHASED') {
+            if (!authStore.accessToken) {
                 throw new Error('Unauthorized to add review');
             }
 
-            await addCourseReview(id, rating, content, authStore.accessToken);
-            await get().fetchCourseReviews(id, get().currentPage);
+            if (type === 'course') {
+                const courseStore = useCourseStore.getState();
+                const course = courseStore.ownedCourses.find(course => course.id === id);
+                if (course?.relationshipType !== 'PURCHASED') {
+                    throw new Error('Unauthorized to add review');
+                }
+                await addCourseReview(id, rating, content, authStore.accessToken);
+            } else {
+                await addTeacherReview(id, rating, content, authStore.accessToken);
+            }
+
+            await get().fetchReviews(type, id, get().currentPage);
         } catch (error) {
             console.error('Error adding review:', error);
             throw error;
         }
     },
 
-    setSortDirection: async (direction: 'asc' | 'desc', courseId: number) => {
+    setSortDirection: async (direction: 'asc' | 'desc', id: number, type: 'course' | 'teacher') => {
         set({ sortDir: direction, currentPage: 0 });
-        await get().fetchCourseReviews(courseId, 0);
+        await get().fetchReviews(type, id, 0);
     },
 
-    setSortBy: async (sort: 'date' | 'rating', courseId: number) => {
+    setSortBy: async (sort: 'date' | 'rating', id: number, type: 'course' | 'teacher') => {
         set({ sortBy: sort, currentPage: 0 });
-        await get().fetchCourseReviews(courseId, 0);
+        await get().fetchReviews(type, id, 0);
     },
 
     editReview: async (reviewId: number, rating: number, content: string) => {
@@ -163,7 +170,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
 
             const currentReview = get().reviews.find(review => review.id === reviewId);
             if (currentReview) {
-                await get().fetchCourseReviews(currentReview.contentId, get().currentPage);
+                await get().fetchReviews(currentReview.type, currentReview.contentId, get().currentPage);
             }
         } catch (error) {
             console.error('Error editing review:', error);
@@ -180,19 +187,17 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
             }
 
             const currentReview = get().reviews.find(review => review.id === reviewId);
-            const contentId = currentReview?.contentId;
+            if (!currentReview) return;
 
             await deleteReview(reviewId, authStore.accessToken);
 
-            if (contentId) {
-                try {
-                    await get().fetchCourseReviews(contentId, get().currentPage);
-                } catch  {
-                    set(state => ({
-                        ...state,
-                        reviews: state.reviews.filter(review => review.id !== reviewId)
-                    }));
-                }
+            try {
+                await get().fetchReviews(currentReview.type, currentReview.contentId, get().currentPage);
+            } catch {
+                set(state => ({
+                    ...state,
+                    reviews: state.reviews.filter(review => review.id !== reviewId)
+                }));
             }
         } catch (error) {
             console.error('Error deleting review:', error);

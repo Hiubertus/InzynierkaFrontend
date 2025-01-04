@@ -1,6 +1,7 @@
 import * as z from "zod";
 
 export interface CourseForm {
+    id?: number | null;
     name: string;
     banner: File | null;
     description: string;
@@ -13,16 +14,24 @@ export interface CourseForm {
 }
 
 export interface ChapterForm {
+    id?: number | null;
+    order?: number;
     name: string;
     subchapters: SubChapterForm[];
+    deleted?: boolean
 }
 
 export interface SubChapterForm {
+    id?: number | null;
+    order?: number;
     name: string;
     content: (TextForm | MediaForm | QuizForm)[];
+    deleted?: boolean
 }
 
 export interface TextForm {
+    id?: number | null;
+    order?: number;
     type: 'text';
     text: string;
     fontSize: "small" | "medium" | "large";
@@ -30,28 +39,42 @@ export interface TextForm {
     italics: boolean;
     underline: boolean;
     textColor: string;
+    deleted?: boolean;
 }
 
 export interface MediaForm {
+    id?: number | null;
+    order?: number;
     type: 'image' | 'video';
     file: File | null;
     mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
+    updateFile?: File | null;
+    deleted?: boolean
 }
 
 export interface QuizForm {
+    id?: number | null;
+    order?: number;
     type: 'quiz';
     quizContent: QuizContentForm[];
+    deleted?: boolean
 }
 
 export interface QuizContentForm {
+    id?: number | null;
+    order?: number;
     question: string;
     answers: AnswerForm[];
     singleAnswer: boolean;
+    deleted?: boolean
 }
 
 export interface AnswerForm {
+    id?: number | null;
+    order?: number;
     answer: string;
     isCorrect: boolean;
+    deleted?: boolean
 }
 
 export const formSchema = z.object({

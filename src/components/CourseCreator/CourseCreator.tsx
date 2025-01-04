@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import {useEffect, useState} from 'react';
 import {useFieldArray, useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CourseForm, formSchema } from "@/components/CourseCreator/formSchema";
@@ -14,6 +14,9 @@ import {useAuthStore} from "@/lib/stores/authStore";
 import {useRouter} from "next/navigation";
 import {toast} from "@/hooks/use-toast";
 import {createCourse} from "@/lib/course/createCourse";
+import {updateCourse} from "@/lib/course/updateCourse";
+import {convertBackendToFormData} from "@/models/backend_models/backendCourseToEdit";
+import {getCourseToEdit} from "@/lib/course/getCourseToEdit";
 
 type PreviewMode = 'editor' | 'page' | 'content';
 
@@ -44,7 +47,11 @@ const PREVIEW_MODES = [
     { mode: 'content' as PreviewMode, icon: Eye, label: 'Preview Content' }
 ] as const;
 
-export const CourseCreator = () => {
+interface Props {
+    courseId?: number;
+}
+
+export const CourseCreator = ({courseId}: Props) => {
     const [previewMode, setPreviewMode] = useState<PreviewMode>('editor');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const router = useRouter();
@@ -54,6 +61,27 @@ export const CourseCreator = () => {
         resolver: zodResolver(formSchema),
         defaultValues: INITIAL_FORM_VALUES
     });
+
+    useEffect(() => {
+        const loadCourseData = async () => {
+            if (courseId && accessToken) {
+                try {
+                    const courseData = await getCourseToEdit(accessToken, courseId);
+                    const formData = convertBackendToFormData(courseData);
+                    form.reset(formData);
+                } catch (error) {
+                    console.error('Error loading course:', error);
+                    toast({
+                        title: "Error",
+                        description: "Failed to load course data",
+                        variant: "destructive"
+                    });
+                }
+            }
+        };
+
+        loadCourseData();
+    }, [courseId, accessToken, form]);
 
     const { fields: chapters, append: appendChapter, remove: removeChapter, swap: swapChapter, move: moveChapter } = useFieldArray({
         control: form.control,
@@ -73,103 +101,189 @@ export const CourseCreator = () => {
         setIsSubmitting(true);
         try {
             const data = new FormData();
+            const isUpdate = Boolean(courseId);
 
-            data.append('banner', formData.banner as File);
+            // Handle banner
+            if (formData.banner) {
+                data.append('banner', formData.banner);
+            }
 
-            const contentFiles: File[] = []
-            const courseData = {
-                name: formData.name,
-                description: formData.description,
-                price: formData.price,
-                duration: formData.duration,
-                tags: formData.tags,
-                chapters: formData.chapters.map((chapter, chapterIndex) => ({
-                    name: chapter.name,
-                    order: chapterIndex + 1,
-                    subchapters: chapter.subchapters.map((subchapter, subchapterIndex) => ({
-                        name: subchapter.name,
-                        order: subchapterIndex + 1,
-                        content: subchapter.content.map((content, contentIndex) => {
-                            const baseContent = {
-                                order: contentIndex + 1,
-                                type: content.type,
-                            };
+            const contentFiles: File[] = [];
+            const contentUpdates: File[] = [];
 
-                            switch (content.type) {
-                                case 'text':
-                                    return {
-                                        ...baseContent,
-                                        text: content.text,
-                                        fontSize: content.fontSize,
-                                        bolder: content.bolder,
-                                        italics: content.italics,
-                                        underline: content.underline,
-                                        textColor: content.textColor,
-                                    };
-                                case 'image':
-                                case 'video':
-                                    if (content.file) {
-                                        contentFiles.push(content.file);
-                                        return {
-                                            ...baseContent
-                                        };
-                                    }
-                                    return baseContent;
-                                case 'quiz':
-                                    return {
-                                        ...baseContent,
-                                        quizContent: content.quizContent.map((quiz, qIndex) => ({
-                                            order: qIndex + 1,
-                                            question: quiz.question,
-                                            singleAnswer: quiz.singleAnswer,
-                                            answers: quiz.answers.map((answer, aIndex) => ({
-                                                order: aIndex + 1,
-                                                answer: answer.answer,
-                                                isCorrect: answer.isCorrect,
-                                            })),
-                                        })),
-                                    };
-                                default:
-                                    return baseContent;
-                            }
-                        }),
-                    })),
-                }))
+            const processCourseData = () => {
+                const baseCourseData = {
+                    name: formData.name,
+                    description: formData.description,
+                    price: formData.price,
+                    duration: formData.duration,
+                    tags: formData.tags,
+                };
+
+                // Jeśli to update, dodajemy id i pole deleted
+                if (isUpdate) {
+                    return {
+                        ...baseCourseData,
+                        id: formData.id,
+                        chapters: formData.chapters
+                            .filter(chapter => !chapter.deleted)
+                            .map((chapter, chapterIndex) => ({
+                                id: chapter.id,
+                                deleted: chapter.deleted,
+                                name: chapter.name,
+                                order: chapterIndex + 1,
+                                subchapters: chapter.subchapters
+                                    .filter(subchapter => !subchapter.deleted)
+                                    .map((subchapter, subchapterIndex) => ({
+                                        id: subchapter.id,
+                                        deleted: subchapter.deleted,
+                                        name: subchapter.name,
+                                        order: subchapterIndex + 1,
+                                        content: subchapter.content
+                                            .filter(content => !content.deleted)
+                                            .map((content, contentIndex) => {
+                                                const baseContent = {
+                                                    id: content.id,
+                                                    deleted: content.deleted,
+                                                    order: contentIndex + 1,
+                                                    type: content.type,
+                                                };
+
+                                                switch (content.type) {
+                                                    case 'text':
+                                                        return {
+                                                            ...baseContent,
+                                                            text: content.text,
+                                                            fontSize: content.fontSize,
+                                                            bolder: content.bolder,
+                                                            italics: content.italics,
+                                                            underline: content.underline,
+                                                            textColor: content.textColor,
+                                                        };
+                                                    case 'image':
+                                                    case 'video':
+                                                        if (content.updateFile) {
+                                                            contentUpdates.push(content.updateFile);
+                                                        }
+                                                        return baseContent;
+                                                    case 'quiz':
+                                                        return {
+                                                            ...baseContent,
+                                                            quizContent: content.quizContent
+                                                                .filter(quiz => !quiz.deleted)
+                                                                .map((quiz, qIndex) => ({
+                                                                    id: quiz.id,
+                                                                    deleted: quiz.deleted,
+                                                                    order: qIndex + 1,
+                                                                    question: quiz.question,
+                                                                    singleAnswer: quiz.singleAnswer,
+                                                                    answers: quiz.answers
+                                                                        .filter(answer => !answer.deleted)
+                                                                        .map((answer, aIndex) => ({
+                                                                            id: answer.id,
+                                                                            deleted: answer.deleted,
+                                                                            order: aIndex + 1,
+                                                                            answer: answer.answer,
+                                                                            isCorrect: answer.isCorrect,
+                                                                        })),
+                                                                })),
+                                                        };
+                                                }
+                                            }),
+                                    })),
+                            }))
+                    };
+                }
+
+                // Jeśli to create, nie dodajemy id ani deleted
+                return {
+                    ...baseCourseData,
+                    chapters: formData.chapters
+                        .map((chapter, chapterIndex) => ({
+                            name: chapter.name,
+                            order: chapterIndex + 1,
+                            subchapters: chapter.subchapters
+                                .map((subchapter, subchapterIndex) => ({
+                                    name: subchapter.name,
+                                    order: subchapterIndex + 1,
+                                    content: subchapter.content
+                                        .map((content, contentIndex) => {
+                                            const baseContent = {
+                                                order: contentIndex + 1,
+                                                type: content.type,
+                                            };
+
+                                            switch (content.type) {
+                                                case 'text':
+                                                    return {
+                                                        ...baseContent,
+                                                        text: content.text,
+                                                        fontSize: content.fontSize,
+                                                        bolder: content.bolder,
+                                                        italics: content.italics,
+                                                        underline: content.underline,
+                                                        textColor: content.textColor,
+                                                    };
+                                                case 'image':
+                                                case 'video':
+                                                    if (content.file) {
+                                                        contentFiles.push(content.file);
+                                                    }
+                                                    return baseContent;
+                                                case 'quiz':
+                                                    return {
+                                                        ...baseContent,
+                                                        quizContent: content.quizContent
+                                                            .map((quiz, qIndex) => ({
+                                                                order: qIndex + 1,
+                                                                question: quiz.question,
+                                                                singleAnswer: quiz.singleAnswer,
+                                                                answers: quiz.answers
+                                                                    .map((answer, aIndex) => ({
+                                                                        order: aIndex + 1,
+                                                                        answer: answer.answer,
+                                                                        isCorrect: answer.isCorrect,
+                                                                    })),
+                                                            })),
+                                                    };
+                                            }
+                                        }),
+                                })),
+                        }))
+                };
             };
 
+            const courseData = processCourseData();
             data.append('courseData', JSON.stringify(courseData));
-            contentFiles.forEach(contentFile => {
-                data.append('contentFiles', contentFile as File)
-            })
 
-            const result = await createCourse(data, accessToken);
+            if (!isUpdate) {
+                contentFiles.forEach(file => {
+                    data.append('contentFiles', file);
+                });
+            } else {
+                contentUpdates.forEach(file => {
+                    data.append('contentUpdates', file);
+                });
+            }
+
+            const result = isUpdate
+                ? await updateCourse(data, accessToken)
+                : await createCourse(data, accessToken);
 
             if (result.success) {
                 toast({
                     title: "Success",
-                    description: "Course created successfully"
+                    description: `Course ${isUpdate ? 'updated' : 'created'} successfully`
                 });
-                // if (userData.role !== 'TEACHER' && userData.role !== 'ADMIN') {
-                //     toast({
-                //         title: "Error",
-                //         description: "You don't have permission to create courses",
-                //         variant: "destructive"
-                //     });
-                //     return;
-                // }
-                if (result) {
-                    router.push(`/`);
-                } else {
-                    router.push('/');
-                }
+                router.push('/');
             } else {
                 toast({
                     title: "Error",
-                    description: result.message || "Failed to create course",
+                    description: result.message || `Failed to ${isUpdate ? 'update' : 'create'} course`,
                     variant: "destructive"
                 });
             }
-        } catch(err: unknown) {
+        } catch (err) {
             toast({
                 title: "Error",
                 description: String(err),
@@ -181,15 +295,32 @@ export const CourseCreator = () => {
     };
 
     const handleAddChapter = () => {
-        appendChapter({
-            name: `Chapter ${chapters.length + 1}`,
-            subchapters: [
-                {
-                    name: 'SubChapter 1',
-                    content: []
-                }
-            ]
-        });
+        if (!courseId) {
+            appendChapter({
+                name: `Chapter ${chapters.length + 1}`,
+                subchapters: [
+                    {
+                        name: 'SubChapter 1',
+                        content: []
+                    }
+                ]
+            });
+        }
+        else {
+            appendChapter({
+                id: null,
+                name: `Chapter ${chapters.length + 1}`,
+                deleted: false,
+                subchapters: [
+                    {
+                        id: null,
+                        name: 'SubChapter 1',
+                        deleted: false,
+                        content: []
+                    }
+                ]
+            });
+        }
     };
 
     const renderPreviewModeButtons = () => (
@@ -208,6 +339,22 @@ export const CourseCreator = () => {
         </div>
     );
 
+    const handleRemoveChapter = (index: number) => {
+        const chapter = chapters[index];
+
+        if (!courseId || chapter.id === null) {
+
+            removeChapter(index);
+        } else {
+            form.setValue(`chapters.${index}.deleted`, true);
+        }
+    };
+
+    const visibleChapters = chapters.filter(chapter =>
+        !courseId ||
+        !chapter.deleted
+    );
+
     const renderEditor = () => (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="max-w-4xl mx-auto p-4">
@@ -216,15 +363,13 @@ export const CourseCreator = () => {
                 <CourseDataForm form={form} />
 
                 <DraggableList
-                    items={chapters}
+                    items={visibleChapters}
                     onReorder={(newOrder) => {
-
-                        const movedItemId = newOrder.find((item, index) => item.id !== chapters[index]?.id)?.id;
+                        const movedItemId = newOrder.find((item, index) =>
+                            item.id !== visibleChapters[index]?.id)?.id;
                         if (movedItemId) {
-
                             const oldIndex = chapters.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
-
                             moveChapter(oldIndex, newIndex);
                         }
                     }}
@@ -233,11 +378,12 @@ export const CourseCreator = () => {
                         <ChapterCreator
                             key={chapter.id}
                             chapter={chapter}
-                            chaptersLength={chapters.length}
+                            chaptersLength={visibleChapters.length}
                             chapterIndex={index}
-                            removeChapter={removeChapter}
+                            removeChapter={handleRemoveChapter}
                             form={form}
                             swap={swapChapter}
+                            courseId={courseId}
                         />
                     )}
                     className="space-y-4"

@@ -31,7 +31,6 @@ export const useUserStore = create<UserState>((set) => ({
     userData: null,
     isInitialized: false,
     setUserData: (data) => {
-
         const pictureFile = data.pictureBase64 ?
             convertPictureToFile(data.pictureBase64, data.mimeType) :
             data.picture || null;

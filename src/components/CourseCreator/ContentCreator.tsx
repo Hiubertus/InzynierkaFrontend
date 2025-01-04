@@ -15,6 +15,7 @@ interface ContentCreator {
     contentIndex: number;
     swap: (from: number, to: number) => void;
     contentsLength: number;
+    courseId?: number;
 }
 
 export const ContentCreator: FC<ContentCreator> = ({
@@ -25,8 +26,21 @@ export const ContentCreator: FC<ContentCreator> = ({
                                                        contentIndex,
                                                        removeContent,
                                                        swap,
-                                                       contentsLength
+                                                       contentsLength,
+                                                       courseId,
                                                    }) => {
+    const handleRemoveContent = () => {
+        if (!courseId || content.id === null) {
+            removeContent(contentIndex);
+        } else {
+
+            form.setValue(
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.deleted`,
+                true
+            );
+        }
+    };
+
     return (
         <div className="flex rounded-lg overflow-hidden py-4">
             <OrderButtons
@@ -42,7 +56,7 @@ export const ContentCreator: FC<ContentCreator> = ({
                         chapterIndex={chapterIndex}
                         subChapterIndex={subChapterIndex}
                         contentIndex={contentIndex}
-                        removeContent={removeContent}
+                        removeContent={handleRemoveContent}
                     />
                 )}
                 {(content.type === 'video' || content.type === 'image') && (
@@ -52,7 +66,7 @@ export const ContentCreator: FC<ContentCreator> = ({
                         chapterIndex={chapterIndex}
                         subChapterIndex={subChapterIndex}
                         contentIndex={contentIndex}
-                        removeContent={removeContent}
+                        removeContent={handleRemoveContent}
                     />
                 )}
                 {content.type === 'quiz' && (
@@ -61,7 +75,8 @@ export const ContentCreator: FC<ContentCreator> = ({
                         chapterIndex={chapterIndex}
                         subChapterIndex={subChapterIndex}
                         contentIndex={contentIndex}
-                        removeContent={removeContent}
+                        removeContent={handleRemoveContent}
+                        courseId={courseId}
                     />
                 )}
             </div>

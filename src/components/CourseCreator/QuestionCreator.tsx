@@ -20,6 +20,7 @@ interface QuizCreatorProps {
     questionIndex: number;
     removeQuestion: (index: number) => void;
     swap: (from: number, to: number) => void;
+    courseId?: number
 }
 
 export const QuestionCreator: React.FC<QuizCreatorProps> = ({
@@ -30,7 +31,8 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                                                                 questionIndex,
                                                                 removeQuestion,
                                                                 questionsLength,
-                                                                swap
+                                                                swap,
+                                                                courseId,
                                                             }) => {
     const {
         fields: answers,
@@ -57,18 +59,26 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
 
     // Resetuj wszystkie odpowiedzi przy zmianie typu pytania
     useEffect(() => {
-        const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
-        const currentAnswers = form.getValues(answersFieldName);
+        if (singleAnswer) {
+            const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
+            const currentAnswers = form.getValues(answersFieldName);
 
-        if (currentAnswers) {
-            currentAnswers.forEach((_, index) => {
-                form.setValue(
-                    `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect` as const,
-                    false
-                );
-            });
+            // Sprawdź, czy jest więcej niż jedna odpowiedź zaznaczona
+            const correctAnswers = currentAnswers.filter(answer => answer.isCorrect);
+            if (correctAnswers.length > 1) {
+                // Jeśli jest więcej niż jedna odpowiedź zaznaczona, zostaw tylko pierwszą
+                const firstCorrectIndex = currentAnswers.findIndex(answer => answer.isCorrect);
+                currentAnswers.forEach((_, index) => {
+                    if (index !== firstCorrectIndex) {
+                        form.setValue(
+                            `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect` as const,
+                            false
+                        );
+                    }
+                });
+            }
         }
-    }, [singleAnswer, chapterIndex, subChapterIndex, contentIndex, questionIndex, form]);
+    }, [singleAnswer]); // tylko wtedy, gdy zmienia się typ pytania
 
     // Efekt dla walidacji
     useEffect(() => {
@@ -87,6 +97,48 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
             }
         }
     }, [hasAnyCorrectAnswer, form, chapterIndex, subChapterIndex, contentIndex, questionIndex]);
+
+    const visibleAnswers = answers.filter(answer =>
+        !courseId || !answer.deleted
+    );
+
+    const handleRemoveAnswer = (index: number) => {
+        const answer = answers[index];
+
+        if (!courseId || answer.id === null) {
+            removeAnswer(index);
+        } else {
+            form.setValue(
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.deleted`,
+                true
+            );
+        }
+    };
+
+    const handleAppendAnswer = () => {
+        if (answers.length >= 8) {
+            const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
+            form.setError(answersFieldName, {
+                type: 'manual',
+                message: 'Maximum 8 answers are allowed'
+            });
+            return;
+        }
+
+        if (!courseId) {
+            appendAnswer({
+                isCorrect: false,
+                answer: `Answer ${answers.length + 1}`
+            });
+        } else {
+            appendAnswer({
+                id: null,
+                isCorrect: false,
+                answer: `Answer ${answers.length + 1}`,
+                deleted: false
+            });
+        }
+    };
 
 
     return (
@@ -159,13 +211,13 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
             </CardHeader>
             <CardContent className="bg-purple-100">
                 <DraggableList
-                    items={answers}
+                    items={visibleAnswers}
                     onReorder={(newOrder) => {
-                        const movedItemId = newOrder.find((item, index) => item.id !== answers[index]?.id)?.id;
+                        const movedItemId = newOrder.find((item, index) =>
+                            item.id !== visibleAnswers[index]?.id)?.id;
                         if (movedItemId) {
                             const oldIndex = answers.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
-
                             moveAnswer(oldIndex, newIndex);
                         }
                     }}
@@ -174,13 +226,13 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                         <AnswerCreator
                             key={answer.id}
                             form={form}
-                            answersLength={answers.length}
+                            answersLength={visibleAnswers.length}
                             chapterIndex={chapterIndex}
                             subChapterIndex={subChapterIndex}
                             contentIndex={contentIndex}
                             questionIndex={questionIndex}
                             answerIndex={index}
-                            removeAnswer={removeAnswer}
+                            removeAnswer={handleRemoveAnswer}
                             singleAnswer={singleAnswer}
                             swap={swapAnswer}
                         />
@@ -192,28 +244,14 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
 
                 <div className="mt-2 space-y-2">
                     <Button
-                        onClick={() => {
-                            if (answers.length >= 8) {
-                                const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
-                                form.setError(answersFieldName, {
-                                    type: 'manual',
-                                    message: 'Maximum 8 answers are allowed'
-                                });
-                                return;
-                            }
-                            appendAnswer({
-                                isCorrect: false,
-                                answer: `Answer ${answers.length + 1}`
-                            });
-                        }}
+                        onClick={handleAppendAnswer}
                         type="button"
-                        disabled={answers.length >= 8}
+                        disabled={visibleAnswers.length >= 8}
                     >
                         <Plus size={16} className="mr-1"/>
                         Add Answer
                     </Button>
 
-                    {/* Error message container */}
                     <FormField
                         control={form.control}
                         name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const}

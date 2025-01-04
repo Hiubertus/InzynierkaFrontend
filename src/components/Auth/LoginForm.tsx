@@ -40,7 +40,8 @@ export const LoginForm: FC = memo(() => {
                 setAuthInitialized(false);
                 setUserInitialized(false);
 
-                fetchProfile(result.userData.id)
+                // Czekamy na pobranie profilu
+                await fetchProfile(result.userData.id);
 
                 resetCourseData();
                 setAccessToken(result.accessToken);
@@ -48,15 +49,12 @@ export const LoginForm: FC = memo(() => {
                 setAuthInitialized(true);
                 setUserInitialized(true);
                 router.push(ROUTES.HOME);
-
             } else if (result.error) {
                 setBackendError(result.error);
             }
         } catch (error) {
             setBackendError('An unexpected error occurred');
             console.error('Login error:', error);
-        } finally {
-
         }
     }
 

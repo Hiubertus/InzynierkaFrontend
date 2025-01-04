@@ -49,6 +49,7 @@ export default function CoursePage({ params }: CoursePageProps) {
         }
     }, [params.id, accessToken, fetchSingleCourse, isDataFetched, isCourseInitialized])
 
+
     if (isLoading && !course || !owner) {
         return (
             <div className="container mx-auto px-4 py-8 space-y-8">
@@ -100,7 +101,13 @@ export default function CoursePage({ params }: CoursePageProps) {
                         <CardTitle>Course Reviews</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <ReviewList courseId={course.id} relationshipType={course.relationshipType} isReadyForReviews={!isLoading && !!course}/>
+                        <ReviewList
+                            contentId={course.id}
+                            type="course"
+                            ownerId={owner.id}
+                            relationshipType={course.relationshipType}
+                            isReadyForReviews={isCourseInitialized}
+                        />
                     </CardContent>
                 </Card>
             </div>

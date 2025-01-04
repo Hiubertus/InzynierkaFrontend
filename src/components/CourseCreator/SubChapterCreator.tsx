@@ -5,7 +5,7 @@ import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {ContentButtons} from "@/components/CourseCreator/ContentButtons";
 import React, {useEffect} from "react";
 import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
-import {CourseForm} from "@/components/CourseCreator/formSchema";
+import {CourseForm, MediaForm, QuizForm, TextForm} from "@/components/CourseCreator/formSchema";
 import {ContentCreator} from "@/components/CourseCreator/ContentCreator";
 import OrderButtons from "@/components/CourseCreator/OrderButtons";
 import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
@@ -18,6 +18,7 @@ interface SubChapterCreatorProps {
     removeSubChapter: (index: number) => void;
     form: UseFormReturn<CourseForm>;
     swap: (from: number, to: number) => void;
+    courseId?: number;
 }
 
 export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
@@ -27,7 +28,8 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                                                                         subChaptersLength,
                                                                         removeSubChapter,
                                                                         form,
-                                                                        swap
+                                                                        swap,
+    courseId
                                                                     }) => {
 
     const {fields: contents, append: appendContent, remove: removeContent, swap: swapContent, move: moveContent} = useFieldArray({
@@ -35,9 +37,34 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content`
     });
 
-    useEffect(() => {
-        form.setValue(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.name`, subChapter.name);
-    }, [chapterIndex, form, subChapter.name, subChapterIndex]);
+    const visibleContents = contents.filter(content =>
+        !courseId || !content.deleted
+    );
+
+    const handleRemoveContent = (index: number) => {
+        const content = contents[index];
+
+        if (!courseId || content.id === null) {
+            removeContent(index);
+        } else {
+            form.setValue(
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${index}.deleted`,
+                true
+            );
+        }
+    };
+
+    const handleAppendContent = (newContent: MediaForm | TextForm | QuizForm) => {
+        if (!courseId) {
+            appendContent(newContent);
+        } else {
+            appendContent({
+                ...newContent,
+                id: null,
+                deleted: false
+            });
+        }
+    };
     
     return (
         <Card className="border-l-2 border-l-indigo-300">
@@ -83,13 +110,13 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
             </CardHeader>
             <CardContent className="bg-indigo-50">
                 <DraggableList
-                    items={contents}
+                    items={visibleContents}
                     onReorder={(newOrder) => {
-                        const movedItemId = newOrder.find((item, index) => item.id !== contents[index]?.id)?.id;
+                        const movedItemId = newOrder.find((item, index) =>
+                            item.id !== visibleContents[index]?.id)?.id;
                         if (movedItemId) {
                             const oldIndex = contents.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
-
                             moveContent(oldIndex, newIndex);
                         }
                     }}
@@ -102,9 +129,10 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                             chapterIndex={chapterIndex}
                             subChapterIndex={subChapterIndex}
                             contentIndex={index}
-                            removeContent={removeContent}
+                            removeContent={handleRemoveContent}
                             swap={swapContent}
-                            contentsLength={contents.length}
+                            contentsLength={visibleContents.length}
+                            courseId={courseId}
                         />
                     )}
                     className="space-y-4"
@@ -112,7 +140,7 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                     activationDelay={200}
                 />
                 <ContentButtons
-                    appendContent={appendContent}
+                    appendContent={handleAppendContent}
                 />
             </CardContent>
         </Card>

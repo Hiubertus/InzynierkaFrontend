@@ -51,14 +51,14 @@ export function StoreProvider({
     useEffect(() => {
         if (isInitialized.current) return;
 
-        const initializeStores = () => {
+        const initializeStores = async () => {
             if (initialAccessToken) {
                 setAccessToken(initialAccessToken);
             }
 
             if (initialUserData) {
                 setUserData(initialUserData);
-                fetchProfile(initialUserData.id)
+                await fetchProfile(initialUserData.id);
             }
 
             setAuthInitialized(true);

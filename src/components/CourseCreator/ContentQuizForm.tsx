@@ -13,6 +13,7 @@ interface ContentQuizFormProps {
     subChapterIndex: number;
     contentIndex: number;
     removeContent: (index: number) => void;
+    courseId?: number
 }
 
 export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
@@ -20,7 +21,8 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
                                                                     chapterIndex,
                                                                     subChapterIndex,
                                                                     contentIndex,
-                                                                    removeContent
+                                                                    removeContent,
+                                                                    courseId
                                                                 }) => {
     const {
         fields: questions,
@@ -33,17 +35,71 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent`
     });
 
+    const visibleQuestions = questions.filter(question =>
+        !courseId || !question.deleted
+    );
+
+    const handleRemoveQuestion = (index: number) => {
+        const question = questions[index];
+
+        if (!courseId || question.id === null) {
+            // Jeśli tworzymy nowy kurs lub pytanie nie ma id, usuwamy normalnie
+            removeQuestion(index);
+        } else {
+            // Jeśli edytujemy i pytanie ma id, ustawiamy deleted: true
+            form.setValue(
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${index}.deleted`,
+                true
+            );
+        }
+    };
+
+    const handleAppendQuestion = () => {
+        if (!courseId) {
+            appendQuestion({
+                question: `Question ${questions.length + 1}`,
+                answers: [{
+                    answer: 'Answer 1',
+                    isCorrect: false
+                }, {
+                    answer: 'Answer 2',
+                    isCorrect: false
+                }],
+                singleAnswer: true
+            });
+        } else {
+            appendQuestion({
+                id: null,
+                question: `Question ${questions.length + 1}`,
+                answers: [{
+                    id: null,
+                    answer: 'Answer 1',
+                    isCorrect: false,
+                    deleted: false
+                }, {
+                    id: null,
+                    answer: 'Answer 2',
+                    isCorrect: false,
+                    deleted: false
+                }],
+                singleAnswer: true,
+                deleted: false
+            });
+        }
+    };
+
+
     return (
         <div className="flex justify-between">
             <div className="space-y-4 p-4 w-full bg-indigo-50 border border-gray-200 border-l-2 border-l-indigo-300">
                 <DraggableList
-                    items={questions}
+                    items={visibleQuestions}
                     onReorder={(newOrder) => {
-                        const movedItemId = newOrder.find((item, index) => item.id !== questions[index]?.id)?.id;
+                        const movedItemId = newOrder.find((item, index) =>
+                            item.id !== visibleQuestions[index]?.id)?.id;
                         if (movedItemId) {
                             const oldIndex = questions.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
-
                             moveQuestion(oldIndex, newIndex);
                         }
                     }}
@@ -52,13 +108,14 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
                         <QuestionCreator
                             key={question.id}
                             form={form}
-                            questionsLength={questions.length}
+                            questionsLength={visibleQuestions.length}
                             chapterIndex={chapterIndex}
                             subChapterIndex={subChapterIndex}
                             contentIndex={contentIndex}
                             questionIndex={index}
-                            removeQuestion={removeQuestion}
+                            removeQuestion={handleRemoveQuestion}
                             swap={swapQuestion}
+                            courseId={courseId}
                         />
                     )}
                     className="space-y-4"
@@ -66,19 +123,7 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
                     activationDelay={250}
                 />
                 <Button
-                    onClick={() => {
-                        appendQuestion({
-                            question: `Question ${questions.length + 1}`,
-                            answers: [{
-                                answer: 'Answer 1',
-                                isCorrect: false
-                            }, {
-                                answer: 'Answer 2',
-                                isCorrect: false
-                            }],
-                            singleAnswer: true
-                        });
-                    }}
+                    onClick={handleAppendQuestion}
                     className="mt-2"
                     type="button"
                 >

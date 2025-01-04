@@ -19,14 +19,19 @@ export const ContentFileForm: React.FC<ContentFileFormProps> = ({
                                                                     subChapterIndex,
                                                                     contentIndex,
                                                                     contentType,
-                                                                    removeContent
+                                                                    removeContent,
                                                                 }) => {
     const currentFile = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.file`);
+    const currentFileUpdate = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.updateFile`);
+    const hasExistingId = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.id`) !== null;
 
     return (
         <FormField
             control={form.control}
-            name={`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.file`}
+            name={hasExistingId ?
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.updateFile` :
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.file`
+            }
             render={({field}) => (
                 <FormItem>
                     <FormControl>
@@ -34,7 +39,7 @@ export const ContentFileForm: React.FC<ContentFileFormProps> = ({
                             onFileUploaded={(file) => {
                                 field.onChange(file);
                             }}
-                            currentFile={currentFile}
+                            currentFile={hasExistingId ? currentFileUpdate! : currentFile}
                             accept={contentType === 'video' ? {'video/*': []} : {'image/*': []}}
                             maxSize={50 * 1024 * 1024}
                             removeContent={() => removeContent(contentIndex)}
