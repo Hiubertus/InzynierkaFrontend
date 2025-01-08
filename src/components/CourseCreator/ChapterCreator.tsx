@@ -4,12 +4,13 @@ import {Input} from "@/components/ui/input";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {Button} from "@/components/ui/button";
 import {Plus} from "lucide-react";
-import React, {useEffect} from "react";
+import {FC, useEffect} from "react";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
 import {SubChapterCreator} from "@/components/CourseCreator/SubChapterCreator";
 import OrderButtons from "@/components/CourseCreator/OrderButtons";
 import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
+import {useRealIndex} from "@/components/CourseCreator/useRealIndex";
 
 interface ChapterCreatorProps {
     chapter: FieldArrayWithId<CourseForm, "chapters", "id">;
@@ -21,7 +22,7 @@ interface ChapterCreatorProps {
     courseId?: number
 }
 
-export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
+export const ChapterCreator: FC<ChapterCreatorProps> = ({
                                                                   courseId,
                                                                   chapter,
                                                                   chapterIndex,
@@ -34,6 +35,7 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters`
     });
+
 
     const handleAddSubChapter = () => {
         if (!courseId) {
@@ -50,21 +52,28 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
             });
         }
     };
-    const handleRemoveSubChapter = (index: number) => {
-        const subChapter = subChapters[index];
 
-        if (!courseId || subChapter.id === null) {
-            // Jeśli tworzymy nowy kurs lub subchapter nie ma id, usuwamy normalnie
-            removeSubChapter(index);
+
+    const watchedSubChapters = form.watch(`chapters.${chapterIndex}.subchapters`);
+
+    const visibleSubChapters = () => {
+        return subChapters.filter((_, index) => {
+            const watchedSubChapter = watchedSubChapters[index];
+            return !courseId || !watchedSubChapter.deleted;
+        });
+    }
+
+    const calculateRealIndex = useRealIndex(watchedSubChapters);
+
+    const handleRemoveSubChapter = (visibleIndex: number) => {
+        const subChapter = visibleSubChapters()[visibleIndex];
+        if (!courseId || isNaN(Number(subChapter.id))) {
+            removeSubChapter(visibleIndex);
         } else {
-            // Jeśli edytujemy i subchapter ma id, ustawiamy deleted: true
-            form.setValue(`chapters.${chapterIndex}.subchapters.${index}.deleted`, true);
+            const realIndex = calculateRealIndex(visibleIndex);
+            form.setValue(`chapters.${chapterIndex}.subchapters.${realIndex}.deleted`, true);
         }
     };
-    const visibleSubChapters = subChapters.filter(subChapter =>
-        !courseId ||
-        !subChapter.deleted
-    );
 
     useEffect(() => {
         form.setValue(`chapters.${chapterIndex}.name`, chapter.name);
@@ -114,10 +123,10 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
             </CardHeader>
             <CardContent className="space-y-4 bg-indigo-200">
                 <DraggableList
-                    items={visibleSubChapters} // używamy przefiltrowanej listy
+                    items={visibleSubChapters()} // używamy przefiltrowanej listy
                     onReorder={(newOrder) => {
                         const movedItemId = newOrder.find((item, index) =>
-                            item.id !== visibleSubChapters[index]?.id)?.id;
+                            item.id !== visibleSubChapters()[index].id);
                         if (movedItemId) {
                             const oldIndex = subChapters.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
@@ -128,8 +137,7 @@ export const ChapterCreator: React.FC<ChapterCreatorProps> = ({
                     renderItem={(subChapter, index) => (
                         <SubChapterCreator
                             key={subChapter.id}
-                            subChapter={subChapter}
-                            subChaptersLength={visibleSubChapters.length}
+                            subChaptersLength={visibleSubChapters().length}
                             chapterIndex={chapterIndex}
                             subChapterIndex={index}
                             removeSubChapter={handleRemoveSubChapter}

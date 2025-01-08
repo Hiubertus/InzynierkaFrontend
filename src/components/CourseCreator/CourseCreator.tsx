@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {useFieldArray, useForm} from 'react-hook-form';
+import {useEffect,  useState} from 'react';
+import { useFieldArray, useForm} from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CourseForm, formSchema } from "@/components/CourseCreator/formSchema";
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {createCourse} from "@/lib/course/createCourse";
 import {updateCourse} from "@/lib/course/updateCourse";
 import {convertBackendToFormData} from "@/models/backend_models/backendCourseToEdit";
 import {getCourseToEdit} from "@/lib/course/getCourseToEdit";
+import {useRealIndex} from "@/components/CourseCreator/useRealIndex";
 
 type PreviewMode = 'editor' | 'page' | 'content';
 
@@ -68,7 +69,10 @@ export const CourseCreator = ({courseId}: Props) => {
                 try {
                     const courseData = await getCourseToEdit(accessToken, courseId);
                     const formData = convertBackendToFormData(courseData);
+                    console.log(formData)
                     form.reset(formData);
+
+                    console.log(form.getValues())
                 } catch (error) {
                     console.error('Error loading course:', error);
                     toast({
@@ -103,13 +107,11 @@ export const CourseCreator = ({courseId}: Props) => {
             const data = new FormData();
             const isUpdate = Boolean(courseId);
 
-            // Handle banner
             if (formData.banner) {
                 data.append('banner', formData.banner);
             }
 
             const contentFiles: File[] = [];
-            const contentUpdates: File[] = [];
 
             const processCourseData = () => {
                 const baseCourseData = {
@@ -120,7 +122,6 @@ export const CourseCreator = ({courseId}: Props) => {
                     tags: formData.tags,
                 };
 
-                // Jeśli to update, dodajemy id i pole deleted
                 if (isUpdate) {
                     return {
                         ...baseCourseData,
@@ -162,10 +163,13 @@ export const CourseCreator = ({courseId}: Props) => {
                                                         };
                                                     case 'image':
                                                     case 'video':
-                                                        if (content.updateFile) {
-                                                            contentUpdates.push(content.updateFile);
+                                                        if (content.file) {
+                                                            contentFiles.push(content.file);
                                                         }
-                                                        return baseContent;
+                                                        return {
+                                                            ...baseContent,
+                                                            updateFile: content.updateFile || false,
+                                                        }
                                                     case 'quiz':
                                                         return {
                                                             ...baseContent,
@@ -195,7 +199,6 @@ export const CourseCreator = ({courseId}: Props) => {
                     };
                 }
 
-                // Jeśli to create, nie dodajemy id ani deleted
                 return {
                     ...baseCourseData,
                     chapters: formData.chapters
@@ -254,21 +257,19 @@ export const CourseCreator = ({courseId}: Props) => {
             };
 
             const courseData = processCourseData();
+
             data.append('courseData', JSON.stringify(courseData));
 
-            if (!isUpdate) {
-                contentFiles.forEach(file => {
-                    data.append('contentFiles', file);
-                });
-            } else {
-                contentUpdates.forEach(file => {
-                    data.append('contentUpdates', file);
-                });
-            }
+            contentFiles.forEach(file => {
+                data.append('contentFiles', file);
+            });
+
+            console.log(contentFiles);
 
             const result = isUpdate
                 ? await updateCourse(data, accessToken)
                 : await createCourse(data, accessToken);
+
 
             if (result.success) {
                 toast({
@@ -339,21 +340,28 @@ export const CourseCreator = ({courseId}: Props) => {
         </div>
     );
 
-    const handleRemoveChapter = (index: number) => {
-        const chapter = chapters[index];
 
-        if (!courseId || chapter.id === null) {
 
-            removeChapter(index);
+    const watchedValues = form.watch('chapters');
+
+    const visibleChapters = () => {
+        return chapters.filter((_, index) => {
+            const watchedChapter = watchedValues[index];
+            return !courseId || !watchedChapter.deleted
+        });
+    }
+
+    const calculateRealIndex = useRealIndex(watchedValues);
+
+    const handleRemoveChapter = (visibleIndex: number) => {
+        const chapter = visibleChapters()[visibleIndex];
+        if (!courseId || isNaN(Number(chapter.id))) {
+            removeChapter(visibleIndex);
         } else {
-            form.setValue(`chapters.${index}.deleted`, true);
+            const realIndex = calculateRealIndex(visibleIndex);
+            form.setValue(`chapters.${realIndex}.deleted`, true);
         }
     };
-
-    const visibleChapters = chapters.filter(chapter =>
-        !courseId ||
-        !chapter.deleted
-    );
 
     const renderEditor = () => (
         <Form {...form}>
@@ -363,10 +371,10 @@ export const CourseCreator = ({courseId}: Props) => {
                 <CourseDataForm form={form} />
 
                 <DraggableList
-                    items={visibleChapters}
+                    items={visibleChapters()}
                     onReorder={(newOrder) => {
                         const movedItemId = newOrder.find((item, index) =>
-                            item.id !== visibleChapters[index]?.id)?.id;
+                            item.id !== visibleChapters()[index].id);
                         if (movedItemId) {
                             const oldIndex = chapters.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
@@ -378,7 +386,7 @@ export const CourseCreator = ({courseId}: Props) => {
                         <ChapterCreator
                             key={chapter.id}
                             chapter={chapter}
-                            chaptersLength={visibleChapters.length}
+                            chaptersLength={visibleChapters().length}
                             chapterIndex={index}
                             removeChapter={handleRemoveChapter}
                             form={form}

@@ -1,6 +1,5 @@
 import {FormControl, FormField, FormItem, FormMessage} from "@/components/ui/form";
 import {Textarea} from "@/components/ui/textarea";
-import React from "react";
 import {UseFormReturn} from "react-hook-form";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
@@ -13,6 +12,7 @@ import {
     MoveDown
 } from "lucide-react";
 import ColorPicker from "@/components/CourseCreator/ColorPicker";
+import {FC} from "react";
 
 interface ContentTextFormProps {
     form: UseFormReturn<CourseForm>;
@@ -22,7 +22,7 @@ interface ContentTextFormProps {
     removeContent: (index: number) => void;
 }
 
-export const ContentTextForm: React.FC<ContentTextFormProps> = ({
+export const ContentTextForm: FC<ContentTextFormProps> = ({
                                                                     form,
                                                                     chapterIndex,
                                                                     subChapterIndex,

@@ -4,12 +4,13 @@ import {Input} from "@/components/ui/input";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {Button} from "@/components/ui/button";
 import {Plus} from "lucide-react";
-import React, { useEffect } from "react";
+import {FC, useEffect} from "react";
 import {useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {AnswerCreator} from "@/components/CourseCreator/AnswerCreator";
 import OrderButtons from "@/components/CourseCreator/OrderButtons";
 import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
+import {useRealIndex} from "@/components/CourseCreator/useRealIndex";
 
 interface QuizCreatorProps {
     form: UseFormReturn<CourseForm>;
@@ -23,7 +24,7 @@ interface QuizCreatorProps {
     courseId?: number
 }
 
-export const QuestionCreator: React.FC<QuizCreatorProps> = ({
+export const QuestionCreator: FC<QuizCreatorProps> = ({
                                                                 form,
                                                                 chapterIndex,
                                                                 subChapterIndex,
@@ -49,24 +50,19 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
         `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.singleAnswer` as const
     );
 
-    // Watch for any changes in answers' isCorrect values
     const answersValues = form.watch(
         `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const
     );
 
-    // Sprawdź, czy którakolwiek odpowiedź jest zaznaczona
-    const hasAnyCorrectAnswer = answersValues?.some(answer => answer.isCorrect);
 
-    // Resetuj wszystkie odpowiedzi przy zmianie typu pytania
+
     useEffect(() => {
         if (singleAnswer) {
             const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
             const currentAnswers = form.getValues(answersFieldName);
 
-            // Sprawdź, czy jest więcej niż jedna odpowiedź zaznaczona
             const correctAnswers = currentAnswers.filter(answer => answer.isCorrect);
             if (correctAnswers.length > 1) {
-                // Jeśli jest więcej niż jedna odpowiedź zaznaczona, zostaw tylko pierwszą
                 const firstCorrectIndex = currentAnswers.findIndex(answer => answer.isCorrect);
                 currentAnswers.forEach((_, index) => {
                     if (index !== firstCorrectIndex) {
@@ -78,17 +74,22 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                 });
             }
         }
-    }, [singleAnswer]); // tylko wtedy, gdy zmienia się typ pytania
+    });
+    const visibleAnswers = () => {
+        return answers.filter((_, index) => {
+            const watchedAnswer = answersValues[index];
+            return !courseId || !watchedAnswer.deleted;
+        });
+    };
 
+    const hasAnyCorrectAnswer = visibleAnswers()?.some(answer => answer.isCorrect);
     // Efekt dla walidacji
     useEffect(() => {
         const answersFieldName = `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers` as const;
 
-        // Jeśli jest poprawna odpowiedź, wyczyść błąd
         if (hasAnyCorrectAnswer) {
             form.clearErrors(answersFieldName);
         } else {
-            // Ustaw błąd tylko jeśli formularz był już submitowany
             if (form.formState.isSubmitted) {
                 form.setError(answersFieldName, {
                     type: 'custom',
@@ -98,18 +99,16 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
         }
     }, [hasAnyCorrectAnswer, form, chapterIndex, subChapterIndex, contentIndex, questionIndex]);
 
-    const visibleAnswers = answers.filter(answer =>
-        !courseId || !answer.deleted
-    );
+    const calculateRealIndex = useRealIndex(answersValues);
 
-    const handleRemoveAnswer = (index: number) => {
-        const answer = answers[index];
-
-        if (!courseId || answer.id === null) {
-            removeAnswer(index);
+    const handleRemoveAnswer = (visibleIndex: number) => {
+        const answer = visibleAnswers()[visibleIndex];
+        if (!courseId || isNaN(Number(answer.id))) {
+            removeAnswer(visibleIndex);
         } else {
+            const realIndex = calculateRealIndex(visibleIndex);
             form.setValue(
-                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.deleted`,
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${realIndex}.deleted`,
                 true
             );
         }
@@ -211,10 +210,10 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
             </CardHeader>
             <CardContent className="bg-purple-100">
                 <DraggableList
-                    items={visibleAnswers}
+                    items={visibleAnswers()}
                     onReorder={(newOrder) => {
                         const movedItemId = newOrder.find((item, index) =>
-                            item.id !== visibleAnswers[index]?.id)?.id;
+                            item.id !== visibleAnswers()[index].id);
                         if (movedItemId) {
                             const oldIndex = answers.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
@@ -226,7 +225,7 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                         <AnswerCreator
                             key={answer.id}
                             form={form}
-                            answersLength={visibleAnswers.length}
+                            answersLength={visibleAnswers().length}
                             chapterIndex={chapterIndex}
                             subChapterIndex={subChapterIndex}
                             contentIndex={contentIndex}
@@ -246,7 +245,7 @@ export const QuestionCreator: React.FC<QuizCreatorProps> = ({
                     <Button
                         onClick={handleAppendAnswer}
                         type="button"
-                        disabled={visibleAnswers.length >= 8}
+                        disabled={visibleAnswers().length >= 8}
                     >
                         <Plus size={16} className="mr-1"/>
                         Add Answer

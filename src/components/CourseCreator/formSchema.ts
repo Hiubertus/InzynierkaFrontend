@@ -48,7 +48,7 @@ export interface MediaForm {
     type: 'image' | 'video';
     file: File | null;
     mediaType: 'image/jpeg' | 'image/png' | 'image/gif' | 'video/mp4' | 'video/webm';
-    updateFile?: File | null;
+    updateFile?: boolean;
     deleted?: boolean
 }
 
@@ -77,7 +77,9 @@ export interface AnswerForm {
     deleted?: boolean
 }
 
+
 export const formSchema = z.object({
+    id: z.number().nullable().optional(),
     name: z.string().min(1, {message: "Course name is required"}),
     banner: z.custom<File>().nullable().refine((val) => val !== null, {
         message: "Banner is required"
@@ -94,12 +96,16 @@ export const formSchema = z.object({
         .array(z.string().min(1, { message: "Each tag must have at least one character" }))
         .min(1, { message: "At least one tag is required" }),
     chapters: z.array(z.object({
+        id: z.number().nullable().optional(),
         name: z.string().min(1, {message: "Chapter name is required"}),
+        deleted: z.boolean().optional(),
         subchapters: z.array(z.object({
+            id: z.number().nullable().optional(),
             name: z.string().min(1, {message: "Subchapter name is required"}),
-            completed: z.boolean().optional().default(false),
+            deleted: z.boolean().optional(),
             content: z.array(z.discriminatedUnion('type', [
                 z.object({
+                    id: z.number().nullable().optional(),
                     type: z.literal('text'),
                     text: z.string().min(1, {message: "Text content is required"}),
                     fontSize: z.enum(["small", "medium", "large"]).default("medium"),
@@ -107,25 +113,33 @@ export const formSchema = z.object({
                     italics: z.boolean().default(false),
                     underline: z.boolean().default(false),
                     textColor: z.string().default('#000000'),
+                    deleted: z.boolean().optional(),
                 }),
                 z.object({
+                    id: z.number().nullable().optional(),
                     type: z.enum(['image', 'video']),
-                    file: z.custom<File>().nullable().refine((val) => val !== null, {
-                        message: "Media file is required"
-                    }),
+                    file: z.custom<File>().nullable(),
+                    updateFile: z.boolean().optional(),
                     mediaType: z.enum([
                         'image/jpeg', 'image/png', 'image/gif',
                         'video/mp4', 'video/webm'
                     ]),
+                    deleted: z.boolean().optional(),
                 }),
                 z.object({
+                    id: z.number().nullable().optional(),
                     type: z.literal('quiz'),
+                    deleted: z.boolean().optional(),
                     quizContent: z.array(z.object({
+                        id: z.number().nullable().optional(),
                         question: z.string().min(1, {message: "Question is required"}),
                         singleAnswer: z.boolean(),
+                        deleted: z.boolean().optional(),
                         answers: z.array(z.object({
+                            id: z.number().nullable().optional(),
                             answer: z.string().min(1, {message: "Answer text is required"}),
                             isCorrect: z.boolean(),
+                            deleted: z.boolean().optional(),
                         }))
                             .min(2, {message: "At least two answers are required"})
                             .max(8, {message: "Maximum 8 answers are allowed"})

@@ -1,25 +1,128 @@
 import { Button } from "@/components/ui/button";
 import { FileText, Type, ClipboardList } from "lucide-react";
-import React from "react";
 import { MediaForm, QuizForm, TextForm } from "@/components/CourseCreator/formSchema";
+import { FC } from "react";
 
 interface ContentButtonsProps {
     appendContent: (content: TextForm | MediaForm | QuizForm) => void;
+    courseId?: number;
 }
 
-export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) => {
+export const ContentButtons: FC<ContentButtonsProps> = ({ appendContent, courseId }) => {
+    const handleAppendText = () => {
+        const textContent: TextForm = {
+            type: "text",
+            text: "",
+            fontSize: "medium",
+            bolder: false,
+            italics: false,
+            underline: false,
+            textColor: "#000000"
+        };
+
+        if (courseId) {
+            appendContent({
+                ...textContent,
+                id: null,
+                deleted: false
+            });
+        } else {
+            appendContent(textContent);
+        }
+    };
+
+    const handleAppendImage = () => {
+        const imageContent: MediaForm = {
+            type: "image",
+            file: null,
+            mediaType: 'image/jpeg'
+        };
+
+        if (courseId) {
+            appendContent({
+                ...imageContent,
+                id: null,
+                deleted: false,
+                updateFile: false
+            });
+        } else {
+            appendContent(imageContent);
+        }
+    };
+
+    const handleAppendVideo = () => {
+        const videoContent: MediaForm = {
+            type: "video",
+            file: null,
+            mediaType: 'video/mp4'
+        };
+
+        if (courseId) {
+            appendContent({
+                ...videoContent,
+                id: null,
+                deleted: false,
+                updateFile: false
+            });
+        } else {
+            appendContent(videoContent);
+        }
+    };
+
+    const handleAppendQuiz = () => {
+        const quizContent: QuizForm = {
+            type: "quiz",
+            quizContent: [{
+                question: "New Question",
+                singleAnswer: true,
+                answers: [
+                    {
+                        answer: "Answer 1",
+                        isCorrect: false,
+                    },
+                    {
+                        answer: "Answer 2",
+                        isCorrect: false,
+                    }
+                ]
+            }]
+        };
+
+        if (courseId) {
+            appendContent({
+                ...quizContent,
+                id: null,
+                deleted: false,
+                quizContent: [{
+                    id: null,
+                    question: "New Question",
+                    singleAnswer: true,
+                    deleted: false,
+                    answers: [
+                        {
+                            id: null,
+                            answer: "Answer 1",
+                            isCorrect: false,
+                            deleted: false
+                        },
+                        {
+                            id: null,
+                            answer: "Answer 2",
+                            isCorrect: false,
+                            deleted: false
+                        }
+                    ]
+                }]
+            });
+        } else {
+            appendContent(quizContent);
+        }
+    };
+
     return (
         <div className="flex space-x-2 pt-4">
             <Button
-                onClick={() => appendContent({
-                    type: "text",
-                    text: "",
-                    fontSize: "small",
-                    bolder: false,
-                    italics: false,
-                    underline: false,
-                    textColor: "black"
-                })}
+                onClick={handleAppendText}
                 variant="outline"
                 className="flex items-center"
                 type="button"
@@ -28,11 +131,7 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) =
                 Text
             </Button>
             <Button
-                onClick={() => appendContent({
-                    type: "image",
-                    file: null,
-                    mediaType: 'image/jpeg'
-                })}
+                onClick={handleAppendImage}
                 variant="outline"
                 className="flex items-center"
                 type="button"
@@ -41,11 +140,7 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) =
                 Image
             </Button>
             <Button
-                onClick={() => appendContent({
-                    type: "video",
-                    file: null,
-                    mediaType: 'video/mp4'
-                })}
+                onClick={handleAppendVideo}
                 variant="outline"
                 className="flex items-center"
                 type="button"
@@ -54,23 +149,7 @@ export const ContentButtons: React.FC<ContentButtonsProps> = ({appendContent}) =
                 Video
             </Button>
             <Button
-                onClick={() => appendContent({
-                    type: "quiz",
-                    quizContent: [{
-                        question: "Question 1",
-                        singleAnswer: true,
-                        answers: [
-                            {
-                                answer: "Answer 1",
-                                isCorrect: false,
-                            },
-                            {
-                                answer: "Answer 2",
-                                isCorrect: false,
-                            },
-                        ]
-                    }]
-                })}
+                onClick={handleAppendQuiz}
                 variant="outline"
                 className="flex items-center"
                 type="button"

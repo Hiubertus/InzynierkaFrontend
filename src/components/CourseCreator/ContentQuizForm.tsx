@@ -1,11 +1,12 @@
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {Button} from "@/components/ui/button";
 import {Plus} from "lucide-react";
-import React from "react";
-import {useFieldArray, UseFormReturn} from "react-hook-form";
+import { useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm} from "@/components/CourseCreator/formSchema";
 import {QuestionCreator} from "@/components/CourseCreator/QuestionCreator";
 import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
+import {FC} from "react";
+import {useRealIndex} from "@/components/CourseCreator/useRealIndex";
 
 interface ContentQuizFormProps {
     form: UseFormReturn<CourseForm>;
@@ -16,7 +17,7 @@ interface ContentQuizFormProps {
     courseId?: number
 }
 
-export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
+export const ContentQuizForm: FC<ContentQuizFormProps> = ({
                                                                     form,
                                                                     chapterIndex,
                                                                     subChapterIndex,
@@ -35,20 +36,27 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent`
     });
 
-    const visibleQuestions = questions.filter(question =>
-        !courseId || !question.deleted
+    const watchedQuestions = form.watch(
+        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent`
     );
 
-    const handleRemoveQuestion = (index: number) => {
-        const question = questions[index];
+    const visibleQuestions = () => {
+        return questions.filter((question, index) => {
+            const watchedQuestion = watchedQuestions[index];
+            return !courseId || !watchedQuestion.deleted;
+        });
+    }
 
-        if (!courseId || question.id === null) {
-            // Jeśli tworzymy nowy kurs lub pytanie nie ma id, usuwamy normalnie
-            removeQuestion(index);
+    const calculateRealIndex = useRealIndex(watchedQuestions);
+
+    const handleRemoveQuestion = (visibleIndex: number) => {
+        const question = visibleQuestions()[visibleIndex];
+        if (!courseId || isNaN(Number(question.id))) {
+            removeQuestion(visibleIndex);
         } else {
-            // Jeśli edytujemy i pytanie ma id, ustawiamy deleted: true
+            const realIndex = calculateRealIndex(visibleIndex);
             form.setValue(
-                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${index}.deleted`,
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${realIndex}.deleted`,
                 true
             );
         }
@@ -93,10 +101,10 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
         <div className="flex justify-between">
             <div className="space-y-4 p-4 w-full bg-indigo-50 border border-gray-200 border-l-2 border-l-indigo-300">
                 <DraggableList
-                    items={visibleQuestions}
+                    items={visibleQuestions()}
                     onReorder={(newOrder) => {
                         const movedItemId = newOrder.find((item, index) =>
-                            item.id !== visibleQuestions[index]?.id)?.id;
+                            item.id !== visibleQuestions()[index].id);
                         if (movedItemId) {
                             const oldIndex = questions.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
@@ -108,7 +116,7 @@ export const ContentQuizForm: React.FC<ContentQuizFormProps> = ({
                         <QuestionCreator
                             key={question.id}
                             form={form}
-                            questionsLength={visibleQuestions.length}
+                            questionsLength={visibleQuestions().length}
                             chapterIndex={chapterIndex}
                             subChapterIndex={subChapterIndex}
                             contentIndex={contentIndex}

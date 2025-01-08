@@ -3,16 +3,16 @@ import {FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/compon
 import { Input } from "@/components/ui/input";
 import { FileUpload } from "@/components/CourseCreator/FileUpload";
 import { Textarea } from "@/components/ui/textarea";
-import React from "react";
 import { UseFormReturn } from "react-hook-form";
 import { CourseForm } from "@/components/CourseCreator/formSchema";
 import { TagInput } from "@/components/CourseCreator/TagInput";
+import {FC} from "react";
 
 interface CourseDataFormProps {
     form: UseFormReturn<CourseForm>
 }
 
-export const CourseDataForm: React.FC<CourseDataFormProps> = ({ form }) => {
+export const CourseDataForm: FC<CourseDataFormProps> = ({ form }) => {
     const currentBanner = form.watch('banner');
 
     return (

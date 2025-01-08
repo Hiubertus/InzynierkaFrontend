@@ -1,5 +1,6 @@
-import React from 'react';
+
 import { ChevronUp, ChevronDown } from 'lucide-react';
+import {FC} from "react";
 
 interface OrderButtonsProps {
     onMoveUp: () => void;
@@ -8,7 +9,7 @@ interface OrderButtonsProps {
     canMoveDown: boolean;
 }
 
-const OrderButtons: React.FC<OrderButtonsProps> = ({
+const OrderButtons: FC<OrderButtonsProps> = ({
                                                        onMoveUp,
                                                        onMoveDown,
                                                        canMoveUp,

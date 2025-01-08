@@ -29,17 +29,7 @@ export const ContentCreator: FC<ContentCreator> = ({
                                                        contentsLength,
                                                        courseId,
                                                    }) => {
-    const handleRemoveContent = () => {
-        if (!courseId || content.id === null) {
-            removeContent(contentIndex);
-        } else {
 
-            form.setValue(
-                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.deleted`,
-                true
-            );
-        }
-    };
 
     return (
         <div className="flex rounded-lg overflow-hidden py-4">
@@ -56,7 +46,7 @@ export const ContentCreator: FC<ContentCreator> = ({
                         chapterIndex={chapterIndex}
                         subChapterIndex={subChapterIndex}
                         contentIndex={contentIndex}
-                        removeContent={handleRemoveContent}
+                        removeContent={removeContent}
                     />
                 )}
                 {(content.type === 'video' || content.type === 'image') && (
@@ -66,7 +56,7 @@ export const ContentCreator: FC<ContentCreator> = ({
                         chapterIndex={chapterIndex}
                         subChapterIndex={subChapterIndex}
                         contentIndex={contentIndex}
-                        removeContent={handleRemoveContent}
+                        removeContent={removeContent}
                     />
                 )}
                 {content.type === 'quiz' && (
@@ -75,7 +65,7 @@ export const ContentCreator: FC<ContentCreator> = ({
                         chapterIndex={chapterIndex}
                         subChapterIndex={subChapterIndex}
                         contentIndex={contentIndex}
-                        removeContent={handleRemoveContent}
+                        removeContent={removeContent}
                         courseId={courseId}
                     />
                 )}

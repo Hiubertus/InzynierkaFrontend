@@ -3,15 +3,15 @@ import {FormControl, FormField, FormItem, FormMessage} from "@/components/ui/for
 import {Input} from "@/components/ui/input";
 import {DeleteButton} from "@/components/CourseCreator/DeleteButton";
 import {ContentButtons} from "@/components/CourseCreator/ContentButtons";
-import React, {useEffect} from "react";
-import {FieldArrayWithId, useFieldArray, UseFormReturn} from "react-hook-form";
+import { useFieldArray, UseFormReturn} from "react-hook-form";
 import {CourseForm, MediaForm, QuizForm, TextForm} from "@/components/CourseCreator/formSchema";
 import {ContentCreator} from "@/components/CourseCreator/ContentCreator";
 import OrderButtons from "@/components/CourseCreator/OrderButtons";
 import DraggableList from "@/components/CourseCreator/DraggableList/DraggableList";
+import {FC} from "react";
+import {useRealIndex} from "@/components/CourseCreator/useRealIndex";
 
 interface SubChapterCreatorProps {
-    subChapter: FieldArrayWithId<CourseForm, `chapters.${number}.subchapters`, "id">;
     subChaptersLength: number;
     chapterIndex: number;
     subChapterIndex: number;
@@ -21,51 +21,70 @@ interface SubChapterCreatorProps {
     courseId?: number;
 }
 
-export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
-                                                                        subChapter,
+export const SubChapterCreator: FC<SubChapterCreatorProps> = ({
                                                                         chapterIndex,
                                                                         subChapterIndex,
                                                                         subChaptersLength,
                                                                         removeSubChapter,
                                                                         form,
                                                                         swap,
-    courseId
+                                                                        courseId
                                                                     }) => {
-
-    const {fields: contents, append: appendContent, remove: removeContent, swap: swapContent, move: moveContent} = useFieldArray({
+    const {
+        fields: contents,
+        append: appendContent,
+        remove: removeContent,
+        swap: swapContent,
+        move: moveContent
+    } = useFieldArray({
         control: form.control,
         name: `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content`
     });
 
-    const visibleContents = contents.filter(content =>
-        !courseId || !content.deleted
-    );
+    const watchedContents = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content`);
 
-    const handleRemoveContent = (index: number) => {
-        const content = contents[index];
+    const visibleContents = () => {
+        return contents.filter((_, index) => {
+            const watchedContent = watchedContents[index];
+            return !courseId || !watchedContent.deleted;
+        });
+    }
 
-        if (!courseId || content.id === null) {
-            removeContent(index);
+    const calculateRealIndex = useRealIndex(watchedContents);
+
+    const handleRemoveContent = (visibleIndex: number) => {
+
+        const content = visibleContents()[visibleIndex];
+        console.log(content)
+        if (!courseId || isNaN(Number(content.id))) {
+            removeContent(visibleIndex);
         } else {
+            const realIndex = calculateRealIndex(visibleIndex);
             form.setValue(
-                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${index}.deleted`,
+                `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${realIndex}.deleted`,
                 true
             );
         }
     };
 
     const handleAppendContent = (newContent: MediaForm | TextForm | QuizForm) => {
+        const visibleLength = visibleContents().length;
+
         if (!courseId) {
-            appendContent(newContent);
+            appendContent({
+                ...newContent,
+                order: visibleLength + 1
+            });
         } else {
             appendContent({
                 ...newContent,
                 id: null,
-                deleted: false
+                deleted: false,
+                order: visibleLength + 1
             });
         }
     };
-    
+
     return (
         <Card className="border-l-2 border-l-indigo-300">
             <CardHeader className="flex flex-col bg-indigo-100 overflow-hidden">
@@ -110,10 +129,10 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
             </CardHeader>
             <CardContent className="bg-indigo-50">
                 <DraggableList
-                    items={visibleContents}
+                    items={visibleContents()}
                     onReorder={(newOrder) => {
                         const movedItemId = newOrder.find((item, index) =>
-                            item.id !== visibleContents[index]?.id)?.id;
+                            item.id !== visibleContents()[index].id);
                         if (movedItemId) {
                             const oldIndex = contents.findIndex(item => item.id === movedItemId);
                             const newIndex = newOrder.findIndex(item => item.id === movedItemId);
@@ -131,7 +150,7 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                             contentIndex={index}
                             removeContent={handleRemoveContent}
                             swap={swapContent}
-                            contentsLength={visibleContents.length}
+                            contentsLength={visibleContents().length}
                             courseId={courseId}
                         />
                     )}
@@ -141,8 +160,9 @@ export const SubChapterCreator: React.FC<SubChapterCreatorProps> = ({
                 />
                 <ContentButtons
                     appendContent={handleAppendContent}
+                    courseId={courseId}
                 />
             </CardContent>
         </Card>
     );
-}
+};

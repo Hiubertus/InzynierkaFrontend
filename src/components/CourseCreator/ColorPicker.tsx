@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {FC} from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Palette } from 'lucide-react';
 import {cn} from "@/lib/utils";
@@ -9,7 +9,7 @@ interface ColorPickerProps {
     buttonClassName?: string;
 }
 
-export const ColorPicker: React.FC<ColorPickerProps> = ({
+export const ColorPicker: FC<ColorPickerProps> = ({
                                                      value,
                                                      onChange,
                                                      buttonClassName

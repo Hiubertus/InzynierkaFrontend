@@ -35,9 +35,7 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
     const handleSingleAnswerChange = (checked: boolean) => {
         if (checked && singleAnswer) {
             const currentAnswers = form.getValues(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers`);
-            console.log("siurek")
             currentAnswers.forEach((_, index) => {
-                console.log("kanalia")
                 if (index !== answerIndex) {
                     form.setValue(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${index}.isCorrect`, false);
                 }
@@ -46,9 +44,6 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
     };
 
     const inputName = `question-${chapterIndex}-${subChapterIndex}-${contentIndex}-${questionIndex}-answers`;
-    const isCorrect = form.getValues(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.quizContent.${questionIndex}.answers.${answerIndex}.isCorrect`)
-    console.log(isCorrect)
-
 
     return (
         <div className="flex py-4 rounded-lg overflow-hidden">
@@ -78,7 +73,6 @@ export const AnswerCreator: React.FC<AnswerCreatorProps> = ({
                                                         onChange={(e) => {
                                                             field.onChange(e.target.checked);
                                                             handleSingleAnswerChange(e.target.checked);
-                                                            console.log("kupaaa")
                                                         }}
                                                         className="mr-2"
                                                         name={inputName}

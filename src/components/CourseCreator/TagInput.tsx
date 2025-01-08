@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ interface TagInputProps {
 }
 
 export const TagInput: React.FC<TagInputProps> = ({ form }) => {
-    const [tagInput, setTagInput] = React.useState("");
+    const [tagInput, setTagInput] = useState("");
     const tags = form.watch('tags');
 
     const handleAddTag = () => {
