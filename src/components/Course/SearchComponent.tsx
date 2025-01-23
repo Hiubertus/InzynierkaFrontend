@@ -47,6 +47,7 @@ export const SearchComponent = ({ onSearch }: SearchComponentProps) => {
                 <Button
                     onClick={handleSubmit}
                     className="px-4"
+                    type="button"
                 >
                     Search
                 </Button>
@@ -55,6 +56,7 @@ export const SearchComponent = ({ onSearch }: SearchComponentProps) => {
                         variant="outline"
                         onClick={handleClear}
                         className="px-3"
+                        type="button"
                     >
                         <X className="h-4 w-4" />
                     </Button>
@@ -63,10 +65,9 @@ export const SearchComponent = ({ onSearch }: SearchComponentProps) => {
 
             <Command className="rounded-lg border shadow-md">
                 <CommandInput placeholder="Search available tags..." />
-                <CommandList>
+                <CommandList className="max-h-40">
                     <CommandEmpty>No tags found.</CommandEmpty>
                     <CommandGroup heading="Available Tags">
-                        <CommandItem>Test</CommandItem>
                         {availableTags?.map((tag) => (
                             <CommandItem
                                 key={tag}
@@ -80,7 +81,6 @@ export const SearchComponent = ({ onSearch }: SearchComponentProps) => {
                         ))}
                     </CommandGroup>
                 </CommandList>
-
             </Command>
 
             {localTag && (

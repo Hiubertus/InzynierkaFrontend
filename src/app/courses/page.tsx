@@ -26,7 +26,6 @@ const TAB_CONFIG: Array<{
 ]
 
 export default function Page() {
-    // const [searchTerm, setSearchTerm] = useState("")
     const [activeTab, setActiveTab] = useState<CourseType>('shop')
     const [isLoading, setIsLoading] = useState(false)
 
@@ -113,6 +112,26 @@ export default function Page() {
                 </TabsList>
                 {TAB_CONFIG.map(tab => (
                     <TabsContent key={tab.value} value={tab.value}>
+                        <CourseGrid
+                            gridType={tab.value}
+                            userData={userData}
+                            courses={courses}
+                            profiles={profiles}
+                            isLoading={isLoading && hasAccessToTab(tab.value)}
+                            error={error}
+                        />
+                        {tab.value === 'created' && userData?.roles.includes('TEACHER') && (
+                            <div className="flex items-center justify-center mt-6">
+                                <Button
+                                    variant="default"
+                                    className="flex items-center gap-2"
+                                    onClick={() => router.push(`${ROUTES.COURSES}/creator`)}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Create Course
+                                </Button>
+                            </div>
+                        )}
                         {courses.length > 0 && (
                             <div className="mt-6 flex justify-center">
                                 <PaginationControls
@@ -134,27 +153,6 @@ export default function Page() {
                                 />
                             </div>
                         )}
-                        <CourseGrid
-                            gridType={tab.value}
-                            userData={userData}
-                            courses={courses}
-                            profiles={profiles}
-                            isLoading={isLoading && hasAccessToTab(tab.value)}
-                            error={error}
-                        />
-                        {tab.value === 'created' && userData?.roles.includes('TEACHER') && (
-                            <div className="flex items-center justify-center mt-6">
-                                <Button
-                                    variant="default"
-                                    className="flex items-center gap-2"
-                                    onClick={() => router.push(`${ROUTES.COURSES}/creator`)}
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    Create Course
-                                </Button>
-                            </div>
-                        )}
-
                     </TabsContent>
                 ))}
             </Tabs>

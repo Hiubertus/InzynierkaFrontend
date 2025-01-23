@@ -22,7 +22,6 @@ export const ContentFileForm: FC<ContentFileFormProps> = ({
                                                               removeContent,
                                                           }) => {
     const currentFile = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.file`);
-    const contentId = form.watch(`chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.id`);
 
     return (
         <FormField
@@ -33,15 +32,13 @@ export const ContentFileForm: FC<ContentFileFormProps> = ({
                     <FormControl>
                         <FileUpload
                             onFileUploaded={(file) => {
-                                console.log('File being uploaded:', file); // Sprawdźmy czy plik dociera do formularza
+                                console.log('File being uploaded:', file);
                                 field.onChange(file);
-                                if (contentId && !isNaN(Number(contentId)) && file) {
-                                    console.log("lol")
-                                    form.setValue(
-                                        `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.updateFile`,
-                                        true
-                                    );
-                                }
+                                form.setValue(
+                                    `chapters.${chapterIndex}.subchapters.${subChapterIndex}.content.${contentIndex}.updateFile`,
+                                    true
+                                );
+
                             }}
                             currentFile={currentFile}
                             accept={contentType === 'video' ? {'video/*': []} : {'image/*': []}}

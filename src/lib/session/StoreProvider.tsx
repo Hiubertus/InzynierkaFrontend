@@ -83,8 +83,8 @@ export function StoreProvider({
             }
 
             toast({
-                title: "Email wysłany",
-                description: "Link weryfikacyjny został wysłany na Twój adres email.",
+                title: "Email send",
+                description: "Verification link was sent to your address.",
                 variant: "success",
                 duration: 5000,
             });
@@ -92,8 +92,8 @@ export function StoreProvider({
         } catch (error) {
             console.error('Error sending verification email:', error);
             toast({
-                title: "Błąd",
-                description: "Nie udało się wysłać emaila weryfikacyjnego. Spróbuj ponownie później.",
+                title: "Error",
+                description: "There was an error sending verification code. Try again later.",
                 variant: "destructive",
                 duration: 5000,
             });
@@ -104,8 +104,8 @@ export function StoreProvider({
     useEffect(() => {
         if (initialAccessToken && initialUserData?.roles?.includes('USER') && !initialUserData?.roles?.includes('VERIFIED')) {
             toast({
-                title: "Weryfikacja email wymagana",
-                description: "Prosze zweryfikować email by móc korzystać z większej ilości usług.",
+                title: "Email verification required",
+                description: "Verify your account to gain access to more features.",
                 duration: 5000,
                 variant: "default",
                 action: (
@@ -114,7 +114,7 @@ export function StoreProvider({
                         size="sm"
                         onClick={handleVerificationRequest}
                     >
-                        Zweryfikuj
+                        Verify
                     </Button>
                 ),
             });
@@ -124,6 +124,8 @@ export function StoreProvider({
     useEffect(() => {
         if (initialAccessToken && initialUserData?.roles?.includes('USER')) {
             const refreshTokenInterval = setInterval(async () => {
+                // setAuthInitialized(false);
+                // setUserInitialized(false);
                 try {
                     const response = await fetch('/api/auth/refresh', {
                         method: 'POST',
@@ -133,14 +135,18 @@ export function StoreProvider({
                     if (!response.ok) {
                         throw new Error('Failed to refresh token');
                     }
-
                     const data = await response.json();
                     setAccessToken(data.accessToken);
+
                 } catch (error) {
                     console.error('Error refreshing token:', error);
                     clearAuth();
                     clearUserData();
-                }
+                } 
+                // finally {
+                //     setAuthInitialized(true);
+                //     setUserInitialized(true)
+                // }
             }, 14 * 60 * 1000);
 
             return () => clearInterval(refreshTokenInterval);

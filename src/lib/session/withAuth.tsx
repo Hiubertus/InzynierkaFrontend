@@ -52,26 +52,26 @@ const checkAccess = (
 const getAccessDeniedMessage = (restriction: AccessRestriction, userData: UserData | null): string => {
     switch (restriction.type) {
         case 'auth':
-            return "Musisz być zalogowany, aby uzyskać dostęp do tej strony.";
+            return "Log in to access this page.";
         case 'public':
-            return "Ta strona jest dostępna tylko dla niezalogowanych użytkowników.";
+            return "Logout to access this page.";
         case 'roles':
-            if (!restriction.roles || !restriction.restrictionName) return "Brak wymaganych uprawnień.";
+            if (!restriction.roles || !restriction.restrictionName) return "No permissions to access this page.";
 
             if (!userData) return "Musisz być zalogowany, aby uzyskać dostęp do tej strony.";
 
             switch (restriction.restrictionName) {
                 case 'VERIFIED':
-                    return "Ta strona wymaga weryfikacji konta. Zweryfikuj swój adres email.";
+                    return "This page requires verified account, verify your account first.";
                 case 'TEACHER':
-                    return "Ta strona jest dostępna tylko dla nauczycieli.";
+                    return "This page is accessible only by Teacher.";
                 case 'ADMIN':
-                    return "Ta strona jest dostępna tylko dla administratorów.";
+                    return "This page is accessible only by Admin.";
                 default:
-                    return "Brak wymaganych uprawnień.";
+                    return "No permission to access this page.";
             }
         default:
-            return "Brak dostępu do tej strony.";
+            return "No permission to access this page.";
     }
 };
 

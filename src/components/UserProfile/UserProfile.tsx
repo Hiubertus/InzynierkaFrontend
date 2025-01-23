@@ -104,6 +104,8 @@ export const UserProfile = () => {
                                 <span className="text-sm text-muted-foreground">
                                     Member since {formatDate(userProfile.createdAt)}
                                 </span>
+                                {userProfile.teacherProfileCreatedAt && (<span className="text-sm text-muted-foreground">Teacher since {formatDate(userProfile.teacherProfileCreatedAt)}</span>)}
+
                             </div>
                             {userProfile.review !== null && userProfile.reviewNumber !== null && (
                                 <StarRating
@@ -114,15 +116,27 @@ export const UserProfile = () => {
                         </div>
                     </div>
                     {isOwnProfile && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex items-center gap-2"
-                            onClick={() => router.push(ROUTES.PROFILE_EDIT)}
-                        >
-                            <Pencil className="h-4 w-4"/>
-                            Edit Profile
-                        </Button>
+                        <div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2"
+                                onClick={() => router.push(ROUTES.PROFILE_EDIT)}
+                            >
+                                <Pencil className="h-4 w-4"/>
+                                Edit Profile
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex items-center gap-2"
+                                onClick={() => router.push(ROUTES.PROFILE_HISTORY)}
+                            >
+                                <Pencil className="h-4 w-4"/>
+                                Show History
+                            </Button>
+                        </div>
+
                     )}
                 </div>
             </CardHeader>

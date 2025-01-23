@@ -79,55 +79,52 @@ export const CourseGrid = ({
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 9 }).map((_, index) => (
-                    <CourseCardSkeleton key={`skeleton-${index}`} />
-                ))}
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="text-center py-8 text-red-500">
-                An error has occurred
-            </div>
-        );
-    }
-
-    if (courses.length === 0) {
-        const requiredRole: RoleReturn = getRoleForType(gridType);
-        const isAuthenticated = requiredRole ? userData?.roles.includes(requiredRole) : true;
-        const message = EMPTY_STATES[gridType][isAuthenticated ? 'authenticated' : 'unauthenticated'];
-
-        return (
-            <div className="text-center py-8 text-gray-500">
-                {message}
-            </div>
-        );
-    }
-
     return (
-        <>
+        <div>
             {showSearch && (
                 <SearchComponent
                     onSearch={handleSearch}
                 />
             )}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {courses.map(course => {
-                    const ownerProfile = profiles.find(profile => profile.id === course.ownerId);
-                    return (
-                        <CourseCard
-                            key={course.id}
-                            course={course}
-                            userProfile={ownerProfile!}
-                        />
-                    );
-                })}
-            </div>
-        </>
+
+            {isLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {Array.from({ length: 9 }).map((_, index) => (
+                        <CourseCardSkeleton key={`skeleton-${index}`} />
+                    ))}
+                </div>
+            ) : error ? (
+                <div className="text-center py-8 text-red-500">
+                    An error has occurred
+                </div>
+            ) : courses.length === 0 ? (
+                <div>
+                    {(() => {
+                        const requiredRole: RoleReturn = getRoleForType(gridType);
+                        const isAuthenticated = requiredRole ? userData?.roles.includes(requiredRole) : true;
+                        const message = EMPTY_STATES[gridType][isAuthenticated ? 'authenticated' : 'unauthenticated'];
+
+                        return (
+                            <div className="text-center py-8 text-gray-500">
+                                {message}
+                            </div>
+                        );
+                    })()}
+                </div>
+            ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {courses.map(course => {
+                        const ownerProfile = profiles.find(profile => profile.id === course.ownerId);
+                        return (
+                            <CourseCard
+                                key={course.id}
+                                course={course}
+                                userProfile={ownerProfile!}
+                            />
+                        );
+                    })}
+                </div>
+            )}
+        </div>
     );
 };

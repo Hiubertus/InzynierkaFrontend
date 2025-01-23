@@ -46,8 +46,14 @@ export const UserProfileSmall = ({ userProfile, className, isClickable = false }
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="text-xs text-muted-foreground border-t pt-2">
-                    Member since {formatDate(userProfile.createdAt)}
+                    <div>Member since {formatDate(userProfile.createdAt)}</div>
+
+                    {userProfile.teacherProfileCreatedAt && <div>
+                        Teacher since {formatDate(userProfile.teacherProfileCreatedAt)}
+                    </div>}
                 </div>
+
+
 
                 <p className="text-sm">
                     {userProfile.description || "Brak opisu użytkownika."}
@@ -60,7 +66,7 @@ export const UserProfileSmall = ({ userProfile, className, isClickable = false }
                             {userProfile.badges && userProfile.badges.length > 0 ? (
                                 userProfile.badges.map((achievement: string, index: number) => (
                                     <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                                        <Trophy className="h-3 w-3" />
+                                        <Trophy className="h-3 w-3"/>
                                         {achievement}
                                     </Badge>
                                 ))

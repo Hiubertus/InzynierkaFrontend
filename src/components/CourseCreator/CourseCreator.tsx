@@ -58,6 +58,7 @@ export const CourseCreator = ({courseId}: Props) => {
     const router = useRouter();
     const { accessToken } = useAuthStore();
     const { userData } = useUserStore();
+    const isEditMode = Boolean(courseId);
     const form = useForm<CourseForm>({
         resolver: zodResolver(formSchema),
         defaultValues: INITIAL_FORM_VALUES
@@ -264,8 +265,6 @@ export const CourseCreator = ({courseId}: Props) => {
                 data.append('contentFiles', file);
             });
 
-            console.log(contentFiles);
-
             const result = isUpdate
                 ? await updateCourse(data, accessToken)
                 : await createCourse(data, accessToken);
@@ -366,7 +365,9 @@ export const CourseCreator = ({courseId}: Props) => {
     const renderEditor = () => (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(handleSubmit)} className="max-w-4xl mx-auto p-4">
-                <h1 className="text-2xl font-bold mb-4">Create a New Course</h1>
+                <h1 className="text-2xl font-bold mb-4">
+                    {isEditMode ? 'Edit Course' : 'Create a New Course'}
+                </h1>
 
                 <CourseDataForm form={form} />
 
@@ -417,10 +418,10 @@ export const CourseCreator = ({courseId}: Props) => {
                     {isSubmitting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Creating Course...
+                            {isEditMode ? 'Updating Course...' : 'Creating Course...'}
                         </>
                     ) : (
-                        'Create Course'
+                        isEditMode ? 'Update Course' : 'Create Course'
                     )}
                 </Button>
             </form>

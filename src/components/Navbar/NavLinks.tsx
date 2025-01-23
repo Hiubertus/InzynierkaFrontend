@@ -17,11 +17,6 @@ export const NavLinks = ({roles}: { roles: Roles[] | undefined }) => {
                     Courses
                 </Button>
             </Link>
-            <Link href={ROUTES.TASKS}>
-                <Button variant="ghost">
-                    Tasks
-                </Button>
-            </Link>
             { roles?.includes('USER') && !roles?.includes('TEACHER') &&
                 (<Link href={ROUTES.BECOME_TEACHER}>
                     <Button variant="ghost">

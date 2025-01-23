@@ -65,7 +65,7 @@ export const CourseDataForm: FC<CourseDataFormProps> = ({ form }) => {
                                         'image/*': [],
                                         'video/*': []
                                     }}
-                                    maxSize={5 * 1024 * 1024}
+                                    maxSize={50 * 1024 * 1024}
                                 />
                             </FormControl>
                             <FormMessage/>

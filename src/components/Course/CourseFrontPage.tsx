@@ -16,6 +16,8 @@ import {useToast} from "@/hooks/use-toast";
 import {ToastAction} from "@/components/ui/toast";
 import {StarRating} from "@/components/StarRating/StarRating";
 import {ROUTES} from "@/components/Navbar/routes";
+import {useAuthStore} from "@/lib/stores/authStore";
+import {useUserStore} from "@/lib/stores/userStore";
 
 
 interface CoursePageProps {
@@ -25,48 +27,51 @@ interface CoursePageProps {
 
 export const CourseFrontPage = ({course, owner}: CoursePageProps) => {
     const { buyCourseAction } = useCourseStore()
+    const { accessToken } = useAuthStore()
+    const { userData } = useUserStore()
     const router = useRouter()
     const { toast } = useToast()
 
     const handlePurchase = async () => {
         try {
+            if(!accessToken) {
+                toast({
+                    variant: "destructive",
+                    title: "Authentication Required",
+                    description: "Please log in to purchase this course",
+                    action: (
+                        <ToastAction altText="Login" onClick={() => router.push('/auth')}>
+                            Login
+                        </ToastAction>
+                    )
+                })
+                return
+            }
+            if(userData && course.price > userData.points) {
+                toast({
+                    variant: "destructive",
+                    title: "More points needed",
+                    description: "Insufficient funds to buy course",
+                })
+                return
+            }
             await buyCourseAction(course.id)
             toast({
                 title: "Success",
                 description: "Course purchased successfully",
             })
 
-        } catch (error) {
-            if (error instanceof Error) {
-                if (error.message.includes('log in')) {
-                    toast({
-                        variant: "destructive",
-                        title: "Authentication Required",
-                        description: "Please log in to purchase this course",
-                        action: (
-                            <ToastAction altText="Login" onClick={() => router.push('/auth')}>
-                                Login
-                            </ToastAction>
-                        )
-                    })
-                } else if (error.message.includes('funds')) {
-                    toast({
-                        variant: "destructive",
-                        title: "Insufficient Funds",
-                        description: "You don't have enough points to purchase this course"
-                    })
-                } else {
-                    toast({
-                        variant: "destructive",
-                        title: "Error",
-                        description: error.message
-                    })
-                }
-            }
+        } catch {
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "There was an error while buying course"
+            })
         }
     }
 
     const renderActionButton = () => {
+        console.log(course.relationshipType)
         switch (course.relationshipType) {
             case 'AVAILABLE':
                 return (
