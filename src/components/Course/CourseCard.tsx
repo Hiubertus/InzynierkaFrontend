@@ -28,12 +28,13 @@ export const CourseCard = ({ course, userProfile }: {course: CourseData, userPro
                     <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{course.description}</p>
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2" onClick={handleAvatarClick}>
-                            <AvatarComponent userProfile={userProfile} isLink={false} />
+                            <AvatarComponent userProfile={userProfile} isLink={false} />status
+
                             <span className="text-sm">{userProfile.fullName}</span>
                         </div>
                         <div className="flex items-center text-sm">
                             <Calendar className="h-4 w-4 mr-1" />
-                            {course.createdAt.toLocaleTimeString()}
+                            {course.createdAt.toLocaleDateString()}
                         </div>
                     </div>
                     <div className="flex flex-wrap gap-1 mb-2">
