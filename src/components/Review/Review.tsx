@@ -94,7 +94,6 @@ export const Review = ({
                                 </p>
                                 <StarRating
                                     rating={rating}
-                                    ratingNumber={1}
                                     className="mt-1"
                                 />
                             </div>
